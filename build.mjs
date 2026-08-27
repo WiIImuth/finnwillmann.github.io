@@ -74,7 +74,6 @@ const LANGS = {
       projectsLead: "Woran ich bisher gearbeitet habe.",
       aboutTitle: "Über mich",
       contactTitle: "Kontakt",
-      cv: "Lebenslauf als PDF",
       empty: "Noch keine Projekte.",
       notFoundTitle: "Nichts gefunden",
       notFoundText: "Diese Adresse führt ins Leere.",
@@ -130,7 +129,6 @@ const LANGS = {
       projectsLead: "What I have built so far.",
       aboutTitle: "About",
       contactTitle: "Contact",
-      cv: "Download CV",
       empty: "No projects yet.",
       notFoundTitle: "Not found",
       notFoundText: "There is nothing at this address.",
@@ -586,7 +584,7 @@ function homePage({ config, L, home, projects, artworks }) {
     <p class="hero-lead">${escapeHtml(pick(config.tagline, L.code))}</p>
     <div class="btn-row">
       <a class="btn btn-primary" href="${r.projects}">${escapeHtml(t.heroCta)}</a>
-      ${heroLinks}${config.cv ? `<a class="btn" href="${config.cv}">${escapeHtml(t.cv)}</a>` : ""}
+      ${heroLinks}
     </div>
   </div>
 </section>
@@ -791,7 +789,6 @@ ${pageHeader({ eyebrow: pick(config.role, L.code), title: about.data.headline ||
     ? `<h2 class="section-title spaced" data-anim="rise">${escapeHtml(t.tools)}</h2>
        <div class="skills" data-anim="rise">${skills}</div>`
     : ""}
-  ${config.cv ? `<div class="btn-row spaced" data-anim="rise"><a class="btn" href="${config.cv}">${escapeHtml(t.cv)}</a></div>` : ""}
 </section>
 
 ${ctaSection(L)}
