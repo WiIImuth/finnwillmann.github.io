@@ -1,5 +1,6 @@
 {
   "name": "Finn Willmann",
+  "alias": "Willmuth",
   "email": "mail@finnwillmann.com",
   "role": {
     "de": "Spieleentwicklung",
@@ -17,8 +18,8 @@
     "url": "https://finnwillmann.com",
     "noindex": true,
     "description": {
-      "de": "Portfolio von Finn Willmann. Spieleentwicklung in Unity: Projekte, Werdegang, Kontakt.",
-      "en": "Portfolio of Finn Willmann. Game development in Unity: projects, background, contact."
+      "de": "Portfolio von Finn Willmann, als Willmuth unterwegs. Spieleentwicklung in Unity: Projekte, Artworks, Kontakt.",
+      "en": "Portfolio of Finn Willmann, working as Willmuth. Game development in Unity: projects, artworks, contact."
     }
   },
   "projectsIntro": {

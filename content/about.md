@@ -3,6 +3,10 @@ headline: Über mich
 lead: Unity, Bewegung und die Frage, warum sich etwas richtig anfühlt.
 ---
 
+Ich heiße Finn Willmann und veröffentliche als **Willmuth**. Der Name steht auf
+itch.io, auf Instagram und über meinen Arbeiten, dahinter steckt dieselbe
+Person.
+
 Ich studiere an der Hochschule Macromedia und entwickle Spiele in Unity. Die
 Bandbreite reicht vom Siebentage-Jam im Dreierteam bis zum Prüfungsprojekt, das
 ich allein gestemmt habe: Konzept, Code, Level, Gestaltung.

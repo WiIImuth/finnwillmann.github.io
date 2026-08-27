@@ -17,6 +17,7 @@
  *   /ueber-mich/ /en/about/
  *   /kontakt/    /en/contact/
  *   /impressum/  /en/imprint/
+ *   /datenschutz/ /en/privacy/
  */
 
 import { readFile, readdir, mkdir, rm, writeFile } from "node:fs/promises";
@@ -40,7 +41,7 @@ const LANGS = {
     other: "en",
     otherLabel: "EN",
     otherTitle: "Switch to English",
-    seg: { projects: "projekte", artworks: "artworks", about: "ueber-mich", contact: "kontakt", imprint: "impressum" },
+    seg: { projects: "projekte", artworks: "artworks", about: "ueber-mich", contact: "kontakt", imprint: "impressum", privacy: "datenschutz" },
     t: {
       skip: "Direkt zum Inhalt",
       nav: { projects: "Projekte", artworks: "Artworks", about: "Über mich", contact: "Kontakt" },
@@ -83,6 +84,10 @@ const LANGS = {
       imprintContact: "Kontakt",
       imprintResponsible: "Verantwortlich für den Inhalt",
       imprintAddress: "Anschrift wie oben.",
+      imprintAlias: "Künstlername",
+      privacy: "Datenschutz",
+      privacyTitle: "Datenschutzerklärung",
+      alsoKnownAs: "arbeitet als",
       mainNav: "Hauptnavigation",
       footerNav: "Fußzeile",
       shot: (x) => `Bildschirmfoto aus ${x}`,
@@ -95,7 +100,7 @@ const LANGS = {
     other: "de",
     otherLabel: "DE",
     otherTitle: "Auf Deutsch ansehen",
-    seg: { projects: "projects", artworks: "artworks", about: "about", contact: "contact", imprint: "imprint" },
+    seg: { projects: "projects", artworks: "artworks", about: "about", contact: "contact", imprint: "imprint", privacy: "privacy" },
     t: {
       skip: "Skip to content",
       nav: { projects: "Work", artworks: "Artworks", about: "About", contact: "Contact" },
@@ -138,6 +143,10 @@ const LANGS = {
       imprintContact: "Contact",
       imprintResponsible: "Responsible for the content",
       imprintAddress: "address as above.",
+      imprintAlias: "Artist name",
+      privacy: "Privacy",
+      privacyTitle: "Privacy policy",
+      alsoKnownAs: "works as",
       mainNav: "Main navigation",
       footerNav: "Footer",
       shot: (x) => `Screenshot from ${x}`,
@@ -153,6 +162,7 @@ const routes = (L) => ({
   about: `${L.prefix}/${L.seg.about}/`,
   contact: `${L.prefix}/${L.seg.contact}/`,
   imprint: `${L.prefix}/${L.seg.imprint}/`,
+  privacy: `${L.prefix}/${L.seg.privacy}/`,
 });
 
 /* ------------------------------------------------------------------ *
@@ -423,8 +433,24 @@ const ICON_THEME = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false
 function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "", v = {} }) {
   const r = routes(L);
   const t = L.t;
-  const fullTitle = title ? `${title} · ${config.name}` : `${config.name} · ${pick(config.role, L.code)}`;
+  // Künstlername vorn, bürgerlicher Name direkt daneben. So steht in jedem
+  // Seitentitel und in jedem Suchergebnis beides zusammen.
+  const alias = config.alias || "";
+  const signature = alias ? `${alias} · ${config.name}` : config.name;
+  const fullTitle = title ? `${title} · ${signature}` : `${signature} · ${pick(config.role, L.code)}`;
   const base = config.site?.url ? config.site.url.replace(/\/$/, "") : "";
+
+  // Für Suchmaschinen: beide Namen gehören zu einer Person.
+  const person = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: config.name,
+    ...(alias ? { alternateName: alias } : {}),
+    jobTitle: pick(config.role, L.code),
+    ...(base ? { url: base + "/" } : {}),
+    ...(config.email ? { email: `mailto:${config.email}` } : {}),
+    sameAs: (config.links || []).map((l) => l.href).filter((h) => /^https?:/.test(h)),
+  };
 
   const navItems = [
     { label: t.nav.projects, href: r.projects },
@@ -469,6 +495,7 @@ ${base && altUrl ? `<link rel="alternate" hreflang="${L.other}" href="${base}${a
 })();
 </script>
 <link rel="stylesheet" href="/assets/styles.css${v.css ? `?v=${v.css}` : ""}">
+<script type="application/ld+json">${JSON.stringify(person).replace(/</g, "\\u003c")}</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>">
 </head>
 <body class="${bodyClass}">
@@ -476,7 +503,11 @@ ${base && altUrl ? `<link rel="alternate" hreflang="${L.other}" href="${base}${a
 
 <header class="site-header">
   <div class="wrap header-inner">
-    <a class="brand" href="${r.home}">${escapeHtml(config.name)}</a>
+    <a class="brand" href="${r.home}">${
+      alias
+        ? `<span class="brand-alias">${escapeHtml(alias)}</span><span class="brand-name">${escapeHtml(config.name)}</span>`
+        : escapeHtml(config.name)
+    }</a>
     <nav class="site-nav" aria-label="${escapeHtml(t.mainNav)}">${navHtml}</nav>
     <div class="header-tools">
       <a class="lang-switch" href="${altUrl}" title="${escapeHtml(L.otherTitle)}" lang="${L.other}">${L.otherLabel}</a>
@@ -491,8 +522,8 @@ ${content}
 
 <footer class="site-footer">
   <div class="wrap footer-inner">
-    <p>© ${new Date().getFullYear()} ${escapeHtml(config.name)}</p>
-    <nav class="footer-links" aria-label="${escapeHtml(t.footerNav)}">${footerLinks}<a href="${r.imprint}">${escapeHtml(t.imprint)}</a></nav>
+    <p>© ${new Date().getFullYear()} ${escapeHtml(config.name)}${alias ? ` · ${escapeHtml(alias)}` : ""}</p>
+    <nav class="footer-links" aria-label="${escapeHtml(t.footerNav)}">${footerLinks}<a href="${r.imprint}">${escapeHtml(t.imprint)}</a><a href="${r.privacy}">${escapeHtml(t.privacy)}</a></nav>
   </div>
 </footer>
 
@@ -580,7 +611,11 @@ function homePage({ config, L, home, projects, artworks }) {
   <div class="hero-glow" aria-hidden="true"></div>
   <div class="wrap hero-inner">
     <p class="eyebrow">${escapeHtml(pick(config.role, L.code))}${location ? ` · ${escapeHtml(location)}` : ""}</p>
-    <h1 class="display">${escapeHtml(config.name)}</h1>
+    <h1 class="display">${
+      config.alias
+        ? `${escapeHtml(config.alias)}<span class="hero-name">${escapeHtml(config.name)}</span>`
+        : escapeHtml(config.name)
+    }</h1>
     <p class="hero-lead">${escapeHtml(pick(config.tagline, L.code))}</p>
     <div class="btn-row">
       <a class="btn btn-primary" href="${r.projects}">${escapeHtml(t.heroCta)}</a>
@@ -826,11 +861,23 @@ function imprintPage({ config, L }) {
   <p>${escapeHtml(t.imprintHead)}</p>
   <p>${escapeHtml(im.name || config.name)}<br>
   ${(im.address || []).map(escapeHtml).join("<br>")}</p>
+  ${config.alias ? `<p>${escapeHtml(t.imprintAlias)}: ${escapeHtml(config.alias)}</p>` : ""}
   <h2>${escapeHtml(t.imprintContact)}</h2>
   <p><a href="mailto:${escapeHtml(im.email || config.email)}">${escapeHtml(im.email || config.email)}</a></p>
   <h2>${escapeHtml(t.imprintResponsible)}</h2>
   <p>${escapeHtml(im.name || config.name)}, ${escapeHtml(t.imprintAddress)}</p>
   ${im.note ? `<p class="muted"><em>${escapeHtml(pick(im.note, L.code))}</em></p>` : ""}
+</article>
+`;
+}
+
+function privacyPage({ config, L, privacy }) {
+  const t = L.t;
+  return `
+<article class="wrap section prose narrow" data-anim="rise">
+  <h1>${escapeHtml(privacy.data.headline || t.privacyTitle)}</h1>
+  ${privacy.data.lead ? `<p class="lead">${escapeHtml(privacy.data.lead)}</p>` : ""}
+  ${privacy.html}
 </article>
 `;
 }
@@ -953,10 +1000,11 @@ async function build() {
     const ro = routes(O);
     const t = L.t;
 
-    const [home, about, contact, projects, artworks] = await Promise.all([
+    const [home, about, contact, privacy, projects, artworks] = await Promise.all([
       loadOptional(L, "home.md"),
       loadOptional(L, "about.md"),
       loadOptional(L, "kontakt.md"),
+      loadOptional(L, "datenschutz.md"),
       loadProjects(L),
       loadArtworks(L),
     ]);
@@ -1066,6 +1114,24 @@ async function build() {
       })
     );
     urls.push(r.imprint);
+
+    if (privacy.html) {
+      await writePage(
+        toFile(r.privacy),
+        layout({
+          config, L, v,
+          title: privacy.data.headline || t.privacyTitle,
+          description: privacy.data.lead || t.privacyTitle,
+          canonical: abs(r.privacy),
+          altUrl: ro.privacy,
+          bodyClass: "page-legal",
+          content: privacyPage({ config, L, privacy }),
+        })
+      );
+      urls.push(r.privacy);
+    } else {
+      console.warn("  ! Keine Datenschutzerklärung gefunden, content/datenschutz.md fehlt.");
+    }
 
     const missing = projects.filter((p) => !p.translated).length;
     if (L.dir && missing) {
