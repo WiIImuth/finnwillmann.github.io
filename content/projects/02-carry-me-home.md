@@ -16,7 +16,7 @@ stack:
 repo: ""
 demo: https://drive.google.com/drive/folders/1CQqry5PNj__V8CvP2Zu-ybV9MXhn8mew?usp=drive_link
 demoLabel: Build herunterladen
-cover: ""
+cover: /assets/images/carry-me-home-01.jpg
 order: 2
 draft: false
 ---
@@ -32,6 +32,8 @@ mit genug Übung sicher zu schaffen sein.
 Entstanden ist das Ganze im Modul „Projekt 1: Interdisziplinäres Projekt“
 zusammen mit Moritz Lohmann. Bei mir lag die komplette technische Umsetzung in
 Unity, bei Moritz die 3D-Assets und das Level-Design.
+
+![Ein Level aus Carry Me Home: schwebende Inseln über Wasser, im Hintergrund eine Burg](/assets/images/carry-me-home-02.jpg)
 
 ## Wind, den man selbst malt
 
@@ -51,6 +53,8 @@ Knotenabstand, Zugkraft, Höchstgeschwindigkeit, wie viel Schwung erhalten
 bleibt, wie lange eine Linie lebt. Balancing passiert damit im Editor, nicht im
 Compiler, und mehrere Presets für unterschiedliche Level kosten keine einzige
 Codezeile.
+
+![Weiterer Levelabschnitt mit Hängebrücke und Häuschen](/assets/images/carry-me-home-03.jpg)
 
 ## Wo es hakte
 

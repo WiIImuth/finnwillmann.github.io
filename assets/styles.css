@@ -813,3 +813,34 @@ th { font-weight: 600; }
 
   .hero::before { animation: none; }
 }
+
+/* -------------------------------------------- Vorschaubild auf der Karte */
+
+.card.has-cover { padding-top: 1.1rem; }
+
+.card-cover {
+  display: block;
+  overflow: hidden;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  margin-bottom: 1.1rem;
+}
+
+.card-cover img {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover .card-cover img { transform: scale(1.045); }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-cover img { transition: none; }
+  .card:hover .card-cover img { transform: none; }
+}
+
+/* Schlagworte sitzen immer am unteren Rand, damit Karten mit und ohne
+   Vorschaubild sauber aneinander ausgerichtet bleiben. */
+.card > .tags { margin-top: auto; }

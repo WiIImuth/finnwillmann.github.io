@@ -300,8 +300,13 @@ ${content}
 function projectCard(project) {
   const tags = (project.data.tags || []).map((t) => `<li>${escapeHtml(t)}</li>`).join("");
 
-  return `<article class="card">
+  const thumb = project.data.cover
+    ? `<span class="card-cover"><img src="${project.data.cover}" alt="" loading="lazy" decoding="async"></span>`
+    : "";
+
+  return `<article class="card${project.data.cover ? " has-cover" : ""}">
   <a class="card-link" href="/projekte/${project.slug}/">
+    ${thumb}
     <span class="card-meta">${escapeHtml(project.data.year || "")}</span>
     <h3 class="card-title">${escapeHtml(project.data.title)}</h3>
     <p class="card-summary">${escapeHtml(project.data.summary || "")}</p>
