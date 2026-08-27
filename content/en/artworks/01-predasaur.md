@@ -7,6 +7,7 @@ tags:
   - 3D modelling
   - Concept
   - Texturing
+cover: /assets/images/predasaur-01.jpg
 video: /assets/images/predasaur-turntable.mp4
 poster: /assets/images/predasaur-turntable-poster.jpg
 gallery:

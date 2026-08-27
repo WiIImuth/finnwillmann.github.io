@@ -998,3 +998,192 @@ th { font-weight: 600; }
   .insta-tile, .insta-tile img { transition: none; }
   .insta-tile:hover, .insta-tile:hover img { transform: none; }
 }
+
+/* -------------------------------------------- Kopfbereich aller Seiten */
+
+.hero-page {
+  padding-block: clamp(3.5rem, 11vh, 6rem) clamp(2.5rem, 6vh, 4rem);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.hero-page .hero-lead {
+  font-size: clamp(1.15rem, 2.6vw, 1.6rem);
+  max-width: 44ch;
+  margin-bottom: 0;
+}
+
+.hero-page .tags,
+.hero-page .btn-row { justify-content: center; margin-top: 1.75rem; }
+
+.hero-page .back {
+  margin: 0 0 1.75rem;
+  color: var(--text-muted);
+}
+
+.hero-page .back:hover { transform: translateX(-5px); }
+
+/* Der Einflug gilt auf jeder Seite, nicht nur auf der Startseite */
+.hero .eyebrow,
+.hero .display,
+.hero .display-sm,
+.hero .hero-lead,
+.hero .back,
+.hero .tags,
+.hero .btn-row {
+  animation: hero-in 1s var(--ease) both;
+}
+
+.hero .back        { animation-delay: 0.02s; }
+.hero .eyebrow     { animation-delay: 0.05s; }
+.hero .display,
+.hero .display-sm  { animation-delay: 0.12s; }
+.hero .hero-lead   { animation-delay: 0.22s; }
+.hero .tags        { animation-delay: 0.28s; }
+.hero .btn-row     { animation-delay: 0.34s; }
+
+/* --------------------------------------------- Kacheln auf der Startseite */
+
+.statement-sm {
+  font-size: clamp(1.2rem, 2.6vw, 1.7rem);
+  max-width: 34ch;
+  margin-bottom: 2.5rem;
+}
+
+.tiles {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+}
+
+.tile {
+  position: relative;
+  display: block;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--text);
+  transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease), border-color 0.4s ease;
+}
+
+.tile:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+}
+
+.tile-img { display: block; overflow: hidden; background: var(--bg-soft); }
+
+.tile-img img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 0.9s var(--ease);
+}
+
+.tile:hover .tile-img img { transform: scale(1.06); }
+
+.tile-body { display: block; padding: 1.3rem 1.5rem 1.5rem; }
+
+.tile-meta {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.tile-title {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 620;
+  letter-spacing: -0.022em;
+  transition: color 0.3s ease;
+}
+
+.tile:hover .tile-title { color: var(--accent); }
+
+/* ------------------------------------------------------------ Lightbox */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: saturate(160%) blur(24px);
+  -webkit-backdrop-filter: saturate(160%) blur(24px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s var(--ease), visibility 0.45s;
+}
+
+.lightbox.is-open { opacity: 1; visibility: visible; }
+
+.lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  transform-origin: top left;
+}
+
+.lightbox-close,
+.lightbox-nav {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.3s var(--ease), border-color 0.3s ease, opacity 0.3s ease;
+}
+
+.lightbox-close { top: clamp(0.75rem, 2vw, 1.5rem); right: clamp(0.75rem, 2vw, 1.5rem); }
+
+.lightbox-nav.prev { left: clamp(0.75rem, 2vw, 1.5rem); }
+.lightbox-nav.next { right: clamp(0.75rem, 2vw, 1.5rem); }
+.lightbox-nav { top: 50%; margin-top: -1.375rem; }
+
+.lightbox-close:hover,
+.lightbox-nav:hover {
+  transform: scale(1.08);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+}
+
+.lightbox-close:active,
+.lightbox-nav:hover:active { transform: scale(0.94); }
+
+.lightbox-counter {
+  position: absolute;
+  bottom: clamp(0.9rem, 2.5vw, 1.75rem);
+  left: 50%;
+  translate: -50% 0;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.lightbox[hidden] { display: none; }
+
+body.lightbox-open { overflow: hidden; }
+
+/* Anklickbare Bilder zeigen es auch */
+.shots a, .cover-frame a { cursor: zoom-in; display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox { transition: opacity 0.001ms; }
+  .tile, .tile-img img { transition: none; }
+  .tile:hover, .tile:hover .tile-img img { transform: none; }
+}

@@ -6,6 +6,7 @@ tags:
   - Pencil
   - Perspective
   - Anatomy
+cover: /assets/images/studie-01.jpg
 gallery:
   - /assets/images/studie-01.jpg
   - /assets/images/studie-02.jpg

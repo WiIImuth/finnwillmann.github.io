@@ -64,6 +64,7 @@ const LANGS = {
       artworksEyebrow: "Zeichnung und 3D",
       artworksTitle: "Artworks",
       artworksLead: "Arbeiten aus dem Studium, von der Bleistiftstudie bis zum fertigen 3D-Modell.",
+      artworksAll: "Alle Artworks",
       instagramTitle: "Zuletzt auf Instagram",
       instagramLead: "Was gerade entsteht, landet dort zuerst.",
       instagramCta: "Profil ansehen",
@@ -119,6 +120,7 @@ const LANGS = {
       artworksEyebrow: "Drawing and 3D",
       artworksTitle: "Artworks",
       artworksLead: "Work from my studies, from pencil studies to finished 3D models.",
+      artworksAll: "All artworks",
       instagramTitle: "Latest on Instagram",
       instagramLead: "Whatever is in progress shows up there first.",
       instagramCta: "Open the profile",
@@ -478,19 +480,47 @@ function projectCard(project, L) {
 </article>`;
 }
 
-function pageHeader({ eyebrow, title, lead }) {
-  return `<header class="page-header wrap" data-anim="rise">
-  ${eyebrow ? `<p class="eyebrow">${escapeHtml(eyebrow)}</p>` : ""}
-  <h1 class="display-sm">${escapeHtml(title)}</h1>
-  ${lead ? `<p class="lead">${escapeHtml(lead)}</p>` : ""}
-</header>`;
+function pageHeader({ eyebrow, title, lead, extra = "" }) {
+  return `<section class="hero hero-page">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="wrap hero-inner">
+    ${eyebrow ? `<p class="eyebrow">${escapeHtml(eyebrow)}</p>` : ""}
+    <h1 class="display-sm">${escapeHtml(title)}</h1>
+    ${lead ? `<p class="hero-lead">${escapeHtml(lead)}</p>` : ""}
+    ${extra}
+  </div>
+</section>`;
+}
+
+function ctaSection(L) {
+  const r = routes(L);
+  const t = L.t;
+  return `<section class="cta">
+  <div class="wrap" data-anim="rise">
+    <h2 class="display-sm">${escapeHtml(t.ctaTitle)}</h2>
+    <p class="lead">${escapeHtml(t.ctaLead)}</p>
+    <div class="btn-row"><a class="btn btn-primary" href="${r.contact}">${escapeHtml(t.ctaButton)}</a></div>
+  </div>
+</section>`;
+}
+
+function artworkTile(artwork, href) {
+  const d = artwork.data;
+  const image = d.cover || (d.gallery || [])[0];
+  return `<a class="tile" href="${href}" data-anim="zoom">
+  ${image ? `<span class="tile-img"><img src="${image}" alt="" loading="lazy" decoding="async"></span>` : ""}
+  <span class="tile-body">
+    <span class="tile-meta">${escapeHtml(d.year || "")}${d.role ? ` · ${escapeHtml(d.role)}` : ""}</span>
+    <span class="tile-title">${escapeHtml(d.title)}</span>
+  </span>
+</a>`;
 }
 
 /* ------------------------------------------------------------------ *
  * Seiten
  * ------------------------------------------------------------------ */
 
-function homePage({ config, L, home, projects }) {
+function homePage({ config, L, home, projects, artworks }) {
   const r = routes(L);
   const t = L.t;
 
@@ -534,13 +564,18 @@ ${home.html
     )}</a></p>
 </section>
 
-<section class="cta">
-  <div class="wrap" data-anim="rise">
-    <h2 class="display-sm">${escapeHtml(t.ctaTitle)}</h2>
-    <p class="lead">${escapeHtml(t.ctaLead)}</p>
-    <div class="btn-row"><a class="btn btn-primary" href="${r.contact}">${escapeHtml(t.ctaButton)}</a></div>
+${artworks.length
+  ? `<section class="band">
+  <div class="wrap">
+    <h2 class="section-title" data-anim="rise">${escapeHtml(t.artworksTitle)}</h2>
+    <p class="statement statement-sm" data-anim="rise">${escapeHtml(pick(config.artworksIntro, L.code) || t.artworksLead)}</p>
+    <div class="tiles">${artworks.slice(0, 3).map((a) => artworkTile(a, r.artworks)).join("")}</div>
+    <p class="section-link" data-anim="rise"><a href="${r.artworks}">${escapeHtml(t.artworksAll)}</a></p>
   </div>
-</section>
+</section>`
+  : ""}
+
+${ctaSection(L)}
 `;
 }
 
@@ -554,6 +589,8 @@ ${pageHeader({ eyebrow: t.projectsEyebrow, title: t.projectsTitle, lead: intro |
     ? `<div class="cards">${projects.map((p) => projectCard(p, L)).join("")}</div>`
     : `<p class="muted">${escapeHtml(t.empty)}</p>`}
 </section>
+
+${ctaSection(L)}
 `;
 }
 
@@ -583,31 +620,37 @@ function projectPage({ project, L }) {
     ? `<div class="shots wrap">${shots
         .map(
           (src) =>
-            `<figure data-anim="zoom"><img src="${src}" alt="${escapeHtml(t.shot(d.title))}" loading="lazy" decoding="async"></figure>`
+            `<figure data-anim="zoom"><a href="${src}"><img src="${src}" alt="${escapeHtml(t.shot(d.title))}" loading="lazy" decoding="async"></a></figure>`
         )
         .join("")}</div>`
     : "";
 
   return `
 <article class="project">
-  <div class="wrap">
-    <a class="back" href="${r.projects}">← ${escapeHtml(t.back)}</a>
-    <header class="project-header" data-anim="rise">
+  <section class="hero hero-page">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="wrap hero-inner">
+      <a class="back" href="${r.projects}">← ${escapeHtml(t.back)}</a>
       <h1 class="display-sm">${escapeHtml(d.title)}</h1>
-      <p class="lead">${escapeHtml(d.summary || "")}</p>
+      <p class="hero-lead">${escapeHtml(d.summary || "")}</p>
       ${tags ? `<ul class="tags">${tags}</ul>` : ""}
       ${actions.length ? `<div class="btn-row">${actions.join("")}</div>` : ""}
-    </header>
+    </div>
+  </section>
+
+  <div class="wrap">
     ${meta.length ? `<dl class="project-meta" data-anim="rise">${meta.join("")}</dl>` : ""}
   </div>
 
-  ${d.cover ? `<div class="cover-frame wrap" data-anim="zoom"><img class="cover" src="${d.cover}" alt="${escapeHtml(d.title)}"></div>` : ""}
+  ${d.cover ? `<div class="cover-frame wrap" data-anim="zoom"><a href="${d.cover}"><img class="cover" src="${d.cover}" alt="${escapeHtml(d.title)}"></a></div>` : ""}
   ${gallery}
 
   <div class="wrap">
     <div class="prose" data-anim="rise">${project.html}</div>
   </div>
 </article>
+
+${ctaSection(L)}
 `;
 }
 
@@ -677,6 +720,8 @@ ${pageHeader({ eyebrow: t.artworksEyebrow, title: t.artworksTitle, lead: pick(co
 </section>
 
 ${instagram}
+
+${ctaSection(L)}
 `;
 }
 
@@ -702,6 +747,8 @@ ${pageHeader({ eyebrow: pick(config.role, L.code), title: about.data.headline ||
     : ""}
   ${config.cv ? `<div class="btn-row spaced" data-anim="rise"><a class="btn" href="${config.cv}">${escapeHtml(t.cv)}</a></div>` : ""}
 </section>
+
+${ctaSection(L)}
 `;
 }
 
@@ -866,7 +913,7 @@ async function build() {
         altUrl: ro.home,
         bodyClass: "page-home",
         current: r.home,
-        content: homePage({ config, L, home, projects }),
+        content: homePage({ config, L, home, projects, artworks }),
       })
     );
     urls.push(r.home);

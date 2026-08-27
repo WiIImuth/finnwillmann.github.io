@@ -163,3 +163,171 @@
     }
   }
 })();
+
+/* ------------------------------------------------------------------
+   Lightbox.
+
+   Bilder in Galerien öffnen sich groß. Der Übergang beginnt genau
+   dort, wo das kleine Bild sitzt, und wächst von da auf. Schließen
+   über das Kreuz, einen Klick daneben oder die Escape-Taste, blättern
+   mit den Pfeiltasten.
+
+   Ohne JavaScript bleiben die Bilder normale Links auf die Bilddatei.
+------------------------------------------------------------------ */
+
+(() => {
+  const all = [...document.querySelectorAll(".shots a, .cover-frame a")];
+  if (!all.length) return;
+
+  // Jede Galerie bleibt für sich. Weiterblättern führt nicht aus einer
+  // Arbeit in die nächste.
+  const groups = new Map();
+  for (const a of all) {
+    const key = a.closest(".shots, .cover-frame");
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(a);
+  }
+
+  let triggers = all;
+
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+
+  const words =
+    document.documentElement.lang === "en"
+      ? { close: "Close", prev: "Previous image", next: "Next image" }
+      : { close: "Schließen", prev: "Vorheriges Bild", next: "Nächstes Bild" };
+
+  const box = document.createElement("div");
+  box.className = "lightbox";
+  box.setAttribute("role", "dialog");
+  box.setAttribute("aria-modal", "true");
+  box.hidden = true;
+  box.innerHTML = `
+    <button class="lightbox-close" type="button" aria-label="${words.close}">✕</button>
+    <button class="lightbox-nav prev" type="button" aria-label="${words.prev}">‹</button>
+    <button class="lightbox-nav next" type="button" aria-label="${words.next}">›</button>
+    <img alt="">
+    <p class="lightbox-counter"></p>`;
+  document.body.appendChild(box);
+
+  const big = box.querySelector("img");
+  const counter = box.querySelector(".lightbox-counter");
+  const prevBtn = box.querySelector(".prev");
+  const nextBtn = box.querySelector(".next");
+
+  let index = 0;
+  let lastFocus = null;
+
+  const sourceOf = (a) => a.getAttribute("href");
+  const thumbOf = (i) => triggers[i]?.querySelector("img");
+
+  const show = (i, animateFrom) => {
+    index = (i + triggers.length) % triggers.length;
+    big.src = sourceOf(triggers[index]);
+    big.alt = thumbOf(index)?.alt || "";
+    counter.textContent = `${index + 1} / ${triggers.length}`;
+
+    const multiple = triggers.length > 1;
+    prevBtn.hidden = !multiple;
+    nextBtn.hidden = !multiple;
+
+    if (reduced || !animateFrom) return;
+
+    // Das große Bild startet in der Größe und Position des kleinen
+    // und wächst von dort auf seinen Platz.
+    const run = () => {
+      const to = big.getBoundingClientRect();
+      if (!to.width) return;
+      const from = animateFrom;
+      const scale = Math.max(from.width / to.width, 0.05);
+      big.animate(
+        [
+          {
+            transform: `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${scale}, ${
+              from.height / to.height
+            })`,
+            opacity: 0.4,
+          },
+          { transform: "none", opacity: 1 },
+        ],
+        { duration: 480, easing: EASE }
+      );
+    };
+
+    if (big.complete) run();
+    else big.addEventListener("load", run, { once: true });
+  };
+
+  const open = (i, trigger) => {
+    lastFocus = document.activeElement;
+    box.hidden = false;
+    document.body.classList.add("lightbox-open");
+    requestAnimationFrame(() => box.classList.add("is-open"));
+    show(i, thumbOf(i)?.getBoundingClientRect());
+    box.querySelector(".lightbox-close").focus({ preventScroll: true });
+  };
+
+  const close = () => {
+    box.classList.remove("is-open");
+    document.body.classList.remove("lightbox-open");
+    setTimeout(() => {
+      box.hidden = true;
+      big.removeAttribute("src");
+    }, reduced ? 0 : 450);
+    lastFocus?.focus?.({ preventScroll: true });
+  };
+
+  for (const [container, items] of groups) {
+    items.forEach((a, i) => {
+      a.addEventListener("click", (e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        e.preventDefault();
+        triggers = items;
+        open(i, a);
+      });
+    });
+  }
+
+  box.querySelector(".lightbox-close").addEventListener("click", close);
+
+  prevBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    show(index - 1);
+  });
+
+  nextBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    show(index + 1);
+  });
+
+  // Klick neben das Bild schließt
+  box.addEventListener("click", (e) => {
+    if (e.target === box) close();
+  });
+
+  addEventListener("keydown", (e) => {
+    if (box.hidden) return;
+    if (e.key === "Escape") close();
+    else if (e.key === "ArrowLeft") show(index - 1);
+    else if (e.key === "ArrowRight") show(index + 1);
+    else if (e.key === "Tab") {
+      // Fokus bleibt im Dialog
+      const items = [...box.querySelectorAll("button:not([hidden])")];
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  // Wischen auf dem Telefon
+  let startX = null;
+  box.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+  box.addEventListener("touchend", (e) => {
+    if (startX === null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 60) show(index + (dx < 0 ? 1 : -1));
+    startX = null;
+  }, { passive: true });
+})();
