@@ -29,5 +29,5 @@ abgespielt zu werden.
 
 ## Was ich suche
 
-Hier gehört ein Satz hin, wonach du gerade suchst: Praktikum,
-Werkstudentenstelle, Einstieg nach dem Studium, ab wann und wo.
+Im Rahmen meines Studiums suche ich nach Praxiserfahrung mit Praktika.
+Auf Langfristiger Sicht versuche ich einen festen Fuss in der Spieleentwicklung zu fassen.
