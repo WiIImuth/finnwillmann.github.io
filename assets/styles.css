@@ -844,3 +844,34 @@ th { font-weight: 600; }
 /* Schlagworte sitzen immer am unteren Rand, damit Karten mit und ohne
    Vorschaubild sauber aneinander ausgerichtet bleiben. */
 .card > .tags { margin-top: auto; }
+
+/* --------------------------------------------------- Bildergalerie */
+
+.shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: 1rem;
+  margin: 0 0 3rem;
+}
+
+.shots figure {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-soft);
+}
+
+.shots img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shots figure:hover img { transform: scale(1.04); }
+
+@media (prefers-reduced-motion: reduce) {
+  .shots img { transition: none; }
+  .shots figure:hover img { transform: none; }
+}

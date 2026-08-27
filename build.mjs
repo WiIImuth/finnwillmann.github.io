@@ -300,11 +300,12 @@ ${content}
 function projectCard(project) {
   const tags = (project.data.tags || []).map((t) => `<li>${escapeHtml(t)}</li>`).join("");
 
-  const thumb = project.data.cover
-    ? `<span class="card-cover"><img src="${project.data.cover}" alt="" loading="lazy" decoding="async"></span>`
+  const image = project.data.thumb || project.data.cover;
+  const thumb = image
+    ? `<span class="card-cover"><img src="${image}" alt="" loading="lazy" decoding="async"></span>`
     : "";
 
-  return `<article class="card${project.data.cover ? " has-cover" : ""}">
+  return `<article class="card${image ? " has-cover" : ""}">
   <a class="card-link" href="/projekte/${project.slug}/">
     ${thumb}
     <span class="card-meta">${escapeHtml(project.data.year || "")}</span>
@@ -393,7 +394,18 @@ function projectPage({ project }) {
   if (project.data.stack?.length)
     meta.push(`<div><dt>Stack</dt><dd>${escapeHtml(project.data.stack.join(", "))}</dd></div>`);
 
+  const shots = project.data.gallery || [];
+  const gallery = shots.length
+    ? `<div class="shots">${shots
+        .map((src) => `<figure><img src="${src}" alt="Bildschirmfoto aus ${escapeHtml(project.data.title)}" loading="lazy" decoding="async"></figure>`)
+        .join("")}</div>`
+    : "";
+
   const actions = [];
+  if (project.data.video)
+    actions.push(
+      `<a class="btn" href="${project.data.video}" target="_blank" rel="noopener noreferrer">${escapeHtml(project.data.videoLabel || "Video ansehen")}</a>`
+    );
   if (project.data.repo)
     actions.push(`<a class="btn" href="${project.data.repo}" target="_blank" rel="noopener noreferrer">Quellcode</a>`);
   if (project.data.demo)
@@ -412,6 +424,7 @@ function projectPage({ project }) {
   </header>
   ${meta.length ? `<dl class="project-meta">${meta.join("")}</dl>` : ""}
   ${project.data.cover ? `<img class="cover" src="${project.data.cover}" alt="${escapeHtml(project.data.title)}">` : ""}
+  ${gallery}
   <div class="prose">${project.html}</div>
 </article>
 `;
