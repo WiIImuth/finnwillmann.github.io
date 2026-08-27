@@ -80,13 +80,13 @@
   "impressum": {
     "name": "Finn Willmann",
     "address": [
-      "Straße Hausnummer",
-      "PLZ Ort"
+      "Straße Hausnummer (ist mit zu privat)",
+      "PLZ Ort (ist mir auch zu privat)",
     ],
     "email": "mail@finnwillmann.com",
     "note": {
-      "de": "Pflichtangaben nach § 5 DDG. Bitte vor dem Veröffentlichen ausfüllen.",
-      "en": "Mandatory information under § 5 DDG. Please complete before going live."
+      "de": "Pflichtangaben nach § 5 DDG. Bitte Sakultendo, melde mich nicht bei die Landesmedienanstalten.",
+      "en": "Mandatory information under § 5 DDG."
     }
   },
   "artworksIntro": {
