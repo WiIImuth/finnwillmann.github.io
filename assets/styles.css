@@ -910,3 +910,91 @@ th { font-weight: 600; }
   .js [data-anim] { opacity: 1 !important; transform: none !important; }
   .hero-glow { animation: none; }
 }
+
+/* ------------------------------------------------------------ Artworks */
+
+.artworks { display: flex; flex-direction: column; gap: clamp(4rem, 9vw, 7rem); }
+
+.artwork-head { margin-bottom: 2.25rem; }
+
+.artwork-title {
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  letter-spacing: -0.028em;
+  font-weight: 660;
+  line-height: 1.1;
+  margin: 0 0 0.5rem;
+}
+
+.artwork-meta {
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  margin: 0 0 1.5rem;
+}
+
+.artwork-head .prose { margin-bottom: 1.5rem; }
+
+.artwork-video {
+  margin-bottom: clamp(1rem, 2vw, 1.5rem);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  background: #000;
+  box-shadow: var(--shadow-lg);
+}
+
+.artwork-video video { width: 100%; display: block; }
+
+/* Artworks werden nicht beschnitten. Ein Spaltensatz nimmt Hoch- und
+   Querformate gemischt auf, ohne dass etwas abgeschnitten wird. */
+.artwork .shots {
+  display: block;
+  columns: 2;
+  column-gap: clamp(1rem, 2vw, 1.5rem);
+  margin-bottom: 0;
+}
+
+@media (min-width: 62rem) {
+  .artwork .shots { columns: 3; }
+}
+
+.artwork .shots figure {
+  break-inside: avoid;
+  margin-bottom: clamp(1rem, 2vw, 1.5rem);
+}
+
+.artwork .shots img { aspect-ratio: auto; width: 100%; }
+
+.artwork .shots a { display: block; }
+
+/* ----------------------------------------------------------- Instagram */
+
+.insta { margin-top: clamp(4rem, 9vw, 7rem); }
+
+.insta .lead { margin-bottom: 2.5rem; }
+
+.insta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: clamp(0.6rem, 1.5vw, 1rem);
+}
+
+.insta-tile {
+  display: block;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  aspect-ratio: 1;
+  transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+}
+
+.insta-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s var(--ease); }
+
+.insta-tile:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.insta-tile:hover img { transform: scale(1.06); }
+
+@media (prefers-reduced-motion: reduce) {
+  .insta-tile, .insta-tile img { transition: none; }
+  .insta-tile:hover, .insta-tile:hover img { transform: none; }
+}

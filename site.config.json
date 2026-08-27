@@ -2,7 +2,6 @@
   "name": "Finn Willmann",
   "email": "mail@finnwillmann.com",
   "cv": "",
-
   "role": {
     "de": "Spieleentwicklung",
     "en": "Game Development"
@@ -15,7 +14,6 @@
     "de": "Bewegung ist bei mir kein Mittel zum Zweck, sondern das eigentliche Spiel.",
     "en": "For me, movement is not a means to an end. It is the game."
   },
-
   "site": {
     "url": "https://finnwillmann.com",
     "noindex": true,
@@ -24,40 +22,79 @@
       "en": "Portfolio of Finn Willmann. Game development in Unity: projects, background, contact."
     }
   },
-
   "projectsIntro": {
     "de": "Drei Spiele aus Studium und Game Jam. Was daraus geworden ist, steht hier neben den Umwegen dahin.",
     "en": "Three games from university and a game jam. What came out of them, next to the detours along the way."
   },
-
   "links": [
-    { "label": "Instagram", "href": "https://www.instagram.com/willlmuth/" },
-    { "label": "itch.io", "href": "https://willmuth.itch.io" },
-    { "label": "E-Mail", "href": "mailto:mail@finnwillmann.com" }
-  ],
-
-  "skills": [
     {
-      "group": { "de": "Engines und Werkzeuge", "en": "Engines and tools" },
-      "items": ["Unity", "Blender", "ProBuilder", "Git"]
+      "label": "Instagram",
+      "href": "https://www.instagram.com/willlmuth/"
     },
     {
-      "group": { "de": "Programmierung", "en": "Programming" },
-      "items": ["C#", "Shader", "Editor-Tools"]
+      "label": "itch.io",
+      "href": "https://willmuth.itch.io"
     },
     {
-      "group": { "de": "Gestaltung", "en": "Design" },
-      "items": ["Level-Design", "3D-Modelling", "Sound-Design", "UI-Design"]
+      "label": "E-Mail",
+      "href": "mailto:mail@finnwillmann.com"
     }
   ],
-
+  "skills": [
+    {
+      "group": {
+        "de": "Engines und Werkzeuge",
+        "en": "Engines and tools"
+      },
+      "items": [
+        "Unity",
+        "Blender",
+        "ProBuilder",
+        "Git"
+      ]
+    },
+    {
+      "group": {
+        "de": "Programmierung",
+        "en": "Programming"
+      },
+      "items": [
+        "C#",
+        "Shader",
+        "Editor-Tools"
+      ]
+    },
+    {
+      "group": {
+        "de": "Gestaltung",
+        "en": "Design"
+      },
+      "items": [
+        "Level-Design",
+        "3D-Modelling",
+        "Sound-Design",
+        "UI-Design"
+      ]
+    }
+  ],
   "impressum": {
     "name": "Finn Willmann",
-    "address": ["Straße Hausnummer", "PLZ Ort"],
+    "address": [
+      "Straße Hausnummer",
+      "PLZ Ort"
+    ],
     "email": "mail@finnwillmann.com",
     "note": {
       "de": "Pflichtangaben nach § 5 DDG. Bitte vor dem Veröffentlichen ausfüllen.",
       "en": "Mandatory information under § 5 DDG. Please complete before going live."
     }
+  },
+  "artworksIntro": {
+    "de": "Arbeiten aus dem Studium: Bleistiftstudien, ein 3D-Fahrzeug, und was sonst so entsteht.",
+    "en": "Work from my studies: pencil studies, a 3D vehicle, and whatever else comes up."
+  },
+  "instagram": {
+    "profile": "https://www.instagram.com/willlmuth/",
+    "posts": []
   }
 }

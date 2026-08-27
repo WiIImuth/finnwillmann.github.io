@@ -39,10 +39,10 @@ const LANGS = {
     other: "en",
     otherLabel: "EN",
     otherTitle: "Switch to English",
-    seg: { projects: "projekte", about: "ueber-mich", contact: "kontakt", imprint: "impressum" },
+    seg: { projects: "projekte", artworks: "artworks", about: "ueber-mich", contact: "kontakt", imprint: "impressum" },
     t: {
       skip: "Direkt zum Inhalt",
-      nav: { projects: "Projekte", about: "Über mich", contact: "Kontakt" },
+      nav: { projects: "Projekte", artworks: "Artworks", about: "Über mich", contact: "Kontakt" },
       heroCta: "Zu den Projekten",
       selected: "Eine Auswahl",
       allProjects: (n) => `Alle ${n} Projekte`,
@@ -61,6 +61,12 @@ const LANGS = {
       tools: "Werkzeuge",
       elsewhere: "Woanders zu finden",
       imprint: "Impressum",
+      artworksEyebrow: "Zeichnung und 3D",
+      artworksTitle: "Artworks",
+      artworksLead: "Arbeiten aus dem Studium, von der Bleistiftstudie bis zum fertigen 3D-Modell.",
+      instagramTitle: "Zuletzt auf Instagram",
+      instagramLead: "Was gerade entsteht, landet dort zuerst.",
+      instagramCta: "Profil ansehen",
       projectsEyebrow: "Spiele",
       projectsTitle: "Projekte",
       projectsLead: "Woran ich bisher gearbeitet habe.",
@@ -88,10 +94,10 @@ const LANGS = {
     other: "de",
     otherLabel: "DE",
     otherTitle: "Auf Deutsch ansehen",
-    seg: { projects: "projects", about: "about", contact: "contact", imprint: "imprint" },
+    seg: { projects: "projects", artworks: "artworks", about: "about", contact: "contact", imprint: "imprint" },
     t: {
       skip: "Skip to content",
-      nav: { projects: "Work", about: "About", contact: "Contact" },
+      nav: { projects: "Work", artworks: "Artworks", about: "About", contact: "Contact" },
       heroCta: "See the work",
       selected: "Selected work",
       allProjects: (n) => `All ${n} projects`,
@@ -110,6 +116,12 @@ const LANGS = {
       tools: "Tools",
       elsewhere: "Elsewhere",
       imprint: "Legal notice",
+      artworksEyebrow: "Drawing and 3D",
+      artworksTitle: "Artworks",
+      artworksLead: "Work from my studies, from pencil studies to finished 3D models.",
+      instagramTitle: "Latest on Instagram",
+      instagramLead: "Whatever is in progress shows up there first.",
+      instagramCta: "Open the profile",
       projectsEyebrow: "Games",
       projectsTitle: "Work",
       projectsLead: "What I have built so far.",
@@ -136,6 +148,7 @@ const routes = (L) => ({
   home: `${L.prefix}/`,
   projects: `${L.prefix}/${L.seg.projects}/`,
   project: (slug) => `${L.prefix}/${L.seg.projects}/${slug}/`,
+  artworks: `${L.prefix}/${L.seg.artworks}/`,
   about: `${L.prefix}/${L.seg.about}/`,
   contact: `${L.prefix}/${L.seg.contact}/`,
   imprint: `${L.prefix}/${L.seg.imprint}/`,
@@ -370,6 +383,7 @@ function layout({ config, L, title, description, bodyClass = "", content, canoni
 
   const navItems = [
     { label: t.nav.projects, href: r.projects },
+    { label: t.nav.artworks, href: r.artworks },
     { label: t.nav.about, href: r.about },
     { label: t.nav.contact, href: r.contact },
   ];
@@ -597,6 +611,75 @@ function projectPage({ project, L }) {
 `;
 }
 
+function artworksPage({ config, L, artworks }) {
+  const t = L.t;
+
+  const entries = artworks
+    .map((a) => {
+      const d = a.data;
+      const tags = (d.tags || []).map((x) => `<li>${escapeHtml(x)}</li>`).join("");
+
+      const video = d.video && !/^https?:/.test(d.video)
+        ? `<div class="artwork-video" data-anim="zoom">
+             <video src="${d.video}"${d.poster ? ` poster="${d.poster}"` : ""} controls muted loop playsinline preload="none"></video>
+           </div>`
+        : "";
+
+      const shots = (d.gallery || [])
+        .map(
+          (src) =>
+            `<figure data-anim="zoom"><a href="${src}" target="_blank" rel="noopener noreferrer"><img src="${src}" alt="${escapeHtml(d.title)}" loading="lazy" decoding="async"></a></figure>`
+        )
+        .join("");
+
+      return `<article class="artwork">
+  <header class="artwork-head" data-anim="rise">
+    <h2 class="artwork-title">${escapeHtml(d.title)}</h2>
+    <p class="artwork-meta">${escapeHtml(d.year || "")}${d.role ? ` · ${escapeHtml(d.role)}` : ""}</p>
+    ${a.html ? `<div class="prose narrow">${a.html}</div>` : ""}
+    ${tags ? `<ul class="tags">${tags}</ul>` : ""}
+  </header>
+  ${video}
+  ${shots ? `<div class="shots">${shots}</div>` : ""}
+</article>`;
+    })
+    .join("");
+
+  const ig = config.instagram || {};
+  const posts = (ig.posts || [])
+    .slice(0, 6)
+    .map(
+      (post) =>
+        `<a class="insta-tile" href="${post.href || ig.profile}" target="_blank" rel="noopener noreferrer" data-anim="zoom">
+           <img src="${post.image}" alt="${escapeHtml(post.alt || "Instagram")}" loading="lazy" decoding="async">
+         </a>`
+    )
+    .join("");
+
+  const instagram = ig.profile
+    ? `<section class="band insta">
+  <div class="wrap">
+    <h2 class="display-sm" data-anim="rise">${escapeHtml(t.instagramTitle)}</h2>
+    <p class="lead" data-anim="rise">${escapeHtml(t.instagramLead)}</p>
+    ${posts ? `<div class="insta-grid">${posts}</div>` : ""}
+    <div class="btn-row spaced" data-anim="rise">
+      <a class="btn" href="${ig.profile}" target="_blank" rel="noopener noreferrer">${escapeHtml(t.instagramCta)}</a>
+    </div>
+  </div>
+</section>`
+    : "";
+
+  return `
+${pageHeader({ eyebrow: t.artworksEyebrow, title: t.artworksTitle, lead: pick(config.artworksIntro, L.code) || t.artworksLead })}
+
+<section class="wrap section-tight artworks">
+  ${entries || `<p class="muted">${escapeHtml(t.empty)}</p>`}
+</section>
+
+${instagram}
+`;
+}
+
 function aboutPage({ config, L, about }) {
   const t = L.t;
   const skills = (config.skills || [])
@@ -683,15 +766,15 @@ async function loadOptional(L, name) {
   return { data: {}, html: "", raw: "" };
 }
 
-async function loadProjects(L) {
-  const german = path.join(ROOT, "content", "projects");
+async function loadCollection(L, name) {
+  const german = path.join(ROOT, "content", name);
   if (!existsSync(german)) return [];
 
   const files = (await readdir(german)).filter((f) => f.endsWith(".md"));
   const projects = [];
 
   for (const file of files) {
-    const localised = contentPath(L, "projects", file);
+    const localised = contentPath(L, name, file);
     const translated = existsSync(localised);
     const doc = await loadMarkdownFile(translated ? localised : path.join(german, file));
 
@@ -718,6 +801,9 @@ async function loadProjects(L) {
 
   return projects;
 }
+
+const loadProjects = (L) => loadCollection(L, "projects");
+const loadArtworks = (L) => loadCollection(L, "artworks");
 
 /* ------------------------------------------------------------------ *
  * Build
@@ -762,11 +848,12 @@ async function build() {
     const ro = routes(O);
     const t = L.t;
 
-    const [home, about, contact, projects] = await Promise.all([
+    const [home, about, contact, projects, artworks] = await Promise.all([
       loadOptional(L, "home.md"),
       loadOptional(L, "about.md"),
       loadOptional(L, "kontakt.md"),
       loadProjects(L),
+      loadArtworks(L),
     ]);
 
     await writePage(
@@ -815,6 +902,21 @@ async function build() {
       );
       urls.push(r.project(project.slug));
     }
+
+    await writePage(
+      toFile(r.artworks),
+      layout({
+        config, L,
+        title: t.artworksTitle,
+        description: pick(config.artworksIntro, L.code) || t.artworksLead,
+        canonical: abs(r.artworks),
+        altUrl: ro.artworks,
+        bodyClass: "page-artworks",
+        current: r.artworks,
+        content: artworksPage({ config, L, artworks }),
+      })
+    );
+    urls.push(r.artworks);
 
     await writePage(
       toFile(r.about),
