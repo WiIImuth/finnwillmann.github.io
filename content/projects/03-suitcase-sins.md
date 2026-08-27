@@ -13,8 +13,8 @@ stack:
   - Unity
   - Blender
 repo: ""
-demo: https://vanitas2005.itch.io/suitcase-sins
-demoLabel: Auf itch.io spielen
+demo: https://willmuth.itch.io
+demoLabel: Auf itch.io ansehen
 video: https://www.youtube.com/watch?v=sdnzsveoyk0
 videoLabel: Video ansehen
 thumb: /assets/images/suitcase-sins-titel.jpg
