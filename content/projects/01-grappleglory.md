@@ -46,16 +46,13 @@ sich Kontrolle in der Luft fair an und wann willkürlich? Aus diesen Referenzen
 ist eine Liste von Regeln entstanden, an der ich mein eigenes Bewegungssystem
 ausgerichtet habe.
 
-Als technische Basis dient ein fertiges Controller-Paket. Alles, was das
+Als technische Basis dient ein schmales Controller-Paket. Alles, was das
 Spielgefühl ausmacht, habe ich darauf neu gebaut: das Momentum-System, den
 Greifhaken in vier kombinierbaren Varianten, die vorwärts-dominante
 Luftsteuerung und das Zusammenspiel aus Wallrun, Landung und Absprung. An
 diesen Stellen ist vom Original wenig übrig geblieben. Einige Funktionen
 existierten ohnehin nur dem Namen nach: ein Tempo-Regler, der nichts regelte,
 ein Steuerungsfeld, das ab einem gewissen Wert wirkungslos blieb.
-
-Meine rund 25 eigenen Scripts liegen strikt getrennt vom Paket, damit ein
-Update meine Arbeit nicht überschreiben kann.
 
 ## Woran ich das Spielgefühl gemessen habe
 
