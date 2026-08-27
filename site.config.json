@@ -16,7 +16,7 @@
   },
   "site": {
     "url": "https://finnwillmann.com",
-    "noindex": true,
+    "noindex": false,
     "description": {
       "de": "Portfolio von Finn Willmann, als Willmuth unterwegs. Spieleentwicklung in Unity: Projekte, Artworks, Kontakt.",
       "en": "Portfolio of Finn Willmann, working as Willmuth. Game development in Unity: projects, artworks, contact."
