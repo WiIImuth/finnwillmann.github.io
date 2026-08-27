@@ -471,6 +471,10 @@ function layout({ config, L, title, description, bodyClass = "", content, canoni
     .join("");
 
   return `<!doctype html>
+<!--
+  Erzeugt von build.mjs. Aenderungen an dieser Datei gehen beim naechsten
+  Build verloren. Texte stehen in content/, Stammdaten in site.config.json.
+-->
 <html lang="${L.code}">
 <head>
 <meta charset="utf-8">
