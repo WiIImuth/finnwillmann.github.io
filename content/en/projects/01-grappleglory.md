@@ -18,7 +18,13 @@ stack:
 repo: ""
 demo: https://drive.google.com/drive/folders/1CQqry5PNj__V8CvP2Zu-ybV9MXhn8mew?usp=drive_link
 demoLabel: Download the build
-cover: ""
+cover: /assets/images/grappleglory-01.jpg
+gallery:
+  - /assets/images/grappleglory-02.jpg
+  - /assets/images/grappleglory-03.jpg
+  - /assets/images/grappleglory-04.jpg
+  - /assets/images/grappleglory-05.jpg
+  - /assets/images/grappleglory-06.jpg
 order: 1
 draft: false
 ---
@@ -73,6 +79,21 @@ across at full speed. Since then the controls are forward dominant.
 triggers a cooldown. Before, every failed attempt meant three seconds of
 standing around. The restart button sits large and centred in the pause menu,
 because "again, but better" is by far the most common decision in a speedrun.
+
+## Ink, lacquer and gold
+
+The interface follows one style throughout, matching the dojo: ink black,
+vermilion red, gold and a warm paper tone. Panels have bevelled corners like
+lacquer boxes, with gold frames and corner fittings.
+
+Those graphics are not drawn in a paint program but in code. For one person
+that was the most efficient form of consistency: a change to the corner radius
+is one number, not a re-export of twelve files.
+
+Even the pause menu from the bought package now looks like my own. A styler
+gives it the project look at startup and adds the buttons the package does not
+have. That happens at runtime on purpose, because the prefab belongs to the
+package and every update would have overwritten the changes.
 
 ## Courses from a table
 

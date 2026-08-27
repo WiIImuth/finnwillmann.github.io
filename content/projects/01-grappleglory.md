@@ -18,7 +18,13 @@ stack:
 repo: ""
 demo: https://drive.google.com/drive/folders/1CQqry5PNj__V8CvP2Zu-ybV9MXhn8mew?usp=drive_link
 demoLabel: Build herunterladen
-cover: ""
+cover: /assets/images/grappleglory-01.jpg
+gallery:
+  - /assets/images/grappleglory-02.jpg
+  - /assets/images/grappleglory-03.jpg
+  - /assets/images/grappleglory-04.jpg
+  - /assets/images/grappleglory-05.jpg
+  - /assets/images/grappleglory-06.jpg
 order: 1
 draft: false
 ---
@@ -46,13 +52,16 @@ sich Kontrolle in der Luft fair an und wann willkürlich? Aus diesen Referenzen
 ist eine Liste von Regeln entstanden, an der ich mein eigenes Bewegungssystem
 ausgerichtet habe.
 
-Als technische Basis dient ein schmales Controller-Paket. Alles, was das
+Als technische Basis dient ein fertiges Controller-Paket. Alles, was das
 Spielgefühl ausmacht, habe ich darauf neu gebaut: das Momentum-System, den
 Greifhaken in vier kombinierbaren Varianten, die vorwärts-dominante
 Luftsteuerung und das Zusammenspiel aus Wallrun, Landung und Absprung. An
 diesen Stellen ist vom Original wenig übrig geblieben. Einige Funktionen
 existierten ohnehin nur dem Namen nach: ein Tempo-Regler, der nichts regelte,
 ein Steuerungsfeld, das ab einem gewissen Wert wirkungslos blieb.
+
+Meine rund 25 eigenen Scripts liegen strikt getrennt vom Paket, damit ein
+Update meine Arbeit nicht überschreiben kann.
 
 ## Woran ich das Spielgefühl gemessen habe
 
@@ -76,6 +85,21 @@ Greifhaken-Schuss löst keinen Cooldown mehr aus. Vorher stand man nach jedem
 Fehlversuch drei Sekunden herum. Der Neustart-Knopf sitzt groß in der Mitte des
 Pause-Menüs, weil „nochmal, aber besser“ in einem Speedrun die häufigste
 Entscheidung überhaupt ist.
+
+## Tusche, Lack und Gold
+
+Das Interface folgt durchgehend einem Stil, der zum Dojo passt: Tusche-Schwarz,
+Zinnober-Rot, Gold und ein warmer Papierton. Die Panels haben abgeschrägte
+Ecken wie Lackkästchen, dazu Goldrahmen und Eck-Beschläge.
+
+Gezeichnet werden diese Grafiken nicht in einem Bildprogramm, sondern im Code.
+Für eine Einzelperson war das die effizienteste Form von Konsistenz: Eine
+Änderung am Eckenradius ist eine Zahl, kein Neuexport von zwölf Dateien.
+
+Auch das Pause-Menü aus dem gekauften Paket sieht inzwischen aus wie mein
+eigenes. Ein Styler zieht ihm beim Start die Projekt-Optik an und ergänzt die
+Knöpfe, die das Paket nicht hat. Das passiert bewusst zur Laufzeit, denn das
+Prefab gehört zum Paket und jedes Update hätte den Umbau überschrieben.
 
 ## Parcours aus einer Tabelle
 
