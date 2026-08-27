@@ -14,15 +14,15 @@
   "nav": [
     {
       "label": "Projekte",
-      "href": "/#projekte"
+      "href": "/projekte/"
     },
     {
       "label": "Über mich",
-      "href": "/#ueber-mich"
+      "href": "/ueber-mich/"
     },
     {
       "label": "Kontakt",
-      "href": "/#kontakt"
+      "href": "/kontakt/"
     }
   ],
   "links": [
@@ -76,5 +76,6 @@
     ],
     "email": "deine@mail.de",
     "note": "Pflichtangaben nach § 5 DDG. Bitte vor dem Veröffentlichen ausfüllen."
-  }
+  },
+  "projectsIntro": "Eine Auswahl dessen, woran ich gearbeitet habe — mit dem Weg dorthin, nicht nur dem Ergebnis."
 }

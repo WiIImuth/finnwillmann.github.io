@@ -456,3 +456,86 @@ th { font-weight: 600; }
   html { scroll-behavior: auto; }
   * { transition: none !important; }
 }
+
+/* ------------------------------------------------ Mehrseitige Struktur */
+
+.site-nav a[aria-current="page"] {
+  color: var(--text);
+  font-weight: 560;
+}
+
+.page-header {
+  padding-block: clamp(2.75rem, 7vw, 4.5rem) 0;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 2.25rem;
+}
+
+.page-header h1 {
+  font-size: clamp(2rem, 5.5vw, 3.1rem);
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+  margin: 0 0 0.9rem;
+  font-weight: 660;
+}
+
+.page-header .lead { margin-bottom: 0; }
+
+.section-tight { padding-block: clamp(2.5rem, 6vw, 3.5rem); }
+
+.intro { padding-bottom: 0; }
+
+.section-link {
+  margin: 2rem 0 0;
+  font-size: 0.96rem;
+}
+
+.section-link a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 520;
+}
+
+.section-link a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.section-title.spaced {
+  margin-top: 3.5rem;
+}
+
+.btn-row.spaced { margin-top: 2rem; }
+
+.cta {
+  border-top: 1px solid var(--border);
+}
+
+.cta h2 {
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.75rem;
+}
+
+.link-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  max-width: 26rem;
+}
+
+.link-list li {
+  border-bottom: 1px solid var(--border);
+}
+
+.link-list a {
+  display: block;
+  padding: 0.85rem 0;
+  text-decoration: none;
+  color: var(--text);
+  transition: color 0.15s, padding-left 0.15s;
+}
+
+.link-list a:hover {
+  color: var(--accent);
+  padding-left: 0.35rem;
+}
