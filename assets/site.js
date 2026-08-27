@@ -1,4 +1,47 @@
 /* ------------------------------------------------------------------
+   Sprung auf einen Anker.
+
+   Die Seite scrollt weich, und ein weicher Sprung beim Laden wird vom
+   Browser gern abgebrochen. Deshalb springen wir hier selbst, hart und
+   ohne Animation, und wiederholen es, sobald die Bilder geladen sind.
+   Sobald der Besucher selbst scrollt, lassen wir ihn in Ruhe.
+------------------------------------------------------------------ */
+
+(() => {
+  if (location.hash.length < 2) return;
+
+  let target;
+  try {
+    target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  } catch (e) {
+    return;
+  }
+  if (!target) return;
+
+  let userMoved = false;
+  const markMoved = () => { userMoved = true; };
+  for (const event of ["wheel", "touchstart", "keydown", "pointerdown"]) {
+    addEventListener(event, markMoved, { passive: true, once: true });
+  }
+
+  const jump = () => {
+    const root = document.documentElement;
+    const before = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+    target.scrollIntoView({ block: "start" });
+    root.style.scrollBehavior = before;
+  };
+
+  const jumpIfIdle = () => { if (!userMoved) jump(); };
+
+  jump();
+  requestAnimationFrame(jumpIfIdle);
+  addEventListener("load", jumpIfIdle, { once: true });
+  setTimeout(jumpIfIdle, 250);
+  setTimeout(jumpIfIdle, 900);
+})();
+
+/* ------------------------------------------------------------------
    Bewegung, Hell-Dunkel-Schalter und Kleinkram.
 
    Alles hier ist Zusatz. Ohne JavaScript bleibt die Seite vollständig
