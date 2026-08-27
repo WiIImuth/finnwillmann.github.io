@@ -1,14 +1,14 @@
 {
   "name": "Finn Willmann",
-  "role": "Software-Entwickler",
-  "tagline": "Ich baue Web-Anwendungen, die sich schnell anfühlen und lange halten.",
+  "role": "Spieleentwicklung",
+  "tagline": "Ich baue Spiele, in denen sich Bewegung gut anfühlt — und schreibe auf, warum sie es tut.",
   "location": "Deutschland",
   "email": "deine@mail.de",
   "lang": "de",
   "site": {
     "url": "https://finnwillmann.com",
     "titleSuffix": "Portfolio",
-    "description": "Portfolio von Finn Willmann – Software-Entwicklung, Projekte und Kontakt.",
+    "description": "Portfolio von Finn Willmann — Spieleentwicklung mit Unity, Blender und C#. Projekte, Werdegang und Kontakt.",
     "noindex": true
   },
   "nav": [
@@ -42,29 +42,29 @@
   "cv": "",
   "skills": [
     {
-      "group": "Sprachen",
+      "group": "Engines & Tools",
       "items": [
-        "TypeScript",
-        "JavaScript",
-        "Python",
-        "SQL"
+        "Unity",
+        "Blender",
+        "ProBuilder",
+        "Git"
       ]
     },
     {
-      "group": "Frontend",
+      "group": "Programmierung",
       "items": [
-        "React",
-        "HTML & CSS",
-        "Vite"
+        "C#",
+        "Shader",
+        "Editor-Tools"
       ]
     },
     {
-      "group": "Backend & Tools",
+      "group": "Gestaltung",
       "items": [
-        "Node.js",
-        "PostgreSQL",
-        "Git",
-        "Docker"
+        "Level-Design",
+        "3D-Modelling",
+        "Sound-Design",
+        "UI-Design"
       ]
     }
   ],
@@ -77,5 +77,5 @@
     "email": "deine@mail.de",
     "note": "Pflichtangaben nach § 5 DDG. Bitte vor dem Veröffentlichen ausfüllen."
   },
-  "projectsIntro": "Eine Auswahl dessen, woran ich gearbeitet habe — mit dem Weg dorthin, nicht nur dem Ergebnis."
+  "projectsIntro": "Drei Spiele aus Studium und Game Jam — mit dem Weg dorthin, nicht nur dem Ergebnis."
 }

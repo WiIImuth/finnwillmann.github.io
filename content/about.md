@@ -1,21 +1,33 @@
 ---
 headline: Über mich
-lead: Kurz gesagt, wer ich bin und woran ich arbeite.
+lead: Spieleentwicklung mit Unity — von der ersten Mechanik bis zum spielbaren Build.
 ---
 
-Hier stehen zwei bis vier Sätze über dich. Wer bist du, woran arbeitest du
-gerade, und was suchst du? Konkret schlägt vage: statt „leidenschaftlicher
-Entwickler mit Liebe zum Detail“ lieber „Ich studiere Informatik im 4. Semester
-und baue nebenbei Tools, die mir selbst im Alltag fehlen.“
+Ich studiere an der Hochschule Macromedia und entwickle Spiele mit Unity. Meine
+Projekte reichen vom Siebentage-Game-Jam im Dreierteam bis zum
+Einzel-Prüfungsprojekt, in dem ich Konzept, Programmierung, Level-Design und
+Gestaltung allein verantwortet habe.
 
-Ein zweiter Absatz kann Kontext geben: Ausbildung, aktuelle Station,
-Technologien, in denen du dich zu Hause fühlst — und wonach du gerade suchst
-(Werkstudentenstelle, Praktikum, Einstiegsposition).
+Was sich durch alle Projekte zieht, ist das Interesse am **Spielgefühl**. Bei
+GrappleGlory habe ich Parcours nicht nach Gefühl gebaut, sondern gegen die
+tatsächlichen Physik-Werte gerechnet, und das Momentum-System so lange
+umgebaut, bis sich eine Kette aus Greifhaken, Wallrun und Absprung ohne
+Tempoverlust spielen ließ. Solche Fragen bringen mich weiter als große Feature-Listen.
 
-## Werdegang
+Genauso wichtig ist mir, **nachvollziehbar zu arbeiten**. Ich führe zu jedem
+Projekt ein Logbuch mit Problem, Lösung und Begründung — Fehldiagnosen
+eingeschlossen, ausdrücklich markiert. Das hat mir mehr als einmal Stunden
+gespart, und es hat mir beigebracht, einer plausiblen Erklärung erst zu
+glauben, wenn sie wirklich alle Symptome erklärt.
 
-Wenn du magst, kannst du hier Stationen auflisten — Studium, Praktika,
-Nebenjobs. Alles, was erklärt, wie du dorthin gekommen bist, wo du jetzt bist.
+## Womit ich arbeite
 
-- **seit 2024** — Was du gerade machst
-- **2022–2024** — Was davor war
+Unity und C# sind mein Zuhause, dazu Blender für 3D-Assets, eigene Shader und
+Editor-Werkzeuge, wenn wiederkehrende Arbeit reproduzierbar werden soll. Sound
+mache ich ebenfalls selbst — bei GrappleGlory werden UI-Klänge zur Laufzeit
+synthetisiert statt aus Dateien abgespielt.
+
+## Was ich suche
+
+Hier gehört ein Satz hin, wonach du gerade suchst — Praktikum,
+Werkstudentenstelle, Einstieg nach dem Studium, ab wann und wo.
