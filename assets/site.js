@@ -167,17 +167,29 @@
 /* ------------------------------------------------------------------
    Lightbox.
 
-   Bilder in Galerien öffnen sich groß. Der Übergang beginnt genau
-   dort, wo das kleine Bild sitzt, und wächst von da auf. Schließen
-   über das Kreuz, einen Klick daneben oder die Escape-Taste, blättern
-   mit den Pfeiltasten.
+   Bilder öffnen sich groß und passen sich immer vollständig in den
+   Bildschirm ein, egal ob hoch oder quer. Zoomen über Mausrad,
+   Doppelklick, die Knöpfe unten oder zwei Finger. Im vergrößerten
+   Zustand lässt sich das Bild ziehen.
 
-   Ohne JavaScript bleiben die Bilder normale Links auf die Bilddatei.
+   Schließen über das Kreuz, einen Klick daneben oder Escape,
+   blättern mit den Pfeilen oder durch Wischen.
+
+   Ohne JavaScript bleiben die Bilder normale Links auf die Datei.
 ------------------------------------------------------------------ */
 
 (() => {
   const all = [...document.querySelectorAll(".shots a, .cover-frame a")];
   if (!all.length) return;
+
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+  const MAX = 6;
+
+  const en = document.documentElement.lang === "en";
+  const words = en
+    ? { close: "Close", prev: "Previous image", next: "Next image", zoomIn: "Zoom in", zoomOut: "Zoom out" }
+    : { close: "Schließen", prev: "Vorheriges Bild", next: "Nächstes Bild", zoomIn: "Vergrößern", zoomOut: "Verkleinern" };
 
   // Jede Galerie bleibt für sich. Weiterblättern führt nicht aus einer
   // Arbeit in die nächste.
@@ -188,16 +200,6 @@
     groups.get(key).push(a);
   }
 
-  let triggers = all;
-
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
-
-  const words =
-    document.documentElement.lang === "en"
-      ? { close: "Close", prev: "Previous image", next: "Next image" }
-      : { close: "Schließen", prev: "Vorheriges Bild", next: "Nächstes Bild" };
-
   const box = document.createElement("div");
   box.className = "lightbox";
   box.setAttribute("role", "dialog");
@@ -207,24 +209,86 @@
     <button class="lightbox-close" type="button" aria-label="${words.close}">✕</button>
     <button class="lightbox-nav prev" type="button" aria-label="${words.prev}">‹</button>
     <button class="lightbox-nav next" type="button" aria-label="${words.next}">›</button>
-    <img alt="">
-    <p class="lightbox-counter"></p>`;
+    <img alt="" draggable="false">
+    <div class="lightbox-tools">
+      <button class="lightbox-zoom out" type="button" aria-label="${words.zoomOut}">−</button>
+      <span class="lightbox-counter"></span>
+      <button class="lightbox-zoom in" type="button" aria-label="${words.zoomIn}">+</button>
+    </div>`;
   document.body.appendChild(box);
 
   const big = box.querySelector("img");
   const counter = box.querySelector(".lightbox-counter");
   const prevBtn = box.querySelector(".prev");
   const nextBtn = box.querySelector(".next");
+  const zoomIn = box.querySelector(".lightbox-zoom.in");
+  const zoomOut = box.querySelector(".lightbox-zoom.out");
 
+  let triggers = all;
   let index = 0;
   let lastFocus = null;
 
-  const sourceOf = (a) => a.getAttribute("href");
+  /* ------------------------------------------------ Zoom und Verschieben */
+
+  let scale = 1;
+  let tx = 0;
+  let ty = 0;
+
+  const paint = () => {
+    big.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    box.classList.toggle("is-zoomed", scale > 1.01);
+  };
+
+  // Die unverzerrte Größe lässt sich aus der aktuellen zurückrechnen.
+  const baseBox = () => {
+    const r = big.getBoundingClientRect();
+    return {
+      w: r.width / scale,
+      h: r.height / scale,
+      cx: r.left + r.width / 2 - tx,
+      cy: r.top + r.height / 2 - ty,
+    };
+  };
+
+  const clamp = () => {
+    const b = baseBox();
+    const limitX = Math.max(0, (b.w * scale - box.clientWidth) / 2);
+    const limitY = Math.max(0, (b.h * scale - box.clientHeight) / 2);
+    tx = Math.min(limitX, Math.max(-limitX, tx));
+    ty = Math.min(limitY, Math.max(-limitY, ty));
+  };
+
+  // Zoomt so, dass der Punkt unter dem Zeiger an Ort und Stelle bleibt.
+  const zoomAt = (factor, clientX, clientY) => {
+    const next = Math.min(MAX, Math.max(1, scale * factor));
+    if (next === scale) return;
+    const b = baseBox();
+    const px = (clientX ?? b.cx) - b.cx;
+    const py = (clientY ?? b.cy) - b.cy;
+    tx = px - (px - tx) * (next / scale);
+    ty = py - (py - ty) * (next / scale);
+    scale = next;
+    if (scale === 1) { tx = 0; ty = 0; }
+    clamp();
+    paint();
+  };
+
+  const resetZoom = () => {
+    scale = 1;
+    tx = 0;
+    ty = 0;
+    big.style.transform = "";
+    box.classList.remove("is-zoomed");
+  };
+
+  /* ---------------------------------------------------------- Anzeigen */
+
   const thumbOf = (i) => triggers[i]?.querySelector("img");
 
   const show = (i, animateFrom) => {
     index = (i + triggers.length) % triggers.length;
-    big.src = sourceOf(triggers[index]);
+    resetZoom();
+    big.src = triggers[index].getAttribute("href");
     big.alt = thumbOf(index)?.alt || "";
     counter.textContent = `${index + 1} / ${triggers.length}`;
 
@@ -234,19 +298,16 @@
 
     if (reduced || !animateFrom) return;
 
-    // Das große Bild startet in der Größe und Position des kleinen
-    // und wächst von dort auf seinen Platz.
+    // Das große Bild startet dort, wo das kleine sitzt, und wächst auf.
     const run = () => {
       const to = big.getBoundingClientRect();
       if (!to.width) return;
-      const from = animateFrom;
-      const scale = Math.max(from.width / to.width, 0.05);
       big.animate(
         [
           {
-            transform: `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${scale}, ${
-              from.height / to.height
-            })`,
+            transform: `translate(${animateFrom.left - to.left}px, ${animateFrom.top - to.top}px) scale(${
+              animateFrom.width / to.width
+            }, ${animateFrom.height / to.height})`,
             opacity: 0.4,
           },
           { transform: "none", opacity: 1 },
@@ -259,7 +320,7 @@
     else big.addEventListener("load", run, { once: true });
   };
 
-  const open = (i, trigger) => {
+  const open = (i) => {
     lastFocus = document.activeElement;
     box.hidden = false;
     document.body.classList.add("lightbox-open");
@@ -274,36 +335,117 @@
     setTimeout(() => {
       box.hidden = true;
       big.removeAttribute("src");
+      resetZoom();
     }, reduced ? 0 : 450);
     lastFocus?.focus?.({ preventScroll: true });
   };
 
-  for (const [container, items] of groups) {
+  for (const [, items] of groups) {
     items.forEach((a, i) => {
       a.addEventListener("click", (e) => {
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
         e.preventDefault();
         triggers = items;
-        open(i, a);
+        open(i);
       });
     });
   }
 
   box.querySelector(".lightbox-close").addEventListener("click", close);
+  prevBtn.addEventListener("click", (e) => { e.stopPropagation(); show(index - 1); });
+  nextBtn.addEventListener("click", (e) => { e.stopPropagation(); show(index + 1); });
+  zoomIn.addEventListener("click", (e) => { e.stopPropagation(); zoomAt(1.5); });
+  zoomOut.addEventListener("click", (e) => { e.stopPropagation(); zoomAt(1 / 1.5); });
 
-  prevBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    show(index - 1);
+  big.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    if (scale > 1.01) resetZoom();
+    else zoomAt(2.5, e.clientX, e.clientY);
   });
 
-  nextBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    show(index + 1);
+  box.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      zoomAt(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX, e.clientY);
+    },
+    { passive: false }
+  );
+
+  /* --------------------------------------------- Ziehen, Wischen, Kneifen */
+
+  const pointers = new Map();
+  let dragged = 0;
+  let startTx = 0;
+  let startTy = 0;
+  let pinchStart = 0;
+  let pinchScale = 1;
+
+  const spread = () => {
+    const [a, b] = [...pointers.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+
+  box.addEventListener("pointerdown", (e) => {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, startX: e.clientX });
+    dragged = 0;
+    startTx = tx;
+    startTy = ty;
+    if (pointers.size === 2) {
+      pinchStart = spread();
+      pinchScale = scale;
+    }
+    if (e.target === big && scale > 1.01) big.setPointerCapture?.(e.pointerId);
   });
 
-  // Klick neben das Bild schließt
+  box.addEventListener("pointermove", (e) => {
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
+    const dx = e.clientX - p.x;
+    const dy = e.clientY - p.y;
+
+    if (pointers.size === 2) {
+      pointers.set(e.pointerId, { ...p, x: e.clientX, y: e.clientY });
+      const now = spread();
+      if (pinchStart > 0) {
+        const [a, b] = [...pointers.values()];
+        const target = Math.min(MAX, Math.max(1, (pinchScale * now) / pinchStart));
+        zoomAt(target / scale, (a.x + b.x) / 2, (a.y + b.y) / 2);
+      }
+      dragged = 99;
+      return;
+    }
+
+    if (scale > 1.01) {
+      tx = startTx + dx;
+      ty = startTy + dy;
+      clamp();
+      paint();
+      dragged += Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) || 1;
+    }
+  });
+
+  const endPointer = (e) => {
+    const p = pointers.get(e.pointerId);
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchStart = 0;
+
+    // Wischen blättert, aber nur im nicht vergrößerten Zustand
+    if (p && scale <= 1.01 && triggers.length > 1) {
+      const dx = e.clientX - p.x;
+      if (Math.abs(dx) > 60) {
+        show(index + (dx < 0 ? 1 : -1));
+        dragged = 99;
+      }
+    }
+  };
+
+  box.addEventListener("pointerup", endPointer);
+  box.addEventListener("pointercancel", (e) => pointers.delete(e.pointerId));
+
+  // Klick daneben schließt, ein Ziehen jedoch nicht
   box.addEventListener("click", (e) => {
-    if (e.target === box) close();
+    if (e.target === box && dragged < 6) close();
   });
 
   addEventListener("keydown", (e) => {
@@ -311,8 +453,10 @@
     if (e.key === "Escape") close();
     else if (e.key === "ArrowLeft") show(index - 1);
     else if (e.key === "ArrowRight") show(index + 1);
+    else if (e.key === "+" || e.key === "=") zoomAt(1.5);
+    else if (e.key === "-") zoomAt(1 / 1.5);
+    else if (e.key === "0") resetZoom();
     else if (e.key === "Tab") {
-      // Fokus bleibt im Dialog
       const items = [...box.querySelectorAll("button:not([hidden])")];
       const first = items[0];
       const last = items[items.length - 1];
@@ -321,13 +465,9 @@
     }
   });
 
-  // Wischen auf dem Telefon
-  let startX = null;
-  box.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
-  box.addEventListener("touchend", (e) => {
-    if (startX === null) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    if (Math.abs(dx) > 60) show(index + (dx < 0 ? 1 : -1));
-    startX = null;
-  }, { passive: true });
+  addEventListener("resize", () => {
+    if (box.hidden) return;
+    clamp();
+    paint();
+  });
 })();
