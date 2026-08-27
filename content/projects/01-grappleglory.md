@@ -38,17 +38,24 @@ eine Chamäleon-Zunge, der Wallrun funktioniert über Haftzehen, der Slide ist e
 Rutschen auf dem Schwanz. Ich wollte, dass sich die Fähigkeiten nach Figur
 anfühlen und nicht nach Funktionsliste.
 
-## Warum ich nicht bei null angefangen habe
+## Ein eigenes Movement-System
 
-Für die Spielfigur liegt ein gekauftes Controller-Paket zugrunde. Das war eine
-bewusste Entscheidung. Etwas Vergleichbares selbst zu schreiben hätte Wochen
-gedauert, und die Wochen wollte ich in Level und Spielgefühl stecken.
+Bevor ich am Spielgefühl gearbeitet habe, habe ich mir angesehen, wie andere
+Spiele Bewegung lösen. Wo entsteht Schwung, wo geht er verloren, wann fühlt
+sich Kontrolle in der Luft fair an und wann willkürlich? Aus diesen Referenzen
+ist eine Liste von Regeln entstanden, an der ich mein eigenes Bewegungssystem
+ausgerichtet habe.
 
-Geschenkt bekommt man dabei allerdings nichts. Ich musste fremden Code lesen,
-erweitern und teilweise reparieren. Einige Funktionen gab es nur dem Namen nach:
-einen Tempo-Regler, der nichts regelte, ein Steuerungsfeld, das ab einem
-gewissen Wert wirkungslos blieb. Meine eigenen rund 25 Scripts liegen deshalb
-strikt getrennt vom Paket. Ein Update kann meine Arbeit so nicht überschreiben.
+Als technische Basis dient ein fertiges Controller-Paket. Alles, was das
+Spielgefühl ausmacht, habe ich darauf neu gebaut: das Momentum-System, den
+Greifhaken in vier kombinierbaren Varianten, die vorwärts-dominante
+Luftsteuerung und das Zusammenspiel aus Wallrun, Landung und Absprung. An
+diesen Stellen ist vom Original wenig übrig geblieben. Einige Funktionen
+existierten ohnehin nur dem Namen nach: ein Tempo-Regler, der nichts regelte,
+ein Steuerungsfeld, das ab einem gewissen Wert wirkungslos blieb.
+
+Meine rund 25 eigenen Scripts liegen strikt getrennt vom Paket, damit ein
+Update meine Arbeit nicht überschreiben kann.
 
 ## Woran ich das Spielgefühl gemessen habe
 
