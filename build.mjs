@@ -430,7 +430,7 @@ const ICON_THEME = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false
  * Layout
  * ------------------------------------------------------------------ */
 
-function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "", v = {} }) {
+function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "", image = "", v = {} }) {
   const r = routes(L);
   const t = L.t;
   // Künstlername vorn, bürgerlicher Name direkt daneben. So steht in jedem
@@ -439,6 +439,10 @@ function layout({ config, L, title, description, bodyClass = "", content, canoni
   const signature = alias ? `${alias} · ${config.name}` : config.name;
   const fullTitle = title ? `${title} · ${signature}` : `${signature} · ${pick(config.role, L.code)}`;
   const base = config.site?.url ? config.site.url.replace(/\/$/, "") : "";
+
+  // Vorschaubild beim Teilen. Ohne eigenes Bild greift die Standardkarte.
+  const share = image || "/assets/images/og-default.jpg";
+  const ogImage = base ? base + share : "";
 
   // Für Suchmaschinen: beide Namen gehören zu einer Person.
   const person = {
@@ -488,6 +492,11 @@ ${base && altUrl ? `<link rel="alternate" hreflang="${L.other}" href="${base}${a
 <meta property="og:type" content="website">
 <meta property="og:title" content="${escapeHtml(fullTitle)}">
 <meta property="og:description" content="${escapeHtml(description || "")}">
+<meta property="og:site_name" content="${escapeHtml(signature)}">
+<meta property="og:locale" content="${L.code === "de" ? "de_DE" : "en_US"}">
+${canonical ? `<meta property="og:url" content="${canonical}">` : ""}
+${ogImage ? `<meta property="og:image" content="${ogImage}">` : ""}
+${ogImage ? `<meta name="twitter:card" content="summary_large_image">` : ""}
 <meta name="color-scheme" content="light dark">
 <script>
 (function () {
@@ -1054,6 +1063,7 @@ async function build() {
           altUrl: ro.project(project.slug),
           bodyClass: "page-project",
           current: r.projects,
+          image: project.data.cover || "",
           content: projectPage({ project, L }),
         })
       );
