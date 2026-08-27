@@ -1,0 +1,79 @@
+{
+  "name": "Finn Willmann",
+  "role": "Software-Entwickler",
+  "tagline": "Ich baue Web-Anwendungen, die sich schnell anfühlen und lange halten.",
+  "location": "Deutschland",
+  "email": "deine@mail.de",
+  "lang": "de",
+  "site": {
+    "url": "https://finnwillmann.com",
+    "titleSuffix": "Portfolio",
+    "description": "Portfolio von Finn Willmann – Software-Entwicklung, Projekte und Kontakt."
+  },
+  "nav": [
+    {
+      "label": "Projekte",
+      "href": "/#projekte"
+    },
+    {
+      "label": "Über mich",
+      "href": "/#ueber-mich"
+    },
+    {
+      "label": "Kontakt",
+      "href": "/#kontakt"
+    }
+  ],
+  "links": [
+    {
+      "label": "GitHub",
+      "href": "https://github.com/DEIN-NAME"
+    },
+    {
+      "label": "LinkedIn",
+      "href": "https://www.linkedin.com/in/DEIN-NAME"
+    },
+    {
+      "label": "E-Mail",
+      "href": "mailto:deine@mail.de"
+    }
+  ],
+  "cv": "",
+  "skills": [
+    {
+      "group": "Sprachen",
+      "items": [
+        "TypeScript",
+        "JavaScript",
+        "Python",
+        "SQL"
+      ]
+    },
+    {
+      "group": "Frontend",
+      "items": [
+        "React",
+        "HTML & CSS",
+        "Vite"
+      ]
+    },
+    {
+      "group": "Backend & Tools",
+      "items": [
+        "Node.js",
+        "PostgreSQL",
+        "Git",
+        "Docker"
+      ]
+    }
+  ],
+  "impressum": {
+    "name": "Finn Willmann",
+    "address": [
+      "Straße Hausnummer",
+      "PLZ Ort"
+    ],
+    "email": "deine@mail.de",
+    "note": "Pflichtangaben nach § 5 DDG. Bitte vor dem Veröffentlichen ausfüllen."
+  }
+}
