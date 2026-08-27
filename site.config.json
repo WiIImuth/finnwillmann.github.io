@@ -1,81 +1,63 @@
 {
   "name": "Finn Willmann",
-  "role": "Spieleentwicklung",
-  "tagline": "Bewegung ist bei mir kein Mittel zum Zweck, sondern das eigentliche Spiel.",
-  "location": "Deutschland",
   "email": "mail@finnwillmann.com",
-  "lang": "de",
+  "cv": "",
+
+  "role": {
+    "de": "Spieleentwicklung",
+    "en": "Game Development"
+  },
+  "location": {
+    "de": "Deutschland",
+    "en": "Germany"
+  },
+  "tagline": {
+    "de": "Bewegung ist bei mir kein Mittel zum Zweck, sondern das eigentliche Spiel.",
+    "en": "For me, movement is not a means to an end. It is the game."
+  },
+
   "site": {
     "url": "https://finnwillmann.com",
-    "titleSuffix": "Portfolio",
-    "description": "Portfolio von Finn Willmann. Spieleentwicklung in Unity: Projekte, Werdegang, Kontakt.",
-    "noindex": true
+    "noindex": true,
+    "description": {
+      "de": "Portfolio von Finn Willmann. Spieleentwicklung in Unity: Projekte, Werdegang, Kontakt.",
+      "en": "Portfolio of Finn Willmann. Game development in Unity: projects, background, contact."
+    }
   },
-  "nav": [
-    {
-      "label": "Projekte",
-      "href": "/projekte/"
-    },
-    {
-      "label": "Über mich",
-      "href": "/ueber-mich/"
-    },
-    {
-      "label": "Kontakt",
-      "href": "/kontakt/"
-    }
-  ],
+
+  "projectsIntro": {
+    "de": "Drei Spiele aus Studium und Game Jam. Was daraus geworden ist, steht hier neben den Umwegen dahin.",
+    "en": "Three games from university and a game jam. What came out of them, next to the detours along the way."
+  },
+
   "links": [
-    {
-      "label": "Instagram",
-      "href": "https://www.instagram.com/willlmuth/"
-    },
-    {
-      "label": "itch.io",
-      "href": "https://willmuth.itch.io"
-    },
-    {
-      "label": "E-Mail",
-      "href": "mailto:mail@finnwillmann.com"
-    }
+    { "label": "Instagram", "href": "https://www.instagram.com/willlmuth/" },
+    { "label": "itch.io", "href": "https://willmuth.itch.io" },
+    { "label": "E-Mail", "href": "mailto:mail@finnwillmann.com" }
   ],
-  "cv": "",
+
   "skills": [
     {
-      "group": "Engines & Tools",
-      "items": [
-        "Unity",
-        "Blender",
-        "ProBuilder",
-        "Git"
-      ]
+      "group": { "de": "Engines und Werkzeuge", "en": "Engines and tools" },
+      "items": ["Unity", "Blender", "ProBuilder", "Git"]
     },
     {
-      "group": "Programmierung",
-      "items": [
-        "C#",
-        "Shader",
-        "Editor-Tools"
-      ]
+      "group": { "de": "Programmierung", "en": "Programming" },
+      "items": ["C#", "Shader", "Editor-Tools"]
     },
     {
-      "group": "Gestaltung",
-      "items": [
-        "Level-Design",
-        "3D-Modelling",
-        "Sound-Design",
-        "UI-Design"
-      ]
+      "group": { "de": "Gestaltung", "en": "Design" },
+      "items": ["Level-Design", "3D-Modelling", "Sound-Design", "UI-Design"]
     }
   ],
+
   "impressum": {
     "name": "Finn Willmann",
-    "address": [
-      "Straße Hausnummer",
-      "PLZ Ort"
-    ],
+    "address": ["Straße Hausnummer", "PLZ Ort"],
     "email": "mail@finnwillmann.com",
-    "note": "Pflichtangaben nach § 5 DDG. Bitte vor dem Veröffentlichen ausfüllen."
-  },
-  "projectsIntro": "Drei Spiele aus Studium und Game Jam. Was daraus geworden ist, steht hier neben den Umwegen dahin."
+    "note": {
+      "de": "Pflichtangaben nach § 5 DDG. Bitte vor dem Veröffentlichen ausfüllen.",
+      "en": "Mandatory information under § 5 DDG. Please complete before going live."
+    }
+  }
 }
