@@ -23,6 +23,7 @@ import { readFile, readdir, mkdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(ROOT, "dist");
@@ -377,7 +378,7 @@ const ICON_THEME = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false
  * Layout
  * ------------------------------------------------------------------ */
 
-function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "" }) {
+function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "", v = {} }) {
   const r = routes(L);
   const t = L.t;
   const fullTitle = title ? `${title} · ${config.name}` : `${config.name} · ${pick(config.role, L.code)}`;
@@ -425,7 +426,7 @@ ${base && altUrl ? `<link rel="alternate" hreflang="${L.other}" href="${base}${a
   } catch (e) {}
 })();
 </script>
-<link rel="stylesheet" href="/assets/styles.css">
+<link rel="stylesheet" href="/assets/styles.css${v.css ? `?v=${v.css}` : ""}">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>">
 </head>
 <body class="${bodyClass}">
@@ -453,7 +454,7 @@ ${content}
   </div>
 </footer>
 
-<script src="/assets/site.js" defer></script>
+<script src="/assets/site.js${v.js ? `?v=${v.js}` : ""}" defer></script>
 </body>
 </html>
 `;
@@ -874,8 +875,21 @@ async function writePage(relPath, html) {
 
 const toFile = (url) => path.join(...url.split("/").filter(Boolean), "index.html");
 
+const fingerprint = async (rel) => {
+  const file = path.join(ROOT, rel);
+  if (!existsSync(file)) return "";
+  return createHash("sha1").update(await readFile(file)).digest("hex").slice(0, 8);
+};
+
 async function build() {
   const config = JSON.parse(await readFile(path.join(ROOT, "site.config.json"), "utf8"));
+
+  // Kennzeichen aus dem Dateiinhalt. Ändert sich das Stylesheet, ändert
+  // sich die Adresse, und kein Browser liefert eine alte Fassung aus.
+  const v = {
+    css: await fingerprint("assets/styles.css"),
+    js: await fingerprint("assets/site.js"),
+  };
   const base = config.site?.url ? config.site.url.replace(/\/$/, "") : "";
   const abs = (p) => (base ? base + p : "");
 
@@ -906,7 +920,7 @@ async function build() {
     await writePage(
       L.dir ? path.join(L.dir, "index.html") : "index.html",
       layout({
-        config, L,
+        config, L, v,
         title: "",
         description: pick(config.site?.description, L.code),
         canonical: abs(r.home),
@@ -921,7 +935,7 @@ async function build() {
     await writePage(
       toFile(r.projects),
       layout({
-        config, L,
+        config, L, v,
         title: t.projectsTitle,
         description: pick(config.projectsIntro, L.code) || t.projectsLead,
         canonical: abs(r.projects),
@@ -937,7 +951,7 @@ async function build() {
       await writePage(
         toFile(r.project(project.slug)),
         layout({
-          config, L,
+          config, L, v,
           title: project.data.title,
           description: project.data.summary,
           canonical: abs(r.project(project.slug)),
@@ -953,7 +967,7 @@ async function build() {
     await writePage(
       toFile(r.artworks),
       layout({
-        config, L,
+        config, L, v,
         title: t.artworksTitle,
         description: pick(config.artworksIntro, L.code) || t.artworksLead,
         canonical: abs(r.artworks),
@@ -968,7 +982,7 @@ async function build() {
     await writePage(
       toFile(r.about),
       layout({
-        config, L,
+        config, L, v,
         title: about.data.headline || t.aboutTitle,
         description: about.data.lead || "",
         canonical: abs(r.about),
@@ -983,7 +997,7 @@ async function build() {
     await writePage(
       toFile(r.contact),
       layout({
-        config, L,
+        config, L, v,
         title: t.contactTitle,
         description: contact.data.lead || "",
         canonical: abs(r.contact),
@@ -998,7 +1012,7 @@ async function build() {
     await writePage(
       toFile(r.imprint),
       layout({
-        config, L,
+        config, L, v,
         title: t.imprint,
         description: t.imprint,
         canonical: abs(r.imprint),
@@ -1019,7 +1033,7 @@ async function build() {
   await writePage(
     "404.html",
     layout({
-      config, L: D,
+      config, L: D, v,
       title: D.t.notFoundTitle,
       description: D.t.notFoundText,
       altUrl: routes(LANGS.en).home,
