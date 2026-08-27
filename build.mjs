@@ -179,6 +179,50 @@ const slugify = (s) =>
 const linkAttrs = (href) =>
   /^https?:/.test(href) ? ' target="_blank" rel="noopener noreferrer"' : "";
 
+/* Bildmaße. Stehen Breite und Höhe im HTML, hält der Browser den Platz
+   frei, bevor das Bild geladen ist. Ohne das springt das Layout beim
+   Nachladen, und ein Sprung auf einen Anker landet an der falschen
+   Stelle. */
+const SIZES = new Map();
+
+function readSize(buf) {
+  // PNG
+  if (buf.length > 24 && buf.readUInt32BE(0) === 0x89504e47) {
+    return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) };
+  }
+  // JPEG
+  if (buf.length > 4 && buf[0] === 0xff && buf[1] === 0xd8) {
+    let i = 2;
+    while (i + 9 < buf.length) {
+      if (buf[i] !== 0xff) { i += 1; continue; }
+      const marker = buf[i + 1];
+      if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) { i += 2; continue; }
+      const length = buf.readUInt16BE(i + 2);
+      const isFrame = marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker);
+      if (isFrame) return { h: buf.readUInt16BE(i + 5), w: buf.readUInt16BE(i + 7) };
+      i += 2 + length;
+    }
+  }
+  return null;
+}
+
+async function collectSizes(dir, prefix) {
+  if (!existsSync(dir)) return;
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    const url = `${prefix}/${entry.name}`;
+    if (entry.isDirectory()) { await collectSizes(full, url); continue; }
+    if (!/\.(jpe?g|png)$/i.test(entry.name)) continue;
+    const size = readSize(await readFile(full));
+    if (size) SIZES.set(url, size);
+  }
+}
+
+const dims = (src) => {
+  const size = SIZES.get(src);
+  return size ? ` width="${size.w}" height="${size.h}"` : "";
+};
+
 const pick = (value, lang) =>
   value && typeof value === "object" && !Array.isArray(value) ? value[lang] ?? value.de ?? "" : value ?? "";
 
@@ -248,7 +292,7 @@ function inline(text) {
   out = out.replace(
     /!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;([^&]*)&quot;)?\)/g,
     (_, alt, src, title) =>
-      `<img src="${src}" alt="${alt}"${title ? ` title="${title}"` : ""} loading="lazy" decoding="async">`
+      `<img src="${src}" alt="${alt}"${title ? ` title="${title}"` : ""}${dims(src)} loading="lazy" decoding="async">`
   );
 
   out = out.replace(
@@ -472,7 +516,7 @@ function projectCard(project, L) {
 
   return `<article class="card${image ? " has-cover" : ""}" data-anim="rise">
   <a class="card-link" href="${r.project(project.slug)}">
-    ${image ? `<span class="card-cover"><img src="${image}" alt="" loading="lazy" decoding="async"></span>` : ""}
+    ${image ? `<span class="card-cover"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></span>` : ""}
     <span class="card-meta">${escapeHtml(d.year || "")}</span>
     <h3 class="card-title">${escapeHtml(d.title)}</h3>
     <p class="card-summary">${escapeHtml(d.summary || "")}</p>
@@ -508,8 +552,9 @@ function ctaSection(L) {
 function artworkTile(artwork, href) {
   const d = artwork.data;
   const image = d.cover || (d.gallery || [])[0];
-  return `<a class="tile" href="${href}" data-anim="zoom">
-  ${image ? `<span class="tile-img"><img src="${image}" alt="" loading="lazy" decoding="async"></span>` : ""}
+  // Der Anker führt direkt zu dieser Arbeit, nicht an den Seitenanfang.
+  return `<a class="tile" href="${href}#${artwork.slug}" data-anim="zoom">
+  ${image ? `<span class="tile-img"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></span>` : ""}
   <span class="tile-body">
     <span class="tile-meta">${escapeHtml(d.year || "")}${d.role ? ` · ${escapeHtml(d.role)}` : ""}</span>
     <span class="tile-title">${escapeHtml(d.title)}</span>
@@ -621,7 +666,7 @@ function projectPage({ project, L }) {
     ? `<div class="shots wrap">${shots
         .map(
           (src) =>
-            `<figure data-anim="zoom"><a href="${src}"><img src="${src}" alt="${escapeHtml(t.shot(d.title))}" loading="lazy" decoding="async"></a></figure>`
+            `<figure data-anim="zoom"><a href="${src}"><img src="${src}" alt="${escapeHtml(t.shot(d.title))}"${dims(src)} loading="lazy" decoding="async"></a></figure>`
         )
         .join("")}</div>`
     : "";
@@ -643,7 +688,7 @@ function projectPage({ project, L }) {
     ${meta.length ? `<dl class="project-meta" data-anim="rise">${meta.join("")}</dl>` : ""}
   </div>
 
-  ${d.cover ? `<div class="cover-frame wrap" data-anim="zoom"><a href="${d.cover}"><img class="cover" src="${d.cover}" alt="${escapeHtml(d.title)}"></a></div>` : ""}
+  ${d.cover ? `<div class="cover-frame wrap" data-anim="zoom"><a href="${d.cover}"><img class="cover" src="${d.cover}" alt="${escapeHtml(d.title)}"${dims(d.cover)}></a></div>` : ""}
   ${gallery}
 
   <div class="wrap">
@@ -672,11 +717,11 @@ function artworksPage({ config, L, artworks }) {
       const shots = (d.gallery || [])
         .map(
           (src) =>
-            `<figure data-anim="zoom"><a href="${src}" target="_blank" rel="noopener noreferrer"><img src="${src}" alt="${escapeHtml(d.title)}" loading="lazy" decoding="async"></a></figure>`
+            `<figure data-anim="zoom"><a href="${src}" target="_blank" rel="noopener noreferrer"><img src="${src}" alt="${escapeHtml(d.title)}"${dims(src)} loading="lazy" decoding="async"></a></figure>`
         )
         .join("");
 
-      return `<article class="artwork">
+      return `<article class="artwork" id="${a.slug}">
   <header class="artwork-head" data-anim="rise">
     <h2 class="artwork-title">${escapeHtml(d.title)}</h2>
     <p class="artwork-meta">${escapeHtml(d.year || "")}${d.role ? ` · ${escapeHtml(d.role)}` : ""}</p>
@@ -695,7 +740,7 @@ function artworksPage({ config, L, artworks }) {
     .map(
       (post) =>
         `<a class="insta-tile" href="${post.href || ig.profile}" target="_blank" rel="noopener noreferrer" data-anim="zoom">
-           <img src="${post.image}" alt="${escapeHtml(post.alt || "Instagram")}" loading="lazy" decoding="async">
+           <img src="${post.image}" alt="${escapeHtml(post.alt || "Instagram")}"${dims(post.image)} loading="lazy" decoding="async">
          </a>`
     )
     .join("");
@@ -890,6 +935,8 @@ async function build() {
     css: await fingerprint("assets/styles.css"),
     js: await fingerprint("assets/site.js"),
   };
+
+  await collectSizes(path.join(ROOT, "assets", "images"), "/assets/images");
   const base = config.site?.url ? config.site.url.replace(/\/$/, "") : "";
   const abs = (p) => (base ? base + p : "");
 

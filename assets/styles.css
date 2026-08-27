@@ -1227,3 +1227,6 @@ body.lightbox-open { overflow: hidden; }
   .tile, .tile-img img { transition: none; }
   .tile:hover, .tile:hover .tile-img img { transform: none; }
 }
+
+/* Beim Sprung auf einen Anker bleibt Luft für die Kopfzeile */
+.artwork { scroll-margin-top: 5.5rem; }
