@@ -28,5 +28,5 @@ than played back from files.
 
 ## What I am looking for
 
-This is where a sentence about what you are looking for belongs: internship,
-working student role, a first position after graduating, from when and where.
+Alongside my studies I am looking for practical experience, ideally an
+internship. Longer term I want to build a career in game development.

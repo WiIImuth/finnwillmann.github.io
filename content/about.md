@@ -29,5 +29,5 @@ abgespielt zu werden.
 
 ## Was ich suche
 
-Im Rahmen meines Studiums suche ich nach Praxiserfahrung mit Praktika.
-Auf Langfristiger Sicht versuche ich einen festen Fuss in der Spieleentwicklung zu fassen.
+Im Rahmen meines Studiums suche ich Praxiserfahrung, am liebsten in Form eines
+Praktikums. Langfristig möchte ich in der Spieleentwicklung Fuß fassen.
