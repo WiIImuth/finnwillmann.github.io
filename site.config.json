@@ -8,7 +8,8 @@
   "site": {
     "url": "https://finnwillmann.com",
     "titleSuffix": "Portfolio",
-    "description": "Portfolio von Finn Willmann – Software-Entwicklung, Projekte und Kontakt."
+    "description": "Portfolio von Finn Willmann – Software-Entwicklung, Projekte und Kontakt.",
+    "noindex": true
   },
   "nav": [
     {
