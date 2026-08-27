@@ -1,7 +1,7 @@
 ---
 title: GrappleGlory
 slug: grappleglory
-summary: Ein First-Person-Movement-Platformer, in dem Bewegung selbst die Belohnung ist — Greifhaken, Wallrun und Slide, sauber verkettet.
+summary: First-Person-Platformer, bei dem die Bewegung selbst das Ziel ist. Greifhaken, Wallrun und Slide wollen sauber ineinandergreifen.
 year: 2026
 role: Einzelarbeit
 tags:
@@ -23,98 +23,97 @@ order: 1
 draft: false
 ---
 
-## Die Idee
+## Worum es geht
 
-Eine junge Ninja-Eidechse absolviert Prüfungs-Parcours an einem japanischen
-Bergtempel-Dojo. Kein Kampf, keine Gegner — die Herausforderung besteht darin,
-die Strecke schnell und ohne Unterbrechung zu durchqueren.
+Eine junge Ninja-Eidechse läuft Prüfungs-Parcours an einem Bergtempel-Dojo ab.
+Gegner gibt es keine, gekämpft wird nicht. Die ganze Aufgabe besteht darin, die
+Strecke schnell und ohne Stocken zu durchqueren.
 
-Die Leitidee passt in einen Satz: **Bewegung ist die Belohnung.** An ihr habe
-ich jede Entscheidung im Projekt gemessen. Was den Bewegungsfluss stärkt, kam
-rein; was ihn bremst, flog raus oder wurde umgebaut.
+Ein Satz hat das Projekt zusammengehalten: **Bewegung ist die Belohnung.**
+Daran habe ich jede Entscheidung gemessen. Alles, was den Fluss unterstützt,
+durfte bleiben. Alles, was ihn ausbremst, ist rausgeflogen oder wurde umgebaut.
 
-Das Setting gibt dabei jeder Mechanik eine Geschichte. Der Greifhaken ist die
-Chamäleon-Zunge, der Wallrun funktioniert über Haftzehen, der Slide ist das
-Schwanz-Gleiten. Fähigkeiten sollten sich nicht wie abstrakte Spielfunktionen
-anfühlen, sondern wie Teil einer Figur.
+Das Setting liefert dabei für jede Mechanik eine Erklärung. Der Greifhaken ist
+eine Chamäleon-Zunge, der Wallrun funktioniert über Haftzehen, der Slide ist ein
+Rutschen auf dem Schwanz. Ich wollte, dass sich die Fähigkeiten nach Figur
+anfühlen und nicht nach Funktionsliste.
 
-## Auf fremdem Code aufbauen
+## Warum ich nicht bei null angefangen habe
 
-Als Fundament für die Spielfigur habe ich bewusst ein fertiges Controller-Paket
-aus dem Asset Store genutzt statt alles selbst zu schreiben. Ein eigener
-Controller dieser Qualität wäre Wochen Arbeit gewesen — Zeit, die ich lieber in
-Level-Design und Spielgefühl gesteckt habe.
+Für die Spielfigur liegt ein gekauftes Controller-Paket zugrunde. Das war eine
+bewusste Entscheidung. Etwas Vergleichbares selbst zu schreiben hätte Wochen
+gedauert, und die Wochen wollte ich in Level und Spielgefühl stecken.
 
-Umsonst war das nicht. Ich musste fremden Code lesen, erweitern und an einigen
-Stellen reparieren. Mehrere Funktionen existierten nur dem Namen nach: ein
-Tempo-Regler, der keiner war, ein Steuerungs-Feld, das ab einem bestimmten Wert
-nichts mehr veränderte. Meine eigenen rund 25 Scripts liegen deshalb getrennt
-vom Paket, damit ein Update meine Arbeit nicht überschreiben kann.
+Geschenkt bekommt man dabei allerdings nichts. Ich musste fremden Code lesen,
+erweitern und teilweise reparieren. Einige Funktionen gab es nur dem Namen nach:
+einen Tempo-Regler, der nichts regelte, ein Steuerungsfeld, das ab einem
+gewissen Wert wirkungslos blieb. Meine eigenen rund 25 Scripts liegen deshalb
+strikt getrennt vom Paket. Ein Update kann meine Arbeit so nicht überschreiben.
 
-## Drei Leitlinien für das Spielgefühl
+## Woran ich das Spielgefühl gemessen habe
 
-Beim Testen haben sich drei Regeln herausgebildet, an denen ich das
-Bewegungs-Tuning ausgerichtet habe.
+Beim Testen sind drei Regeln entstanden.
 
-**Tempo gehört dem Spieler.** Der Controller setzte mitgebrachtes Tempo an
-mehreren Stellen hart auf einen Fixwert zurück — beim Andocken an die Wand, an
-der Wand selbst, beim Absprung. Ich habe das umgebaut, sodass Wallrun und
-Landung eingehendes Tempo übernehmen. Erst damit funktioniert die Kette, die
-Level 2 trägt: Grapple, Wallrun, Wall-Jump, Luft-Lenkung, nächste Wand.
+**Das Tempo gehört dem Spieler.** Der Controller setzte mitgebrachten Schwung
+gleich an mehreren Stellen auf einen festen Wert zurück, beim Andocken an die
+Wand, während des Wallruns und noch einmal beim Absprung. Ich habe das so
+umgebaut, dass Wallrun und Landung eingehendes Tempo übernehmen. Erst dadurch
+funktioniert die Kette, auf der Level 2 aufbaut: Grapple, Wallrun, Wall-Jump,
+Lenken in der Luft, nächste Wand.
 
-**Kontrolle in der Luft, aber ehrlich.** Der Spieler kann seine Flugbahn
-biegen, ohne Tempo zu verlieren — der Schwung wird gedreht statt gebremst. Ein
-Praxistest erzwang eine Verfeinerung: Mit voller Luft-Kontrolle konnte ein
-kurzer Seitwärts-Tipper die Figur mit vollem Tempo zur Seite werfen. Die
-Steuerung ist deshalb vorwärts-dominant.
+**Luftkontrolle, aber ehrlich.** Man kann seine Flugbahn nach einem Sprung
+biegen, ohne dabei langsamer zu werden. Der Schwung dreht sich, statt zu
+verschwinden. Ein Test zwang mich zur Nachbesserung: Bei voller Luftkontrolle
+reichte ein kurzer Tipper zur Seite, um die Figur mit vollem Tempo quer zu
+werfen. Seitdem ist die Steuerung vorwärts-dominant.
 
-**Fehler kosten Sekunden, keine Minuten.** Ein Fehlschuss mit dem Greifhaken
-löst keinen Cooldown mehr aus — vorher bedeutete jeder Fehlversuch drei
-Sekunden Stillstand. Der Neustart-Knopf sitzt groß und mittig im Pause-Menü,
-weil „nochmal, aber besser" in einem Speedrun-Spiel die häufigste Entscheidung
-überhaupt ist.
+**Ein Fehler kostet Sekunden, keine Minuten.** Ein danebengegangener
+Greifhaken-Schuss löst keinen Cooldown mehr aus. Vorher stand man nach jedem
+Fehlversuch drei Sekunden herum. Der Neustart-Knopf sitzt groß in der Mitte des
+Pause-Menüs, weil „nochmal, aber besser“ in einem Speedrun die häufigste
+Entscheidung überhaupt ist.
 
-## Level als Code statt als Szene
+## Parcours aus einer Tabelle
 
-Beide Parcours entstehen nicht von Hand im Editor, sondern über eigene
-Editor-Werkzeuge, die die komplette Geometrie aus einer Koordinatentabelle
-aufbauen. Die Maße habe ich dabei nicht nach Gefühl gesetzt, sondern gegen die
-tatsächlichen Physik-Werte gerechnet: Aus Sprungkraft und Schwerkraft ergibt
-sich ein Sprung-Scheitel von rund 2,55 Metern und eine flache Sprungweite von
-etwa 8 Metern — die Lücken im Tutorial bleiben mit 5 Metern bewusst verzeihlich.
+Beide Level entstehen nicht von Hand im Editor. Eigene Editor-Werkzeuge bauen
+die komplette Geometrie aus einer Koordinatentabelle auf. Die Maße stammen dabei
+aus der Physik und nicht aus dem Bauchgefühl: Sprungkraft und Schwerkraft
+ergeben einen Scheitelpunkt von etwa 2,55 Metern und eine flache Sprungweite von
+rund 8 Metern. Die Lücken im Tutorial liegen bei 5 Metern, also bewusst im
+verzeihlichen Bereich.
 
-So ist jede Passage mit der jeweiligen Fähigkeit machbar und ohne sie eben
-nicht. Und eine Änderung ist ein Wert in der Tabelle und ein Menüklick.
+Damit ist jede Passage mit der zugehörigen Fähigkeit zu schaffen und ohne sie
+eben nicht. Eine Änderung wiederum ist ein Wert in der Tabelle plus ein
+Menüklick.
 
-## Der Datenverlust
+## Als die Arbeit weg war
 
-Der einschneidendste Moment des Projekts war ein Datenverlust. Mühsam von Hand
-verlegte Planken und Balken verschwanden mehrfach aus Level 1, und die Analyse
-ergab, dass die Arbeit nie auf der Festplatte angekommen war — der
-Editor-Stand ging verloren, als die Szene neu geladen wurde, nachdem die Datei
-außerhalb von Unity verändert worden war.
+Der schlimmste Moment im Projekt war ein Datenverlust. Aus Level 1
+verschwanden mehrfach Planken und Balken, die ich mühsam von Hand verlegt hatte.
+Die Analyse ergab: Die Arbeit war nie auf der Festplatte angekommen. Der Stand
+im Editor ging verloren, sobald die Szene neu geladen wurde, nachdem jemand die
+Datei von außerhalb angefasst hatte.
 
-Die Konsequenzen waren strukturell: Git-Versionierung, Szenen werden nur noch
-in Unity bearbeitet und sofort committet, und riskante Szenen-Eingriffe laufen
-über eigene Werkzeuge. Das Room-Trim-Werkzeug entstand direkt aus diesem
-Verlust und macht die damals verlorene Arbeit heute in wenigen Klicks
-wiederholbar.
+Meine Antwort darauf war strukturell. Das Projekt liegt seitdem unter Git,
+Szenen bearbeite ich ausschließlich in Unity und committe sofort, und riskante
+Eingriffe laufen über eigene Werkzeuge. Room Trim ist direkt aus diesem Verlust
+entstanden und erledigt die damals verlorene Arbeit heute in ein paar Klicks.
 
-Paradoxerweise hat dieser Tiefpunkt die Werkzeug-Landschaft des Projekts am
-stärksten verbessert.
+Kurioserweise hat ausgerechnet dieser Tiefpunkt die Werkzeuge des Projekts am
+weitesten gebracht.
 
-## Was ich gelernt habe
+## Was hängengeblieben ist
 
-Meine größten Zeitverluste entstanden nicht durch schwere Probleme, sondern
-durch **zu frühe Gewissheit**. Pink gerenderte Shader habe ich zweimal an der
-falschen Stelle „behoben", bevor die systematische Prüfung die echte Ursache
-fand: Das Projekt lief ohne zugewiesene Render-Pipeline. Beim verschwundenen
-Himmel dasselbe Muster — die erste plausible Erklärung war falsch.
+Die meiste Zeit habe ich nicht an schweren Problemen verloren, sondern an **zu
+früher Sicherheit**. Pink gerenderte Shader habe ich zweimal an der falschen
+Stelle repariert, bis die systematische Prüfung die wahre Ursache fand: Dem
+Projekt fehlte die zugewiesene Render-Pipeline. Beim verschwundenen Himmel
+lief es genauso, auch dort war die erste plausible Erklärung schlicht falsch.
 
-Geholfen hat am Ende immer dasselbe Vorgehen: die tatsächlichen Daten
-anschauen und eine Erklärung erst glauben, wenn sie *alle* Symptome erklärt und
-nicht nur das lauteste. Meine Fehldiagnosen lasse ich in der Dokumentation
-markiert stehen. Der Weg zur Lösung ist oft lehrreicher als die Lösung selbst.
+Geholfen hat jedes Mal dasselbe: in die tatsächlichen Daten schauen, und einer
+Erklärung erst glauben, wenn sie *alle* Symptome abdeckt statt nur des
+auffälligsten. Meine Fehldiagnosen lasse ich markiert in der Dokumentation
+stehen. Der Weg zur Lösung lehrt oft mehr als die Lösung.
 
-Und eine zweite Lehre, die bleibt: Arbeit, die nur als Szenen-Zustand
-existiert, ist fragil. Arbeit, die als Code existiert, gehört mir.
+Und noch etwas ist geblieben: Arbeit, die nur als Szenen-Zustand existiert, ist
+verletzlich. Arbeit, die als Code existiert, gehört mir.

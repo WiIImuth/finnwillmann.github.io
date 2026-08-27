@@ -1,8 +1,7 @@
 ---
 headline: Kontakt
-lead: Schreib mir gern — ich antworte in der Regel innerhalb von ein bis zwei Tagen.
+lead: Eine Mail genügt. Meistens melde ich mich innerhalb von ein, zwei Tagen zurück.
 ---
 
-Ob offene Stelle, Projektidee oder einfach eine Frage zu einem meiner
-Projekte: Eine kurze Mail genügt. Wenn es um eine Position geht, hilft es mir,
-wenn du dazuschreibst, worum es geht und ab wann.
+Offene Stelle, Projektidee, Rückfrage zu einem der Spiele: schreib einfach.
+Geht es um eine Position, hilft mir ein Satz dazu, worum es geht und ab wann.

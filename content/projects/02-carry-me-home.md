@@ -1,7 +1,7 @@
 ---
 title: Carry Me Home
 slug: carry-me-home
-summary: Ein bewusst schwerer 2D-Platformer, in dem man den Wind selbst mit der Maus zeichnet und sich daran durchs Level ziehen lässt.
+summary: Ein absichtlich schwerer 2D-Platformer. Den Wind zeichnet man selbst mit der Maus und lässt sich daran durchs Level ziehen.
 year: 2025/26
 role: Programmierung und Sound-Design
 tags:
@@ -21,60 +21,59 @@ order: 2
 draft: false
 ---
 
-## Worum es geht
+## Das Spiel
 
-Carry Me Home ist ein minimalistischer 2D-Platformer, der bewusst mit 3D-Assets
-arbeitet — die Welt wirkt dadurch plastisch, die Steuerung bleibt reduziert.
-Das Spiel orientiert sich am Prinzip eines Rage Games: Fehler werden nicht
-abgefedert, sondern sind Teil der Lernkurve. Es darf frustrieren, muss aber
-fair bleiben. Jede Herausforderung soll mit Übung zuverlässig lösbar sein.
+Carry Me Home ist ein reduzierter 2D-Platformer, der absichtlich mit 3D-Assets
+gebaut ist. Die Welt gewinnt dadurch Plastizität, die Steuerung bleibt schlicht.
+Als Vorbild diente das Prinzip eines Rage Games: Fehler werden nicht abgefedert,
+sie gehören zur Lernkurve. Frust ist erlaubt, Unfairness nicht. Jede Stelle soll
+mit genug Übung sicher zu schaffen sein.
 
-Entstanden im Modul „Projekt 1: Interdisziplinäres Projekt" zusammen mit
-Moritz Lohmann. Ich habe die gesamte technische Umsetzung in Unity
-verantwortet, Moritz die 3D-Assets und das Level-Design.
+Entstanden ist das Ganze im Modul „Projekt 1: Interdisziplinäres Projekt“
+zusammen mit Moritz Lohmann. Bei mir lag die komplette technische Umsetzung in
+Unity, bei Moritz die 3D-Assets und das Level-Design.
 
-## Die Kernmechanik: Wind zeichnen
+## Wind, den man selbst malt
 
-Statt fester Windzonen zeichnet der Spieler den Wind selbst. Ein Mausstrich
-wird auf eine Zeichenebene in der Szene projiziert und daraus ein Pfad
-erzeugt, auf dem in gleichmäßigen Abständen unsichtbare Knoten sitzen. Wer mit
-seinem Trigger-Bereich in diese Knoten gerät — die Spielfigur ebenso wie
-bewegliche Objekte — wird an ihnen entlanggezogen, wie an einer Kette von
-Magneten.
+Es gibt keine festen Windzonen. Stattdessen zeichnet man den Wind. Ein
+Mausstrich wird auf eine Ebene in der Szene projiziert, daraus entsteht ein Pfad
+mit gleichmäßig verteilten, unsichtbaren Knoten. Alles, was mit seinem
+Trigger-Bereich in diese Knoten gerät, die Spielfigur ebenso wie bewegliche
+Objekte, wird an ihnen entlanggezogen. Wie an einer Kette aus Magneten.
 
-Damit daraus ein Spiel wird und kein Freifahrtschein, hat das Zeichnen ein
-**Energie-Budget**: Jeder gezeichnete Meter kostet, Energie lädt sich über die
-Zeit wieder auf. Wie lang eine Linie werden darf, ist damit eine
-Ressourcen-Entscheidung mitten im Sprung.
+Damit daraus eine Aufgabe wird und kein Freifahrtschein, hängt am Zeichnen ein
+**Energie-Budget**. Jeder gezeichnete Meter kostet, die Energie füllt sich über
+die Zeit wieder auf. Wie lang die Linie ausfällt, ist dadurch eine Entscheidung
+mitten im Sprung.
 
-Sämtliche Tuning-Werte — Knotenabstand, Zugkraft, Höchstgeschwindigkeit,
-Momentum-Erhalt, Lebensdauer der Linie — liegen in einem ScriptableObject
-statt im Code. Balancing ist damit eine Änderung im Editor, nicht im
-Compiler, und verschiedene Presets für verschiedene Level sind ohne Codezeile
-möglich.
+Sämtliche Stellschrauben liegen in einem ScriptableObject statt im Code:
+Knotenabstand, Zugkraft, Höchstgeschwindigkeit, wie viel Schwung erhalten
+bleibt, wie lange eine Linie lebt. Balancing passiert damit im Editor, nicht im
+Compiler, und mehrere Presets für unterschiedliche Level kosten keine einzige
+Codezeile.
 
-## Was daran schwierig war
+## Wo es hakte
 
-Die Idee klingt simpel. In der Umsetzung steckt die Schwierigkeit in den
-Details: Trigger-Setups, Rigidbody-Verhalten, die Reihenfolge der Knoten, das
-Löschen von Linien, der Erhalt des Momentums beim Loslassen und das Verhindern
-von unerwünschtem Hin-und-Her zwischen zwei Knoten. Fehler in solchen Systemen
-sind selten lokal — sie zeigen sich als Verhalten, nicht als Exception.
+Die Idee lässt sich in einem Satz erzählen. Die Schwierigkeit steckt in den
+Details: Trigger-Setups, Rigidbody-Verhalten, Reihenfolge der Knoten, Löschen
+von Linien, Erhalt des Schwungs beim Loslassen, und das Verhindern eines
+Hin-und-Her zwischen zwei benachbarten Knoten. Fehler in solchen Systemen sind
+selten lokal. Sie zeigen sich als Verhalten, nicht als Exception.
 
-Die Mechanik hat mehrere Anläufe gebraucht. Geholfen hat, sie früh und
-regelmäßig im echten Spielgefühl zu testen statt auf dem Papier zu optimieren.
+Die Mechanik brauchte mehrere Anläufe. Was geholfen hat: sie früh und immer
+wieder im echten Spielgefühl auszuprobieren, statt auf dem Papier zu optimieren.
 
-Dazu kamen technische Blocker, die nichts mit dem eigenen Code zu tun hatten:
-Das Projekt hing beim Initial Asset Database Refresh, Editor-Dateien waren
-beschädigt. In solchen Momenten sauber zu unterscheiden, ob das Problem im
-eigenen Code oder im Projekt-Setup liegt, war die eigentliche Übung.
+Dazu kamen Blocker, die mit dem eigenen Code nichts zu tun hatten. Das Projekt
+hing beim Initial Asset Database Refresh, Editor-Dateien waren beschädigt.
+Sauber auseinanderzuhalten, ob das Problem im Code oder im Projekt-Setup liegt,
+war dabei die eigentliche Übung.
 
-## Was ich mitgenommen habe
+## Zwei Dinge, die geblieben sind
 
-**Physik-Mechaniken funktionieren nicht über Werte, sondern über Zustände.**
-Entscheidend war nicht, wie stark der Zug ist, sondern wann er aktiv ist, wann
-er endet und was danach mit dem Schwung passiert. Klare Regeln dafür haben
-mehr gebracht als jedes Nachjustieren von Zahlen.
+**Physik-Mechaniken laufen über Zustände, nicht über Werte.** Entscheidend war
+nie, wie stark der Zug wirkt, sondern wann er einsetzt, wann er endet und was
+danach mit dem Schwung geschieht. Klare Regeln dafür haben mehr gebracht als
+jedes Nachjustieren an Zahlen.
 
-Und: Wenn der Editor oder der Projekt-Cache kaputt ist, bringt weiteres
-Code-Tuning nichts. Solche Ursachen früh zu prüfen, spart Stunden.
+Und: Wenn Editor oder Projekt-Cache kaputt sind, hilft weiteres Code-Tuning
+nicht. Solche Ursachen früh auszuschließen, spart Stunden.

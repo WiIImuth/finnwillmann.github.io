@@ -1,33 +1,33 @@
 ---
 headline: Über mich
-lead: Spieleentwicklung mit Unity — von der ersten Mechanik bis zum spielbaren Build.
+lead: Unity, Bewegung und die Frage, warum sich etwas richtig anfühlt.
 ---
 
-Ich studiere an der Hochschule Macromedia und entwickle Spiele mit Unity. Meine
-Projekte reichen vom Siebentage-Game-Jam im Dreierteam bis zum
-Einzel-Prüfungsprojekt, in dem ich Konzept, Programmierung, Level-Design und
-Gestaltung allein verantwortet habe.
+Ich studiere an der Hochschule Macromedia und entwickle Spiele in Unity. Die
+Bandbreite reicht vom Siebentage-Jam im Dreierteam bis zum Prüfungsprojekt, das
+ich allein gestemmt habe: Konzept, Code, Level, Gestaltung.
 
-Was sich durch alle Projekte zieht, ist das Interesse am **Spielgefühl**. Bei
-GrappleGlory habe ich Parcours nicht nach Gefühl gebaut, sondern gegen die
-tatsächlichen Physik-Werte gerechnet, und das Momentum-System so lange
-umgebaut, bis sich eine Kette aus Greifhaken, Wallrun und Absprung ohne
-Tempoverlust spielen ließ. Solche Fragen bringen mich weiter als große Feature-Listen.
+Der rote Faden ist das Spielgefühl. Bei GrappleGlory habe ich die Parcours
+nicht nach Augenmaß gebaut, sondern gegen die Physik-Werte des Controllers
+gerechnet, und das Momentum-System so oft umgebaut, bis Greifhaken, Wallrun und
+Absprung ohne Tempoverlust ineinandergreifen. Solche Detailfragen bringen mich
+weiter als lange Feature-Listen.
 
-Genauso wichtig ist mir, **nachvollziehbar zu arbeiten**. Ich führe zu jedem
-Projekt ein Logbuch mit Problem, Lösung und Begründung — Fehldiagnosen
-eingeschlossen, ausdrücklich markiert. Das hat mir mehr als einmal Stunden
-gespart, und es hat mir beigebracht, einer plausiblen Erklärung erst zu
-glauben, wenn sie wirklich alle Symptome erklärt.
+Fast genauso wichtig finde ich, nachvollziehbar zu arbeiten. Zu jedem Projekt
+läuft ein Logbuch mit: Problem, Lösung, Begründung. Fehldiagnosen bleiben darin
+stehen und sind als solche markiert. Das hat mir schon mehrfach Stunden
+gespart. Vor allem hat es mir beigebracht, einer plausiblen Erklärung erst dann
+zu trauen, wenn sie sämtliche Symptome abdeckt und nicht bloß das lauteste.
 
-## Womit ich arbeite
+## Werkzeuge
 
-Unity und C# sind mein Zuhause, dazu Blender für 3D-Assets, eigene Shader und
-Editor-Werkzeuge, wenn wiederkehrende Arbeit reproduzierbar werden soll. Sound
-mache ich ebenfalls selbst — bei GrappleGlory werden UI-Klänge zur Laufzeit
-synthetisiert statt aus Dateien abgespielt.
+Zuhause bin ich in Unity und C#. Dazu kommt Blender für 3D-Assets, eigene
+Shader, und Editor-Werkzeuge überall dort, wo sich Arbeit wiederholt und
+reproduzierbar werden soll. Sound baue ich ebenfalls selbst. Bei GrappleGlory
+entstehen die UI-Klänge zur Laufzeit aus Parametern, statt aus Dateien
+abgespielt zu werden.
 
 ## Was ich suche
 
-Hier gehört ein Satz hin, wonach du gerade suchst — Praktikum,
+Hier gehört ein Satz hin, wonach du gerade suchst: Praktikum,
 Werkstudentenstelle, Einstieg nach dem Studium, ab wann und wo.

@@ -1,7 +1,7 @@
 ---
 title: Suitcase Sins
 slug: suitcase-sins
-summary: Röntgenbilder von Koffern prüfen und entscheiden, welche Seele durch das Himmelstor darf — in sieben Tagen bei einem Game Jam entstanden.
+summary: Koffer durchleuchten und entscheiden, welche Seele durchs Himmelstor darf. In sieben Tagen bei einem Game Jam gebaut.
 year: 2025
 role: Visual Design und 3D-Modelling
 tags:
@@ -14,34 +14,35 @@ stack:
   - Blender
 repo: ""
 demo: https://vanitas2005.itch.io/suitcase-sins
+demoLabel: Auf itch.io spielen
 cover: ""
 order: 3
 draft: false
 ---
 
-## Die Idee
+## Flughafen trifft Himmelstor
 
-Das Thema des Game Jams war „Low Battery", die Dauer sieben Tage. Unsere Idee
-verband zwei Bilder, die auf den ersten Blick nichts miteinander zu tun haben:
-die **Sicherheitskontrolle am Flughafen** und den **Eintritt in den Himmel**.
+Das Jam-Thema lautete „Low Battery“, die Frist betrug sieben Tage. Unsere Idee
+brachte zwei Bilder zusammen, die zunächst nichts miteinander zu tun haben: die
+**Sicherheitskontrolle am Flughafen** und den **Eintritt in den Himmel**.
 
-Heraus kam ein Arcade-Spiel, das schnelle Urteile verlangt. Man sitzt am
-Röntgengerät vor den Toren des Himmels, prüft, was die Seelen im Gepäck haben,
-und entscheidet, wer passieren darf.
+Herausgekommen ist ein Arcade-Spiel um schnelle Urteile. Man sitzt am
+Röntgengerät vor dem Himmelstor, sieht, was die Seelen so im Gepäck haben, und
+entscheidet über Einlass oder Abweisung.
 
-## Der Anspruch
+## Klein, aber fertig
 
-Das Ziel war ausdrücklich kein möglichst großes Spiel, sondern eines, das
-**mechanisch durchkonzipiert und am Ende der Woche tatsächlich spielbar** ist.
-Bei sieben Tagen ist das die schwierigere der beiden Aufgaben.
+Wir wollten ausdrücklich kein möglichst großes Spiel, sondern eines, das
+**mechanisch durchdacht und am siebten Tag wirklich spielbar** ist. Von diesen
+beiden Zielen ist das zweite das schwerere.
 
-## Meine Rolle
+## Was ich gemacht habe
 
-Im Dreierteam war ich für **Visual Design und 3D-Modelling** zuständig. Darian
-K. hatte Teamleitung und Programmierung, Moritz L. Sound- und Art-Design.
+Im Dreierteam lag bei mir **Visual Design und 3D-Modelling**. Darian K. hatte
+Teamleitung und Programmierung, Moritz L. Sound- und Art-Design.
 
-## Was ich mitgenommen habe
+## Sieben Tage sortieren
 
-Ein Game Jam zwingt zu Entscheidungen, für die man sonst wochenlang Argumente
-sammelt. Was am Freitag nicht steht, steht gar nicht — und genau dieser Druck
-sortiert erstaunlich zuverlässig das Wesentliche vom Beiwerk.
+Ein Jam erzwingt Entscheidungen, für die man sonst wochenlang Argumente wälzt.
+Was am Freitag nicht steht, steht überhaupt nicht. Dieser Druck trennt
+erstaunlich zuverlässig das Wesentliche vom Rest.

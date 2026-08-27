@@ -267,7 +267,7 @@ ${canonical ? `<link rel="canonical" href="${canonical}">` : ""}
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>">
 </head>
 <body class="${bodyClass}">
-<a class="skip" href="#main">Zum Inhalt springen</a>
+<a class="skip" href="#main">Direkt zum Inhalt</a>
 
 <header class="site-header">
   <div class="wrap header-inner">
@@ -339,28 +339,28 @@ function homePage({ config, home, projects }) {
   <h1>${escapeHtml(config.name)}</h1>
   <p class="lead">${escapeHtml(config.tagline)}</p>
   <div class="btn-row">
-    <a class="btn btn-primary" href="/projekte/">Projekte ansehen</a>
+    <a class="btn btn-primary" href="/projekte/">Zu den Projekten</a>
     ${heroLinks}${config.cv ? `<a class="btn" href="${config.cv}">Lebenslauf (PDF)</a>` : ""}
   </div>
 </section>
 
 ${home.html ? `<section class="wrap section intro"><div class="prose narrow">${home.html}</div>
-  <p class="section-link"><a href="/ueber-mich/">Mehr über mich →</a></p></section>` : ""}
+  <p class="section-link"><a href="/ueber-mich/">Wer ich bin →</a></p></section>` : ""}
 
 <section class="wrap section">
-  <h2 class="section-title">Ausgewählte Projekte</h2>
+  <h2 class="section-title">Eine Auswahl</h2>
   ${featured.length ? `<div class="cards">${featured.map(projectCard).join("")}</div>` : emptyProjects()}
   ${projects.length > featured.length
-      ? `<p class="section-link"><a href="/projekte/">Alle ${projects.length} Projekte ansehen →</a></p>`
+      ? `<p class="section-link"><a href="/projekte/">Alle ${projects.length} Projekte →</a></p>`
       : projects.length
-        ? `<p class="section-link"><a href="/projekte/">Zur Projektübersicht →</a></p>`
+        ? `<p class="section-link"><a href="/projekte/">Zur Übersicht →</a></p>`
         : ""}
 </section>
 
 <section class="wrap section cta">
-  <h2>Lass uns sprechen</h2>
-  <p class="lead">Interesse an einer Zusammenarbeit oder eine offene Stelle im Blick?</p>
-  <div class="btn-row"><a class="btn btn-primary" href="/kontakt/">Kontakt aufnehmen</a></div>
+  <h2>Schreib mir</h2>
+  <p class="lead">Offene Stelle, Projektidee oder einfach eine Frage zu einem der Spiele?</p>
+  <div class="btn-row"><a class="btn btn-primary" href="/kontakt/">Zum Kontakt</a></div>
 </section>
 `;
 }
@@ -368,9 +368,9 @@ ${home.html ? `<section class="wrap section intro"><div class="prose narrow">${h
 function projectsIndexPage({ config, projects, intro }) {
   return `
 ${pageHeader({
-    eyebrow: "Arbeiten",
+    eyebrow: "Spiele",
     title: "Projekte",
-    lead: intro || "Eine Auswahl dessen, woran ich gearbeitet habe.",
+    lead: intro || "Woran ich bisher gearbeitet habe.",
   })}
 
 <section class="wrap section-tight">
@@ -398,7 +398,7 @@ function projectPage({ project }) {
 
   return `
 <article class="wrap project">
-  <a class="back" href="/projekte/">← Alle Projekte</a>
+  <a class="back" href="/projekte/">← Zurück zur Übersicht</a>
   <header class="project-header">
     <h1>${escapeHtml(project.data.title)}</h1>
     <p class="lead">${escapeHtml(project.data.summary || "")}</p>
@@ -431,7 +431,7 @@ ${pageHeader({
 
 <section class="wrap section-tight">
   <div class="prose narrow">${about.html}</div>
-  ${skills ? `<h2 class="section-title spaced">Womit ich arbeite</h2><div class="skills">${skills}</div>` : ""}
+  ${skills ? `<h2 class="section-title spaced">Werkzeuge</h2><div class="skills">${skills}</div>` : ""}
   ${config.cv ? `<div class="btn-row spaced"><a class="btn" href="${config.cv}">Lebenslauf als PDF</a></div>` : ""}
 </section>
 `;
@@ -456,7 +456,7 @@ ${pageHeader({
   <div class="btn-row spaced">
     <a class="btn btn-primary" href="mailto:${escapeHtml(config.email)}">${escapeHtml(config.email)}</a>
   </div>
-  ${links ? `<h2 class="section-title spaced">Sonst noch</h2><ul class="link-list">${links}</ul>` : ""}
+  ${links ? `<h2 class="section-title spaced">Woanders zu finden</h2><ul class="link-list">${links}</ul>` : ""}
 </section>
 `;
 }
@@ -578,7 +578,7 @@ async function build() {
     layout({
       config,
       title: "Projekte",
-      description: `Projekte von ${config.name}.`,
+      description: `Spiele und Arbeiten von ${config.name}.`,
       canonical: canonical("/projekte/"),
       bodyClass: "page-projects",
       current: "/projekte/",
@@ -642,10 +642,10 @@ async function build() {
     "404.html",
     layout({
       config,
-      title: "Seite nicht gefunden",
+      title: "Nichts gefunden",
       description: "Diese Seite existiert nicht.",
       bodyClass: "page-legal",
-      content: `<section class="wrap section prose narrow"><h1>404</h1><p>Diese Seite gibt es nicht. <a href="/">Zurück zur Startseite</a>.</p></section>`,
+      content: `<section class="wrap section prose narrow"><h1>404</h1><p>Diese Adresse führt ins Leere. <a href="/">Zurück zur Startseite</a>.</p></section>`,
     })
   );
 
