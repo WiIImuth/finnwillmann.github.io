@@ -262,6 +262,7 @@ ${canonical ? `<link rel="canonical" href="${canonical}">` : ""}
 <meta property="og:description" content="${escapeHtml(description || config.site?.description || "")}">
 <meta name="theme-color" content="#0d0f12" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<script>document.documentElement.classList.add("js")</script>
 <link rel="stylesheet" href="/assets/styles.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>">
 </head>
@@ -285,6 +286,8 @@ ${content}
     <nav class="footer-links" aria-label="Fußzeile">${footerLinks}<a href="/impressum/">Impressum</a></nav>
   </div>
 </footer>
+
+<script src="/assets/site.js" defer></script>
 </body>
 </html>
 `;

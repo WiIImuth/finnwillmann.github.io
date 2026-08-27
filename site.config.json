@@ -3,7 +3,7 @@
   "role": "Spieleentwicklung",
   "tagline": "Ich baue Spiele, in denen sich Bewegung gut anfühlt — und schreibe auf, warum sie es tut.",
   "location": "Deutschland",
-  "email": "deine@mail.de",
+  "email": "mail@finnwillmann.com",
   "lang": "de",
   "site": {
     "url": "https://finnwillmann.com",
@@ -27,16 +27,16 @@
   ],
   "links": [
     {
-      "label": "GitHub",
-      "href": "https://github.com/DEIN-NAME"
+      "label": "Instagram",
+      "href": "https://www.instagram.com/willlmuth/"
     },
     {
-      "label": "LinkedIn",
-      "href": "https://www.linkedin.com/in/DEIN-NAME"
+      "label": "itch.io",
+      "href": "https://vanitas2005.itch.io/suitcase-sins"
     },
     {
       "label": "E-Mail",
-      "href": "mailto:deine@mail.de"
+      "href": "mailto:mail@finnwillmann.com"
     }
   ],
   "cv": "",
@@ -74,7 +74,7 @@
       "Straße Hausnummer",
       "PLZ Ort"
     ],
-    "email": "deine@mail.de",
+    "email": "mail@finnwillmann.com",
     "note": "Pflichtangaben nach § 5 DDG. Bitte vor dem Veröffentlichen ausfüllen."
   },
   "projectsIntro": "Drei Spiele aus Studium und Game Jam — mit dem Weg dorthin, nicht nur dem Ergebnis."
