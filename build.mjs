@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Portfolio-Build — ohne externe Abhängigkeiten.
+ * Portfolio-Build, ohne externe Abhängigkeiten.
  *
  *   node build.mjs        Baut die Seite nach dist/
  *
@@ -235,7 +235,7 @@ function markdown(src) {
  * ------------------------------------------------------------------ */
 
 function layout({ config, title, description, bodyClass = "", content, canonical, current = "" }) {
-  const fullTitle = title ? `${title} · ${config.name}` : `${config.name} — ${config.role}`;
+  const fullTitle = title ? `${title} · ${config.name}` : `${config.name} · ${config.role}`;
 
   const navHtml = (config.nav || [])
     .map((item) => {
@@ -319,7 +319,7 @@ function pageHeader({ eyebrow, title, lead }) {
 }
 
 function emptyProjects() {
-  return `<p class="muted">Noch keine Projekte — lege eine Datei unter <code>content/projects/</code> an.</p>`;
+  return `<p class="muted">Noch keine Projekte. Lege eine Datei unter <code>content/projects/</code> an.</p>`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -505,7 +505,7 @@ async function loadProjects() {
     const doc = await loadMarkdownFile(path.join(dir, file));
     if (doc.data.draft === true) continue;
     if (!doc.data.title) {
-      console.warn(`  ! ${file} hat kein "title" im Frontmatter — wird übersprungen.`);
+      console.warn(`  ! ${file} hat kein "title" im Frontmatter, wird übersprungen.`);
       continue;
     }
     projects.push({
@@ -549,7 +549,7 @@ async function build() {
   try {
     await rm(DIST, { recursive: true, force: true });
   } catch {
-    console.warn("  ! dist/ konnte nicht geleert werden — Dateien werden überschrieben.");
+    console.warn("  ! dist/ konnte nicht geleert werden, Dateien werden überschrieben.");
   }
   await mkdir(DIST, { recursive: true });
 
@@ -680,10 +680,10 @@ async function build() {
     await writeFile(path.join(DIST, "CNAME"), `${new URL(base).hostname}\n`, "utf8");
   }
 
-  console.log(`✓ Build fertig — ${projects.length} Projekt(e), Ausgabe in dist/`);
+  console.log(`✓ Build fertig: ${projects.length} Projekt(e), Ausgabe in dist/`);
   console.log(`  · /  /projekte/  /ueber-mich/  /kontakt/  /impressum/`);
   for (const p of projects) console.log(`  · /projekte/${p.slug}/  (${p.file})`);
-  if (config.site?.noindex) console.log(`  ! noindex ist aktiv — Suchmaschinen bleiben ausgesperrt.`);
+  if (config.site?.noindex) console.log(`  ! noindex ist aktiv, Suchmaschinen bleiben ausgesperrt.`);
 }
 
 build().catch((err) => {

@@ -80,7 +80,7 @@ createServer(async (req, res) => {
       return res.end(body);
     } catch {
       res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
-      return res.end("404 — nicht gefunden");
+      return res.end("404: nicht gefunden");
     }
   }
 
