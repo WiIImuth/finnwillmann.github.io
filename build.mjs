@@ -389,7 +389,9 @@ function projectPage({ project }) {
   if (project.data.repo)
     actions.push(`<a class="btn" href="${project.data.repo}" target="_blank" rel="noopener noreferrer">Quellcode</a>`);
   if (project.data.demo)
-    actions.push(`<a class="btn btn-primary" href="${project.data.demo}" target="_blank" rel="noopener noreferrer">Live ansehen</a>`);
+    actions.push(
+      `<a class="btn btn-primary" href="${project.data.demo}" target="_blank" rel="noopener noreferrer">${escapeHtml(project.data.demoLabel || "Live ansehen")}</a>`
+    );
 
   return `
 <article class="wrap project">

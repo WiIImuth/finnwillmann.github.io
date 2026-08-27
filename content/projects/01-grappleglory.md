@@ -16,7 +16,8 @@ stack:
   - ProBuilder
   - Git
 repo: ""
-demo: ""
+demo: https://drive.google.com/drive/folders/1CQqry5PNj__V8CvP2Zu-ybV9MXhn8mew?usp=drive_link
+demoLabel: Build herunterladen
 cover: ""
 order: 1
 draft: false
