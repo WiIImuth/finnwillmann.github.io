@@ -1,3 +1,1 @@
-I build games in Unity. Almost all of them revolve around movement:
-grappling hooks, wind, speed. What occupies me is less what a mechanic can do
-than why it feels right. That is the question I spend the longest on.
+I am studying game design and work primarily in Unity. My recent games focus on movement and are intentionally difficult. I am less concerned with what a mechanic can do than with how it feels right—and finding the solution to that question is what brings me joy.
