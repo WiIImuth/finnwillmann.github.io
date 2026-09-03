@@ -133,21 +133,26 @@
   :root:not([data-theme="dark"]) {
     color-scheme: light;
 
-    --bg:          oklch(97.5% 0.008 285);
-    --bg-soft:     oklch(94.5% 0.011 285);
+    /* Hell ist durchgehend blau, nicht violett. Auch die Grautoene
+       liegen auf Blau (Farbwinkel 255 statt 285), sonst schimmert im
+       Papier und in den Linien weiter ein Lila mit. */
+    --bg:          oklch(97.5% 0.008 255);
+    --bg-soft:     oklch(94.5% 0.011 255);
     --surface:     oklch(100% 0 0);
-    --surface-2:   oklch(98.5% 0.006 285);
-    --text:        oklch(20% 0.024 285);
-    --text-muted:  oklch(48% 0.022 285);
-    --border:        oklch(85% 0.016 285);
-    --border-soft:   oklch(91% 0.012 285);
-    --border-strong: oklch(64% 0.020 285);
+    --surface-2:   oklch(98.5% 0.006 255);
+    --text:        oklch(20% 0.024 255);
+    --text-muted:  oklch(48% 0.022 255);
+    --border:        oklch(85% 0.016 255);
+    --border-soft:   oklch(91% 0.012 255);
+    --border-strong: oklch(64% 0.020 255);
 
-    --accent:          oklch(48% 0.24 300);
-    --accent-soft:     oklch(40% 0.22 300);
-    --action:          oklch(50% 0.25 300);
-    --action-ink:      oklch(99% 0.01 300);
-    --accent-contrast: oklch(99% 0.01 300);
+    /* Auf hellem Papier traegt derselbe Blauton beides: als Schrift
+       5.6:1, als Flaeche mit weisser Schrift 5.9:1. */
+    --accent:          oklch(50% 0.19 255);
+    --accent-soft:     oklch(42% 0.19 258);
+    --action:          oklch(50% 0.19 255);
+    --action-ink:      oklch(99% 0.01 255);
+    --accent-contrast: oklch(99% 0.01 255);
     --kuehl:           oklch(48% 0.16 262);
 
     --shadow-sm: 0 1px 2px oklch(0% 0 0 / 6%);
@@ -167,21 +172,26 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --bg:          oklch(97.5% 0.008 285);
-  --bg-soft:     oklch(94.5% 0.011 285);
+  /* Hell ist durchgehend blau, nicht violett. Auch die Grautoene
+     liegen auf Blau (Farbwinkel 255 statt 285), sonst schimmert im
+     Papier und in den Linien weiter ein Lila mit. */
+  --bg:          oklch(97.5% 0.008 255);
+  --bg-soft:     oklch(94.5% 0.011 255);
   --surface:     oklch(100% 0 0);
-  --surface-2:   oklch(98.5% 0.006 285);
-  --text:        oklch(20% 0.024 285);
-  --text-muted:  oklch(48% 0.022 285);
-  --border:        oklch(85% 0.016 285);
-  --border-soft:   oklch(91% 0.012 285);
-  --border-strong: oklch(64% 0.020 285);
+  --surface-2:   oklch(98.5% 0.006 255);
+  --text:        oklch(20% 0.024 255);
+  --text-muted:  oklch(48% 0.022 255);
+  --border:        oklch(85% 0.016 255);
+  --border-soft:   oklch(91% 0.012 255);
+  --border-strong: oklch(64% 0.020 255);
 
-  --accent:          oklch(48% 0.24 300);
-  --accent-soft:     oklch(40% 0.22 300);
-  --action:          oklch(50% 0.25 300);
-  --action-ink:      oklch(99% 0.01 300);
-  --accent-contrast: oklch(99% 0.01 300);
+  /* Auf hellem Papier traegt derselbe Blauton beides: als Schrift
+     5.6:1, als Flaeche mit weisser Schrift 5.9:1. */
+  --accent:          oklch(50% 0.19 255);
+  --accent-soft:     oklch(42% 0.19 258);
+  --action:          oklch(50% 0.19 255);
+  --action-ink:      oklch(99% 0.01 255);
+  --accent-contrast: oklch(99% 0.01 255);
   --kuehl:           oklch(48% 0.16 262);
 
   --shadow-sm: 0 1px 2px oklch(0% 0 0 / 6%);
