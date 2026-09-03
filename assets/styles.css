@@ -96,6 +96,9 @@
   --grund-b: var(--kuehl);
   --schleier:  78;
   --effekt:    0.85;
+  /* Staerke der Wellen auf den Unterseiten. Hell darf hoeher sein,
+     weil das Einfaerben dort ohnehin sanfter ausfaellt. */
+  --wellen-staerke: 0.85;
 
   --shadow-sm: 0 1px 2px oklch(0% 0 0 / 45%);
   --shadow-lg: 0 2px 6px oklch(0% 0 0 / 40%), 0 30px 60px -30px oklch(0% 0 0 / 80%);
@@ -160,6 +163,7 @@
     --glow: 0.16;
     --schleier: 84;
     --effekt: 0.85;
+    --wellen-staerke: 0.9;
     --neon-kern: #033fb2;
     --neon-rgb:  49 119 220;
     --grund-a: var(--kuehl);
@@ -199,6 +203,7 @@
   --glow: 0.16;
   --schleier: 84;
   --effekt: 0.85;
+  --wellen-staerke: 0.9;
   --neon-kern: #033fb2;
   --neon-rgb:  49 119 220;
   --grund-a: var(--kuehl);
@@ -2066,6 +2071,92 @@ body.lightbox-open { overflow: hidden; }
   .neon-balken,
   .neon-schein,
   .neon-saum { transform: scaleX(1); }
+}
+
+
+/* ==================================================================
+   Wellen auf den Unterseiten
+
+   Dieselbe Buehne wie auf der Startseite, nur ohne Neon und ohne
+   Scrollverlauf: es gibt hier keinen festgehaltenen Hero, also auch
+   nichts aufzubauen. Die Wellen stehen ruhig hinter der Seite, der
+   Inhalt legt sich als Schleier darueber, und die Mitte bleibt frei,
+   damit hinter dem Text nichts passiert.
+   ================================================================== */
+
+.wellen-buehne {
+  mix-blend-mode: var(--buehne-blend);
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  height: 100svh;
+  margin-bottom: -100svh;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Kein Fortschrittswert, also eine feste Staerke. Etwas leiser als im
+   Uebergang auf der Startseite, weil hier von Anfang an Text darueber
+   liegt. */
+.wellen-buehne .shader { opacity: var(--wellen-staerke); }
+.wellen-buehne .buehne-grund { opacity: 1; }
+
+/* Die Abdunklung der Mitte faellt hier schwaecher aus. Auf der
+   Startseite deckt sie einen bewegten Sternenfall zu, hier nur ein
+   ruhiges Feld, und der Horizont der Wellen liegt genau in der Mitte. */
+.wellen-buehne .buehne-mitte {
+  background: radial-gradient(
+    ellipse 62% 46% at 50% 44%,
+    var(--bg) 0%,
+    color-mix(in oklab, var(--bg) 68%, transparent) 38%,
+    transparent 74%
+  );
+}
+
+/* Oben bleibt der Schleier weg, damit die Wellen hinter dem
+   Seitentitel wirklich zu sehen sind. Erst darunter, wo der Inhalt
+   dicht wird, legt er sich darueber. Die Kante liegt bei einer knappen
+   halben Bildschirmhoehe, also ungefaehr am Fuss des Kopfbereichs. */
+.seite-inhalt {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 26vh,
+    color-mix(in oklab, var(--bg) calc(var(--schleier) * 1%), transparent) 54vh
+  );
+}
+
+.seite-inhalt .band {
+  background: color-mix(in oklab, var(--bg-soft) calc(var(--schleier) * 1% + 4%), transparent);
+}
+
+/* Bilder bleiben undurchsichtig, sonst scheint das Licht durch ein
+   Bildschirmfoto. */
+.seite-inhalt .werk-bild,
+.seite-inhalt .shots figure,
+.seite-inhalt .cover-frame,
+.seite-inhalt .artwork-video,
+.seite-inhalt .insta-tile { background: var(--surface); }
+
+.hat-wellen .site-footer { background: var(--bg); }
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .wellen-buehne .shader { opacity: var(--wellen-staerke); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wellen-buehne {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin-bottom: 0;
+  }
+
+  .wellen-buehne .shader,
+  .wellen-buehne .buehne-mitte { display: none; }
 }
 
 @media (max-width: 46rem) {

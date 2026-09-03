@@ -434,7 +434,7 @@ const ICON_THEME = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false
  * Layout
  * ------------------------------------------------------------------ */
 
-function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "", image = "", v = {} }) {
+function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "", image = "", v = {}, wellen = false }) {
   const r = routes(L);
   const t = L.t;
   // Künstlername vorn, bürgerlicher Name direkt daneben. So steht in jedem
@@ -514,7 +514,7 @@ ${ogImage ? `<meta name="twitter:card" content="summary_large_image">` : ""}
 <script type="application/ld+json">${JSON.stringify(person).replace(/</g, "\\u003c")}</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>">
 </head>
-<body class="${bodyClass}">
+<body class="${bodyClass}${wellen ? " hat-wellen" : ""}">
 <a class="skip" href="#main">${escapeHtml(t.skip)}</a>
 
 <header class="site-header">
@@ -534,7 +534,16 @@ ${ogImage ? `<meta name="twitter:card" content="summary_large_image">` : ""}
 </header>
 
 <main id="main">
+${wellen
+  ? `<div class="wellen-buehne" aria-hidden="true">
+  <div class="buehne-grund"></div>
+  <canvas class="shader"></canvas>
+  <div class="buehne-mitte"></div>
+</div>
+<div class="seite-inhalt">
 ${content}
+</div>`
+  : content}
 </main>
 
 <footer class="site-footer">
@@ -544,7 +553,7 @@ ${content}
   </div>
 </footer>
 
-${bodyClass.includes("page-home") ? `<script src="/assets/shader.js${v.shader ? `?v=${v.shader}` : ""}" defer></script>` : ""}
+${bodyClass.includes("page-home") || wellen ? `<script src="/assets/shader.js${v.shader ? `?v=${v.shader}` : ""}" defer></script>` : ""}
 <script src="/assets/site.js${v.js ? `?v=${v.js}` : ""}" defer></script>
 </body>
 </html>
@@ -607,9 +616,9 @@ function werkZeile(project, L, index) {
 </li>`;
 }
 
-function pageHeader({ eyebrow, title, lead, extra = "" }) {
+function pageHeader({ eyebrow, title, lead, extra = "", glow = true }) {
   return `<section class="hero hero-page">
-  <div class="hero-glow" aria-hidden="true"></div>
+  ${glow ? `<div class="hero-glow" aria-hidden="true"></div>` : ""}
   <div class="wrap hero-inner">
     ${eyebrow ? `<p class="eyebrow">${escapeHtml(eyebrow)}</p>` : ""}
     <h1 class="display-sm">${escapeHtml(title)}</h1>
@@ -736,7 +745,7 @@ ${ctaSection(L)}
 function projectsIndexPage({ L, projects, intro }) {
   const t = L.t;
   return `
-${pageHeader({ title: t.projectsTitle, lead: intro || t.projectsLead })}
+${pageHeader({ glow: false, title: t.projectsTitle, lead: intro || t.projectsLead })}
 
 <section class="wrap section-tight">
   ${projects.length
@@ -867,7 +876,7 @@ function artworksPage({ config, L, artworks }) {
     : "";
 
   return `
-${pageHeader({ title: t.artworksTitle, lead: pick(config.artworksIntro, L.code) || t.artworksLead })}
+${pageHeader({ glow: false, title: t.artworksTitle, lead: pick(config.artworksIntro, L.code) || t.artworksLead })}
 
 <section class="wrap section-tight artworks">
   ${entries || `<p class="muted">${escapeHtml(t.empty)}</p>`}
@@ -891,7 +900,7 @@ function aboutPage({ config, L, about }) {
     .join("");
 
   return `
-${pageHeader({ title: about.data.headline || t.aboutTitle, lead: about.data.lead || "" })}
+${pageHeader({ glow: false, title: about.data.headline || t.aboutTitle, lead: about.data.lead || "" })}
 
 <section class="wrap section-tight">
   <div class="prose narrow">${about.html}</div>
@@ -912,7 +921,7 @@ function contactPage({ config, L, contact }) {
     .join("");
 
   return `
-${pageHeader({ title: contact.data.headline || t.contactTitle, lead: contact.data.lead || "" })}
+${pageHeader({ glow: false, title: contact.data.headline || t.contactTitle, lead: contact.data.lead || "" })}
 
 <section class="wrap section-tight">
   ${contact.html ? `<div class="prose narrow">${contact.html}</div>` : ""}
@@ -1113,6 +1122,7 @@ async function build() {
         canonical: abs(r.projects),
         altUrl: ro.projects,
         bodyClass: "page-projects",
+        wellen: true,
         current: r.projects,
         content: projectsIndexPage({ L, projects, intro: pick(config.projectsIntro, L.code) }),
       })
@@ -1146,6 +1156,7 @@ async function build() {
         canonical: abs(r.artworks),
         altUrl: ro.artworks,
         bodyClass: "page-artworks",
+        wellen: true,
         current: r.artworks,
         content: artworksPage({ config, L, artworks }),
       })
@@ -1161,6 +1172,7 @@ async function build() {
         canonical: abs(r.about),
         altUrl: ro.about,
         bodyClass: "page-about",
+        wellen: true,
         current: r.about,
         content: aboutPage({ config, L, about }),
       })
@@ -1176,6 +1188,7 @@ async function build() {
         canonical: abs(r.contact),
         altUrl: ro.contact,
         bodyClass: "page-contact",
+        wellen: true,
         current: r.contact,
         content: contactPage({ config, L, contact }),
       })

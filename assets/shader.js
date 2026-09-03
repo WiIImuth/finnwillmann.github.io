@@ -306,6 +306,9 @@
     }
 
     var hellAn = false;
+    // Auf den Unterseiten laufen nur die Wellen. Das spart das zweite
+    // Programm pro Bild und ist der ruhigere Hintergrund fuer Text.
+    var nurWellen = !!einst.nurWellen;
 
     function wellenSatz(w) {
       return {
@@ -404,6 +407,10 @@
       // Dunkel sind die Strahlen Licht und werden addiert. Hell sind
       // sie ein Farbton und werden normal darueber gelegt, die Flaeche
       // faerbt dann spaeter per multiply die Seite ein.
+      if (nurWellen) {
+        raf = requestAnimationFrame(bild);
+        return;
+      }
       if (hellAn) gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       else gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
       gl.useProgram(strahlen.p);

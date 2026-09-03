@@ -321,6 +321,94 @@
     }
   }
 
+
+  /* ------------------------------------------- Wellen auf Unterseiten */
+
+  // Dieselbe Buehne wie auf der Startseite, nur ohne Neon und ohne
+  // Scrollverlauf. Es laeuft nur der Wellen-Shader, also ein Programm
+  // pro Bild statt zwei. Alles andere gilt unveraendert: kleiner
+  // gerechnet als der Bildschirm, gedeckelte Bildrate, aus ausserhalb
+  // des Bildes, aus im versteckten Tab, aus bei weniger Bewegung, und
+  // ohne WebGL2 bleibt die Flaeche einfach leer.
+
+  const wellenBuehne = document.querySelector(".wellen-buehne");
+
+  if (wellenBuehne && !reduced) {
+    const wellenFlaeche = wellenBuehne.querySelector(".shader");
+    let wellenMotor = null;
+    let wellenImBild = true;
+    let wellenWach = !document.hidden;
+
+    const wellenAnwerfen = () => {
+      if (wellenMotor || !wellenFlaeche || !window.hintergrundShader) return;
+      wellenMotor = window.hintergrundShader(wellenFlaeche, {
+        nurWellen: true,
+        mass: 0.55,
+        wellen: {
+          horizonColor: "#241640",
+          waveColor: "#6a34d8",
+          crestColor: "#c9a6ff",
+          speed: 0.18,
+          steps: 28,
+          brightness: 0.9,
+          opacity: 0.6,
+          tilt: 1.11,
+          fogDepth: 15,
+        },
+        wellenHell: {
+          horizonColor: "#b2cbf9",
+          waveColor: "#3778d7",
+          crestColor: "#bfd9ff",
+          speed: 0.18,
+          steps: 28,
+          brightness: 1,
+          opacity: 0.28,
+          tilt: 1.11,
+          fogDepth: 15,
+        },
+      });
+      if (wellenMotor) {
+        wellenMotor.modus(currentTheme() !== "dark");
+        wellenMotor.neuMessen();
+      }
+    };
+
+    const wellenPruefen = () => {
+      if (!wellenMotor) wellenAnwerfen();
+      if (!wellenMotor) return;
+      wellenMotor.modus(currentTheme() !== "dark");
+      if (wellenImBild && wellenWach) wellenMotor.an();
+      else wellenMotor.aus();
+    };
+
+    addEventListener(
+      "resize",
+      () => {
+        if (wellenMotor) wellenMotor.neuMessen();
+      },
+      { passive: true }
+    );
+
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(
+        (eintraege) => {
+          wellenImBild = eintraege[0].isIntersecting;
+          wellenPruefen();
+        },
+        { threshold: 0 }
+      ).observe(wellenBuehne);
+    }
+
+    addEventListener("visibilitychange", () => {
+      wellenWach = !document.hidden;
+      wellenPruefen();
+    });
+
+    addEventListener("thema", wellenPruefen);
+
+    wellenPruefen();
+  }
+
   /* ------------------------------------------- Navigation bei schmal */
 
   const kopf = document.querySelector(".site-header");
