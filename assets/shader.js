@@ -387,10 +387,10 @@
         ruheK = k < 0 ? 0 : k > 1 ? 1 : k;
         gl.useProgram(strahlen.p);
         if (strahlen.u.uOpacity) {
-          gl.uniform1f(strahlen.u.uOpacity, strahlenWerte.uOpacity * (1 - 0.4 * ruheK));
+          gl.uniform1f(strahlen.u.uOpacity, strahlenWerte.uOpacity * (1 - 0.2 * ruheK));
         }
         if (strahlen.u.uGlow) {
-          gl.uniform1f(strahlen.u.uGlow, strahlenWerte.uGlow * (1 - 0.25 * ruheK));
+          gl.uniform1f(strahlen.u.uGlow, strahlenWerte.uGlow * (1 - 0.15 * ruheK));
         }
       },
       aus: function () {

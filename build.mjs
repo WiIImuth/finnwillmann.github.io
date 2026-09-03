@@ -669,6 +669,7 @@ function homePage({ config, L, home, projects, artworks }) {
 <div class="buehne" aria-hidden="true">
   <div class="buehne-grund"></div>
   <canvas class="shader"></canvas>
+  <div class="buehne-mitte"></div>
   <div class="neon">
     <div class="neon-schein"></div>
     <div class="neon-saum"></div>

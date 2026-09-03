@@ -87,8 +87,8 @@
      Inhalts in Prozent, Effekt die Staerke des Shaders dahinter. */
   --neon-kern: #f4e6ff;
   --neon-rgb:  184 111 255;
-  --schleier:  84;
-  --effekt:    0.5;
+  --schleier:  78;
+  --effekt:    0.85;
 
   --shadow-sm: 0 1px 2px oklch(0% 0 0 / 45%);
   --shadow-lg: 0 2px 6px oklch(0% 0 0 / 40%), 0 30px 60px -30px oklch(0% 0 0 / 80%);
@@ -1375,12 +1375,17 @@ body.lightbox-open { overflow: hidden; }
   align-content: center;
   padding-block: var(--s7) var(--s5);
   transform: translateY(calc(var(--p, 0) * -7vh)) scale(calc(1 - var(--p, 0) * 0.05));
-  opacity: calc(1 - var(--p, 0) * 0.82);
+  /* Er wird ganz unsichtbar, nicht nur blass: bei etwa der Haelfte des
+     Weges ist er weg. Die Klasse nimmt ihn danach auch aus der
+     Tabreihenfolge, sonst springt der Fokus auf unsichtbare Knoepfe. */
+  opacity: clamp(0, calc(1 - var(--p, 0) * 2.1), 1);
 }
 
 .page-home .hero-home .display {
   font-variation-settings: "wdth" calc(var(--wdth-display) - var(--p, 0) * 40), "wght" 800;
 }
+
+.page-home .hero-home.ist-weg { visibility: hidden; }
 
 .stage-inhalt {
   position: relative;
@@ -1941,6 +1946,24 @@ body.lightbox-open { overflow: hidden; }
   mask-image: linear-gradient(to bottom, #000 0%, #000 var(--bis), transparent calc(var(--bis) + 22%));
 }
 
+/* ------------------------------------------------------ Randbetont */
+
+/* Der Effekt gehoert an die Raender, nicht hinter den Text. Diese
+   Schicht malt die Grundflaeche ueber die Mitte zurueck: aussen bleibt
+   das Licht voll stehen, innen wird es weggenommen. Eine gemalte
+   Flaeche statt einer Maske, weil sie ueberall gleich funktioniert. */
+.buehne-mitte {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 70% 62% at 50% 46%,
+    var(--bg) 0%,
+    color-mix(in oklab, var(--bg) 78%, transparent) 34%,
+    color-mix(in oklab, var(--bg) 34%, transparent) 56%,
+    transparent 76%
+  );
+}
+
 /* ------------------------------------------------------- Schleier */
 
 /* Der Inhalt deckt den Hintergrund nicht zu, er legt sich darueber.
@@ -1971,10 +1994,12 @@ body.lightbox-open { overflow: hidden; }
    leuchtender Shader auf Weiss ergibt kein Licht, sondern Schmutz. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) .neon,
+  :root:not([data-theme="dark"]) .buehne-mitte,
   :root:not([data-theme="dark"]) .shader { display: none; }
 }
 
 :root[data-theme="light"] .neon,
+:root[data-theme="light"] .buehne-mitte,
 :root[data-theme="light"] .shader { display: none; }
 
 /* --------------------------------------- Weniger Bewegung */
@@ -1984,7 +2009,8 @@ body.lightbox-open { overflow: hidden; }
      einfach oben und scrollt mit weg. */
   .buehne { position: absolute; top: 0; left: 0; right: 0; margin-bottom: 0; }
   .stage-raum { height: 0; }
-  .shader { display: none; }
+  .shader,
+  .buehne-mitte { display: none; }
   .neon-balken,
   .neon-schein,
   .neon-saum { transform: scaleX(1); }

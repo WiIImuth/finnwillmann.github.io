@@ -159,6 +159,9 @@
       fortschritt = p;
       heldHero.style.setProperty("--p", String(p));
       if (buehne) buehne.style.setProperty("--p", String(p));
+      // Ab hier ist der Hero unsichtbar. Dann gehoert er auch nicht mehr
+      // in die Tabreihenfolge und nicht mehr in die Vorlesereihenfolge.
+      heldHero.classList.toggle("ist-weg", p >= 0.52);
       if (nachFortschritt) nachFortschritt();
     };
 
