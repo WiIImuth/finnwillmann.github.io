@@ -237,13 +237,15 @@
           backgroundGlow: 0.25,
           opacity: 0.5,
         },
-        // Hell ist eigenstaendig komponiert. Die Farben sind kraeftiger,
-        // weil sie die Flaeche einfaerben statt sie aufzuhellen, und die
-        // Wellen bleiben blasser, sonst wird das Papier schmutzig.
+        // Hell ist eigenstaendig komponiert, in Blau statt Violett. Der
+        // Ton ist nicht frei gewaehlt: es ist der kuehle Zweitton, den die
+        // Seite im dunklen Zustand ohnehin schon fuehrt. Die Farben sind
+        // kraeftiger, weil sie die Flaeche einfaerben statt sie
+        // aufzuhellen, die Wellen blasser, sonst wird das Papier schmutzig.
         wellenHell: {
-          horizonColor: "#cdbaf2",
-          waveColor: "#9a6ae8",
-          crestColor: "#e2d6ff",
+          horizonColor: "#b2cbf9",
+          waveColor: "#3778d7",
+          crestColor: "#bfd9ff",
           speed: 0.22,
           steps: 40,
           brightness: 1,
@@ -252,8 +254,8 @@
           fogDepth: 15,
         },
         strahlenHell: {
-          colors: ["#6626c4", "#9540e8", "#f04fbe"],
-          backgroundColor: "#c9b0f2",
+          colors: ["#1853c6", "#0081e7", "#00a4e7"],
+          backgroundColor: "#a8c6f2",
           speed: 0.55,
           streakCount: 2,
           streakLength: 1.15,
@@ -261,7 +263,10 @@
           twinkle: 0.8,
           zoom: 3.5,
           glow: 0.65,
-          backgroundGlow: 0.1,
+          // Ohne Hintergrundschein: auf hellem Grund zieht der helle
+          // Zweig die Farbe aus dem Verhaeltnis der Kanaele, und der
+          // Schein kippt dabei ins Magenta statt ins Blaue.
+          backgroundGlow: 0,
           opacity: 0.55,
         },
       });

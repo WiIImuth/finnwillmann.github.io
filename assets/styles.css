@@ -90,6 +90,10 @@
   /* Dunkel wird Licht addiert, hell wird die Flaeche eingefaerbt. */
   --buehne-blend: normal;
   --neon-blend: screen;
+  /* Die beiden Flecken der ruhigen Grundflaeche. Dunkel fuehrt der
+     Akzent, hell fuehrt der kuehle Ton. */
+  --grund-a: var(--accent);
+  --grund-b: var(--kuehl);
   --schleier:  78;
   --effekt:    0.85;
 
@@ -149,10 +153,12 @@
     --shadow-sm: 0 1px 2px oklch(0% 0 0 / 6%);
     --shadow-lg: 0 2px 6px oklch(0% 0 0 / 5%), 0 24px 48px -24px oklch(0% 0 0 / 20%);
     --glow: 0.16;
-    --schleier: 86;
+    --schleier: 84;
     --effekt: 0.85;
-    --neon-kern: #5d17c9;
-    --neon-rgb:  150 90 240;
+    --neon-kern: #033fb2;
+    --neon-rgb:  49 119 220;
+    --grund-a: var(--kuehl);
+    --grund-b: oklch(64% 0.13 232);
     --buehne-blend: multiply;
     --neon-blend: normal;
   }
@@ -181,10 +187,12 @@
   --shadow-sm: 0 1px 2px oklch(0% 0 0 / 6%);
   --shadow-lg: 0 2px 6px oklch(0% 0 0 / 5%), 0 24px 48px -24px oklch(0% 0 0 / 20%);
   --glow: 0.16;
-  --schleier: 86;
+  --schleier: 84;
   --effekt: 0.85;
-  --neon-kern: #5d17c9;
-  --neon-rgb:  150 90 240;
+  --neon-kern: #033fb2;
+  --neon-rgb:  49 119 220;
+  --grund-a: var(--kuehl);
+  --grund-b: oklch(64% 0.13 232);
   --buehne-blend: multiply;
   --neon-blend: normal;
 }
@@ -1353,8 +1361,8 @@ body.lightbox-open { overflow: hidden; }
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(58rem 40rem at 16% 4%, color-mix(in oklab, var(--accent) calc(var(--glow) * 100%), transparent), transparent 62%),
-    radial-gradient(50rem 44rem at 86% 34%, color-mix(in oklab, var(--kuehl) calc(var(--glow) * 78%), transparent), transparent 60%);
+    radial-gradient(58rem 40rem at 16% 4%, color-mix(in oklab, var(--grund-a) calc(var(--glow) * 100%), transparent), transparent 62%),
+    radial-gradient(50rem 44rem at 86% 34%, color-mix(in oklab, var(--grund-b) calc(var(--glow) * 78%), transparent), transparent 60%);
 }
 
 .hero-glow::after {
