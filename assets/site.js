@@ -237,20 +237,47 @@
           backgroundGlow: 0.25,
           opacity: 0.5,
         },
+        // Hell ist eigenstaendig komponiert. Die Farben sind kraeftiger,
+        // weil sie die Flaeche einfaerben statt sie aufzuhellen, und die
+        // Wellen bleiben blasser, sonst wird das Papier schmutzig.
+        wellenHell: {
+          horizonColor: "#cdbaf2",
+          waveColor: "#9a6ae8",
+          crestColor: "#e2d6ff",
+          speed: 0.22,
+          steps: 40,
+          brightness: 1,
+          opacity: 0.22,
+          tilt: 1.11,
+          fogDepth: 15,
+        },
+        strahlenHell: {
+          colors: ["#6626c4", "#9540e8", "#f04fbe"],
+          backgroundColor: "#c9b0f2",
+          speed: 0.55,
+          streakCount: 2,
+          streakLength: 1.15,
+          density: 0.28,
+          twinkle: 0.8,
+          zoom: 3.5,
+          glow: 0.65,
+          backgroundGlow: 0.1,
+          opacity: 0.55,
+        },
       });
-      if (motor) motor.neuMessen();
+      if (motor) {
+        motor.modus(!istDunkel());
+        motor.neuMessen();
+      }
     };
 
     // Gerechnet wird nur, wenn die Flaeche im Bild ist, der Tab vorn
     // liegt, der dunkle Zustand aktiv ist und ueberhaupt schon etwas
     // davon zu sehen waere.
     const pruefen = () => {
-      if (!istDunkel()) {
-        if (motor) motor.aus();
-        return;
-      }
       if (!motor) anwerfen();
       if (!motor) return;
+      motor.modus(!istDunkel());
       if (imBild && wach && fortschritt > 0.005) motor.an();
       else motor.aus();
       // Je weiter der Inhalt darueberliegt, desto ruhiger wird es.

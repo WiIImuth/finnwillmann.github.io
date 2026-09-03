@@ -123,6 +123,7 @@
     "uniform float uZoom;",
     "uniform float uBgGlow;",
     "uniform float uOpacity;",
+    "uniform float uLightMode;",
     "out vec4 fragColor;",
     "vec3 palette(float h) {",
     "  int count = uColorCount < 1 ? 1 : uColorCount;",
@@ -184,7 +185,23 @@
     "    C.x += Y.x / 8.0;",
     "  }",
     "  vec3 colr = sqrt(tanhv(max(O.rgb * uGlow - vec3(0.04, 0.08, 0.02), 0.0)));",
-    "  fragColor = vec4(colr, uOpacity);",
+    // Auf hellem Grund ist addiertes Licht unsichtbar. Der helle Zweig
+    // stammt aus der Vorlage: statt Licht dazuzugeben liefert er einen
+    // Farbton, der die Flaeche darunter einfaerbt. Gezeichnet wird er
+    // mit vorgemultipliztem Alpha, damit dort, wo kein Strahl ist, auch
+    // nichts eingefaerbt wird.
+    "  if (uLightMode > 0.5) {",
+    "    float peak = max(colr.r, max(colr.g, colr.b));",
+    "    float deckung = smoothstep(0.035, 0.58, peak) * uOpacity;",
+    "    vec3 chroma = clamp(colr / max(peak, 1e-4), 0.0, 1.0);",
+    "    chroma = pow(chroma, vec3(1.35));",
+    "    float spitze = max(chroma.r, max(chroma.g, chroma.b));",
+    "    chroma /= max(spitze, 1e-4);",
+    "    vec3 ton = mix(vec3(1.0), chroma, 0.94);",
+    "    fragColor = vec4(ton * deckung, deckung);",
+    "  } else {",
+    "    fragColor = vec4(colr, uOpacity);",
+    "  }",
     "}"
   ].join("\n");
 
@@ -288,44 +305,55 @@
       if (pr.u[name]) gl.uniform1i(pr.u[name], wert);
     }
 
+    var hellAn = false;
+
+    function wellenSatz(w) {
+      return {
+        uSpeed: w.speed != null ? w.speed : 0.25,
+        uAmplitude: w.amplitude != null ? w.amplitude : 2.5,
+        uWaveScale: w.waveScale != null ? w.waveScale : 0.6,
+        uWaveRatio: w.waveRatio != null ? w.waveRatio : 0.9,
+        uSwell: w.swell != null ? w.swell : 35,
+        uTurbulence: w.turbulence != null ? w.turbulence : 20,
+        uTilt: w.tilt != null ? w.tilt : 1.11,
+        uZoom: w.zoom != null ? w.zoom : 1,
+        uHeight: w.height != null ? w.height : 5.5,
+        uFogDepth: w.fogDepth != null ? w.fogDepth : 15,
+        uSteps: w.steps != null ? w.steps : 40,
+        uBrightness: w.brightness != null ? w.brightness : 0.75,
+        uOpacity: w.opacity != null ? w.opacity : 0.4,
+        uHorizonColor: hexZuRgb(w.horizonColor || "#2a1a4d"),
+        uWaveColor: hexZuRgb(w.waveColor || "#6a34d8"),
+        uCrestColor: hexZuRgb(w.crestColor || "#c9a6ff")
+      };
+    }
+
+    function strahlenSatz(s) {
+      var f = s.colors || ["#cea4ff", "#b86fff", "#ffa5e2"];
+      return {
+        uColor0: hexZuRgb(f[0]),
+        uColor1: hexZuRgb(f[1] || f[0]),
+        uColor2: hexZuRgb(f[2] || f[0]),
+        uBgColor: hexZuRgb(s.backgroundColor || "#2a1150"),
+        uSpeed: s.speed != null ? s.speed : 0.55,
+        uStreakWidth: s.streakWidth != null ? s.streakWidth : 1,
+        uStreakLength: s.streakLength != null ? s.streakLength : 1.1,
+        uGlow: s.glow != null ? s.glow : 1,
+        uDensity: s.density != null ? s.density : 0.7,
+        uTwinkle: s.twinkle != null ? s.twinkle : 0.8,
+        uZoom: s.zoom != null ? s.zoom : 3,
+        uBgGlow: s.backgroundGlow != null ? s.backgroundGlow : 0.35,
+        uOpacity: s.opacity != null ? s.opacity : 0.9
+      };
+    }
+
     var w = einst.wellen || {};
     var s = einst.strahlen || {};
 
-    var wellenWerte = {
-      uSpeed: w.speed != null ? w.speed : 0.25,
-      uAmplitude: w.amplitude != null ? w.amplitude : 2.5,
-      uWaveScale: w.waveScale != null ? w.waveScale : 0.6,
-      uWaveRatio: w.waveRatio != null ? w.waveRatio : 0.9,
-      uSwell: w.swell != null ? w.swell : 35,
-      uTurbulence: w.turbulence != null ? w.turbulence : 20,
-      uTilt: w.tilt != null ? w.tilt : 1.11,
-      uZoom: w.zoom != null ? w.zoom : 1,
-      uHeight: w.height != null ? w.height : 5.5,
-      uFogDepth: w.fogDepth != null ? w.fogDepth : 15,
-      uSteps: w.steps != null ? w.steps : 40,
-      uBrightness: w.brightness != null ? w.brightness : 0.75,
-      uOpacity: w.opacity != null ? w.opacity : 0.4,
-      uHorizonColor: hexZuRgb(w.horizonColor || "#2a1a4d"),
-      uWaveColor: hexZuRgb(w.waveColor || "#6a34d8"),
-      uCrestColor: hexZuRgb(w.crestColor || "#c9a6ff")
-    };
-
-    var farben = s.colors || ["#cea4ff", "#b86fff", "#ffa5e2"];
-    var strahlenWerte = {
-      uColor0: hexZuRgb(farben[0]),
-      uColor1: hexZuRgb(farben[1] || farben[0]),
-      uColor2: hexZuRgb(farben[2] || farben[0]),
-      uBgColor: hexZuRgb(s.backgroundColor || "#2a1150"),
-      uSpeed: s.speed != null ? s.speed : 0.55,
-      uStreakWidth: s.streakWidth != null ? s.streakWidth : 1,
-      uStreakLength: s.streakLength != null ? s.streakLength : 1.1,
-      uGlow: s.glow != null ? s.glow : 1,
-      uDensity: s.density != null ? s.density : 0.7,
-      uTwinkle: s.twinkle != null ? s.twinkle : 0.8,
-      uZoom: s.zoom != null ? s.zoom : 3,
-      uBgGlow: s.backgroundGlow != null ? s.backgroundGlow : 0.35,
-      uOpacity: s.opacity != null ? s.opacity : 0.9
-    };
+    var wellenWerte = wellenSatz(w);
+    var strahlenWerte = strahlenSatz(s);
+    var wellenHell = wellenSatz(einst.wellenHell || w);
+    var strahlenHell = strahlenSatz(einst.strahlenHell || s);
 
     setze(wellen, wellenWerte);
     setze(strahlen, strahlenWerte);
@@ -361,8 +389,11 @@
       if (wellen.u.iTime) gl.uniform1f(wellen.u.iTime, t);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-      // Strahlen: Licht, also addieren statt ueberdecken.
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+      // Dunkel sind die Strahlen Licht und werden addiert. Hell sind
+      // sie ein Farbton und werden normal darueber gelegt, die Flaeche
+      // faerbt dann spaeter per multiply die Seite ein.
+      if (hellAn) gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      else gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
       gl.useProgram(strahlen.p);
       if (strahlen.u.iResolution) gl.uniform2f(strahlen.u.iResolution, b, h);
       if (strahlen.u.iTime) gl.uniform1f(strahlen.u.iTime, t);
@@ -381,16 +412,30 @@
         raf = requestAnimationFrame(bild);
       },
 
+      // Umschalten zwischen dunkel und hell. Beide Zustaende haben
+      // eigene Farben, nichts wird invertiert.
+      modus: function (hell) {
+        hellAn = !!hell;
+        setze(wellen, hellAn ? wellenHell : wellenWerte);
+        setze(strahlen, hellAn ? strahlenHell : strahlenWerte);
+        setzeInt(strahlen, "uColorCount", 3);
+        setzeInt(strahlen, "uStreakCount", s.streakCount != null ? s.streakCount : 3);
+        gl.useProgram(strahlen.p);
+        if (strahlen.u.uLightMode) gl.uniform1f(strahlen.u.uLightMode, hellAn ? 1 : 0);
+        this.ruhe(ruheK);
+      },
+
       // 0 heisst voller Betrieb, 1 heisst Ruhezustand hinter dem Inhalt:
       // langsamer und leiser, damit die Bewegung nicht vom Text abzieht.
       ruhe: function (k) {
         ruheK = k < 0 ? 0 : k > 1 ? 1 : k;
+        var satz = hellAn ? strahlenHell : strahlenWerte;
         gl.useProgram(strahlen.p);
         if (strahlen.u.uOpacity) {
-          gl.uniform1f(strahlen.u.uOpacity, strahlenWerte.uOpacity * (1 - 0.2 * ruheK));
+          gl.uniform1f(strahlen.u.uOpacity, satz.uOpacity * (1 - 0.2 * ruheK));
         }
         if (strahlen.u.uGlow) {
-          gl.uniform1f(strahlen.u.uGlow, strahlenWerte.uGlow * (1 - 0.15 * ruheK));
+          gl.uniform1f(strahlen.u.uGlow, satz.uGlow * (1 - 0.15 * ruheK));
         }
       },
       aus: function () {

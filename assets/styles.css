@@ -87,6 +87,9 @@
      Inhalts in Prozent, Effekt die Staerke des Shaders dahinter. */
   --neon-kern: #f4e6ff;
   --neon-rgb:  184 111 255;
+  /* Dunkel wird Licht addiert, hell wird die Flaeche eingefaerbt. */
+  --buehne-blend: normal;
+  --neon-blend: screen;
   --schleier:  78;
   --effekt:    0.85;
 
@@ -146,8 +149,12 @@
     --shadow-sm: 0 1px 2px oklch(0% 0 0 / 6%);
     --shadow-lg: 0 2px 6px oklch(0% 0 0 / 5%), 0 24px 48px -24px oklch(0% 0 0 / 20%);
     --glow: 0.16;
-    --schleier: 100;
-    --effekt: 0;
+    --schleier: 86;
+    --effekt: 0.85;
+    --neon-kern: #5d17c9;
+    --neon-rgb:  150 90 240;
+    --buehne-blend: multiply;
+    --neon-blend: normal;
   }
 }
 
@@ -174,8 +181,12 @@
   --shadow-sm: 0 1px 2px oklch(0% 0 0 / 6%);
   --shadow-lg: 0 2px 6px oklch(0% 0 0 / 5%), 0 24px 48px -24px oklch(0% 0 0 / 20%);
   --glow: 0.16;
-  --schleier: 100;
-  --effekt: 0;
+  --schleier: 86;
+  --effekt: 0.85;
+  --neon-kern: #5d17c9;
+  --neon-rgb:  150 90 240;
+  --buehne-blend: multiply;
+  --neon-blend: normal;
 }
 
 /* --------------------------------------------------------- Grundlagen */
@@ -1835,6 +1846,7 @@ body.lightbox-open { overflow: hidden; }
    negative Aussenmass hebt ihre eigene Hoehe wieder auf, damit sie im
    Fluss keinen Platz belegt. */
 .buehne {
+  mix-blend-mode: var(--buehne-blend);
   position: sticky;
   top: 0;
   z-index: 0;
@@ -1880,7 +1892,7 @@ body.lightbox-open { overflow: hidden; }
   translate: -50% 0;
   transform: scaleX(var(--auf, 0));
   transform-origin: 50% 0;
-  mix-blend-mode: screen;
+  mix-blend-mode: var(--neon-blend);
   background:
     radial-gradient(ellipse 34% 42% at 50% 8vh, rgb(var(--neon-rgb) / 0.85) 0%, rgb(var(--neon-rgb) / 0.30) 38%, transparent 72%),
     radial-gradient(ellipse 58% 68% at 50% 6vh, rgb(var(--neon-rgb) / 0.34) 0%, rgb(var(--neon-rgb) / 0.12) 42%, transparent 78%);
@@ -1898,7 +1910,7 @@ body.lightbox-open { overflow: hidden; }
   height: 26vh;
   translate: -50% 0;
   transform: scaleX(var(--auf, 0));
-  mix-blend-mode: screen;
+  mix-blend-mode: var(--neon-blend);
   background: linear-gradient(
     to bottom,
     rgb(var(--neon-rgb) / 0.55) 0%,
@@ -1992,15 +2004,10 @@ body.lightbox-open { overflow: hidden; }
 
 /* Im hellen Modus bleibt die ruhige Flaeche und sonst nichts. Ein
    leuchtender Shader auf Weiss ergibt kein Licht, sondern Schmutz. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .neon,
-  :root:not([data-theme="dark"]) .buehne-mitte,
-  :root:not([data-theme="dark"]) .shader { display: none; }
-}
-
-:root[data-theme="light"] .neon,
-:root[data-theme="light"] .buehne-mitte,
-:root[data-theme="light"] .shader { display: none; }
+/* Im hellen Zustand laeuft dasselbe, nur andersherum: die Flaeche
+   faerbt die Seite ein, statt Licht daraufzulegen. Die Abdunklung der
+   Mitte malt dort Weiss, und Weiss mal Untergrund ist der Untergrund,
+   also bleibt die Mitte frei. */
 
 /* --------------------------------------- Weniger Bewegung */
 
