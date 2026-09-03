@@ -70,6 +70,8 @@
     try {
       localStorage.setItem("theme", theme);
     } catch (e) {}
+    // Der Hintergrund der Startseite haengt am Zustand und muss es wissen.
+    dispatchEvent(new Event("thema"));
   };
 
   for (const button of document.querySelectorAll(".theme-toggle")) {
@@ -85,7 +87,10 @@
     try {
       saved = localStorage.getItem("theme");
     } catch (e) {}
-    if (!saved) root.removeAttribute("data-theme");
+    if (!saved) {
+      root.removeAttribute("data-theme");
+      dispatchEvent(new Event("thema"));
+    }
   });
 
   /* --------------------------------------- Kopfzeile beim Scrollen */
@@ -125,28 +130,36 @@
   /* ------------------------------------------------- Der eine Moment */
 
   // Auf der Startseite bleibt der Hero stehen, waehrend der Inhalt sich
-  // darueber schiebt. Dabei zieht sich der Name in der Breite zusammen.
-  // Das Skript setzt nur einen Wert von 0 bis 1, die Gestaltung steht im
-  // Stylesheet. Ohne Skript steht der Wert auf 0 und alles ist da.
+  // darueber schiebt: der Name zieht sich in der Breite zusammen, der
+  // Hintergrund baut sich von oben nach unten auf, der Hero verblasst.
+  // Ein Wert von 0 bis 1 steuert alles, gestaltet wird im Stylesheet.
+  // Ohne Skript steht der Wert auf 0 und die Seite ist vollstaendig da.
 
   const heldHero = document.querySelector(".page-home .hero-home");
+  const buehne = document.querySelector(".page-home .buehne");
+
+  let fortschritt = 0;
+  let nachFortschritt = null;
 
   if (heldHero && !reduced) {
     let offen = false;
     let letzter = -1;
 
     const messen = () => {
-      const weg = window.innerHeight * 0.85;
+      const weg = window.innerHeight * 1.5;
       const roh = Math.min(1, Math.max(0, window.scrollY / weg));
-      // In hundert Stufen statt stufenlos. Eine Aenderung der Breitenachse
-      // laesst den Browser die ganze Zeile neu setzen, und bei einer
-      // Ueberschrift dieser Groesse kostet das auf schwachen Geraeten
-      // spuerbar. Der Unterschied ist mit blossem Auge nicht zu sehen.
+      // In hundert Stufen statt stufenlos. Eine Aenderung der
+      // Breitenachse laesst den Browser die ganze Zeile neu setzen, und
+      // bei einer Ueberschrift dieser Groesse kostet das spuerbar. Den
+      // Unterschied sieht man nicht.
       const p = Math.round(roh * 100) / 100;
-      if (p === letzter) { offen = false; return; }
-      letzter = p;
-      heldHero.style.setProperty("--p", String(p));
       offen = false;
+      if (p === letzter) return;
+      letzter = p;
+      fortschritt = p;
+      heldHero.style.setProperty("--p", String(p));
+      if (buehne) buehne.style.setProperty("--p", String(p));
+      if (nachFortschritt) nachFortschritt();
     };
 
     addEventListener(
@@ -162,6 +175,115 @@
 
     addEventListener("resize", messen, { passive: true });
     messen();
+  }
+
+  /* -------------------------------------------- Neon und Hintergrund */
+
+  if (buehne) {
+    const wurzel = document.documentElement;
+
+    // Der Neonbalken zieht sich beim Laden aus der Mitte auf. Stark
+    // ausklingend: schneller Anlauf, weiches Ankommen.
+    if (reduced) {
+      wurzel.style.setProperty("--auf", "1");
+    } else {
+      let start = null;
+      const zieh = (zeit) => {
+        if (start === null) start = zeit;
+        const t = Math.min(1, Math.max(0, (zeit - start - 260) / 1900));
+        wurzel.style.setProperty("--auf", (1 - Math.pow(1 - t, 4)).toFixed(4));
+        if (t < 1) requestAnimationFrame(zieh);
+      };
+      requestAnimationFrame(zieh);
+    }
+
+    const flaeche = buehne.querySelector(".shader");
+    let motor = null;
+    let imBild = true;
+    let wach = !document.hidden;
+
+    const istDunkel = () => currentTheme() === "dark";
+
+    const anwerfen = () => {
+      if (motor || reduced || !flaeche || !window.hintergrundShader) return;
+      motor = window.hintergrundShader(flaeche, {
+        // Absichtlich unter der Bildschirmaufloesung gerechnet. Weiche
+        // Verlaeufe vertragen das, und es ist der groesste Gewinn.
+        mass: 0.65,
+        wellen: {
+          horizonColor: "#241640",
+          waveColor: "#6a34d8",
+          crestColor: "#c9a6ff",
+          speed: 0.22,
+          steps: 40,
+          brightness: 0.9,
+          opacity: 0.5,
+          tilt: 1.11,
+          fogDepth: 15,
+        },
+        strahlen: {
+          colors: ["#cea4ff", "#b86fff", "#ffa5e2"],
+          backgroundColor: "#2a1150",
+          speed: 0.55,
+          streakCount: 2,
+          streakLength: 1.15,
+          density: 0.28,
+          twinkle: 0.8,
+          zoom: 3.5,
+          glow: 0.65,
+          backgroundGlow: 0.25,
+          opacity: 0.5,
+        },
+      });
+      if (motor) motor.neuMessen();
+    };
+
+    // Gerechnet wird nur, wenn die Flaeche im Bild ist, der Tab vorn
+    // liegt, der dunkle Zustand aktiv ist und ueberhaupt schon etwas
+    // davon zu sehen waere.
+    const pruefen = () => {
+      if (!istDunkel()) {
+        if (motor) motor.aus();
+        return;
+      }
+      if (!motor) anwerfen();
+      if (!motor) return;
+      if (imBild && wach && fortschritt > 0.005) motor.an();
+      else motor.aus();
+      // Je weiter der Inhalt darueberliegt, desto ruhiger wird es.
+      motor.ruhe(fortschritt);
+    };
+
+    nachFortschritt = pruefen;
+
+    if (!reduced) {
+      addEventListener(
+        "resize",
+        () => {
+          if (motor) motor.neuMessen();
+        },
+        { passive: true }
+      );
+
+      if ("IntersectionObserver" in window) {
+        new IntersectionObserver(
+          (eintraege) => {
+            imBild = eintraege[0].isIntersecting;
+            pruefen();
+          },
+          { threshold: 0 }
+        ).observe(buehne);
+      }
+
+      addEventListener("visibilitychange", () => {
+        wach = !document.hidden;
+        pruefen();
+      });
+
+      addEventListener("thema", pruefen);
+
+      pruefen();
+    }
   }
 
   /* ------------------------------------------- Navigation bei schmal */

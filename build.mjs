@@ -544,6 +544,7 @@ ${content}
   </div>
 </footer>
 
+${bodyClass.includes("page-home") ? `<script src="/assets/shader.js${v.shader ? `?v=${v.shader}` : ""}" defer></script>` : ""}
 <script src="/assets/site.js${v.js ? `?v=${v.js}` : ""}" defer></script>
 </body>
 </html>
@@ -664,8 +665,18 @@ function homePage({ config, L, home, projects, artworks }) {
 
   return `
 <div class="stage">
+
+<div class="buehne" aria-hidden="true">
+  <div class="buehne-grund"></div>
+  <canvas class="shader"></canvas>
+  <div class="neon">
+    <div class="neon-schein"></div>
+    <div class="neon-saum"></div>
+    <div class="neon-balken"></div>
+  </div>
+</div>
+
 <section class="hero hero-home">
-  <div class="hero-glow" aria-hidden="true"></div>
   <div class="wrap hero-inner">
     <h1 class="display">${
       config.alias
@@ -680,6 +691,8 @@ function homePage({ config, L, home, projects, artworks }) {
     </div>
   </div>
 </section>
+
+<div class="stage-raum" aria-hidden="true"></div>
 
 <div class="stage-inhalt">
 ${home.html
@@ -1042,6 +1055,7 @@ async function build() {
   const v = {
     css: await fingerprint("assets/styles.css"),
     js: await fingerprint("assets/site.js"),
+    shader: await fingerprint("assets/shader.js"),
   };
 
   await collectSizes(path.join(ROOT, "assets", "images"), "/assets/images");

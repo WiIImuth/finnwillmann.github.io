@@ -82,6 +82,14 @@
   --accent-contrast: oklch(99% 0.01 300);
   --kuehl:           oklch(58% 0.17 258);
 
+  /* Hintergrund der Startseite: Neonfarbe als rgb-Tripel, weil sie mit
+     Alpha weiterverrechnet wird. Schleier ist die Deckkraft des
+     Inhalts in Prozent, Effekt die Staerke des Shaders dahinter. */
+  --neon-kern: #f4e6ff;
+  --neon-rgb:  184 111 255;
+  --schleier:  84;
+  --effekt:    0.5;
+
   --shadow-sm: 0 1px 2px oklch(0% 0 0 / 45%);
   --shadow-lg: 0 2px 6px oklch(0% 0 0 / 40%), 0 30px 60px -30px oklch(0% 0 0 / 80%);
   --glow: 0.34;
@@ -138,6 +146,8 @@
     --shadow-sm: 0 1px 2px oklch(0% 0 0 / 6%);
     --shadow-lg: 0 2px 6px oklch(0% 0 0 / 5%), 0 24px 48px -24px oklch(0% 0 0 / 20%);
     --glow: 0.16;
+    --schleier: 100;
+    --effekt: 0;
   }
 }
 
@@ -164,6 +174,8 @@
   --shadow-sm: 0 1px 2px oklch(0% 0 0 / 6%);
   --shadow-lg: 0 2px 6px oklch(0% 0 0 / 5%), 0 24px 48px -24px oklch(0% 0 0 / 20%);
   --glow: 0.16;
+  --schleier: 100;
+  --effekt: 0;
 }
 
 /* --------------------------------------------------------- Grundlagen */
@@ -1799,6 +1811,183 @@ body.lightbox-open { overflow: hidden; }
   font-weight: 500;
   color: var(--text-muted);
   margin-bottom: var(--s3);
+}
+
+
+/* ==================================================================
+   Die Buehne: Hintergrund der Startseite
+
+   Drei Zustaende an einem einzigen Scrollwert. Oben ein Neonbalken,
+   der sich beim Laden aufzieht. Beim Scrollen baut sich darunter der
+   Shader von oben nach unten auf, waehrend der Hero verblasst. Danach
+   schiebt sich der Inhalt darueber, nicht als Deckel, sondern als
+   Schleier: das Licht bleibt sichtbar, der Text bleibt lesbar.
+   ================================================================== */
+
+.stage { position: relative; }
+
+/* Die Buehne bleibt stehen, solange die Startseite laeuft. Das
+   negative Aussenmass hebt ihre eigene Hoehe wieder auf, damit sie im
+   Fluss keinen Platz belegt. */
+.buehne {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  height: 100svh;
+  margin-bottom: -100svh;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.buehne-grund {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(58rem 40rem at 16% 4%, color-mix(in oklab, var(--accent) calc(var(--glow) * 100%), transparent), transparent 62%),
+    radial-gradient(50rem 44rem at 86% 34%, color-mix(in oklab, var(--kuehl) calc(var(--glow) * 78%), transparent), transparent 60%);
+  opacity: calc(1 - var(--p, 0) * 0.55);
+}
+
+/* Feines Korn ueber allem, damit die Verlaeufe nicht bandieren. */
+.buehne::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ------------------------------------------------------------ Neon */
+
+.neon {
+  position: absolute;
+  inset: 0;
+  opacity: clamp(0, calc(1 - var(--p, 0) * 2.2), 1);
+}
+
+.neon-schein {
+  position: absolute;
+  left: 50%;
+  top: -2vh;
+  width: min(96rem, 132vw);
+  height: 76vh;
+  translate: -50% 0;
+  transform: scaleX(var(--auf, 0));
+  transform-origin: 50% 0;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(ellipse 34% 42% at 50% 8vh, rgb(var(--neon-rgb) / 0.85) 0%, rgb(var(--neon-rgb) / 0.30) 38%, transparent 72%),
+    radial-gradient(ellipse 58% 68% at 50% 6vh, rgb(var(--neon-rgb) / 0.34) 0%, rgb(var(--neon-rgb) / 0.12) 42%, transparent 78%);
+  filter: blur(10px);
+}
+
+/* Ein flacher Streifen direkt unter dem Balken macht die Kante
+   zwischen Rohr und Licht weich, wie bei einer Neonroehre vor einer
+   Wand. */
+.neon-saum {
+  position: absolute;
+  left: 50%;
+  top: 6vh;
+  width: min(84rem, 92vw);
+  height: 26vh;
+  translate: -50% 0;
+  transform: scaleX(var(--auf, 0));
+  mix-blend-mode: screen;
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--neon-rgb) / 0.55) 0%,
+    rgb(var(--neon-rgb) / 0.18) 34%,
+    transparent 100%
+  );
+  filter: blur(14px);
+}
+
+.neon-balken {
+  position: absolute;
+  left: 50%;
+  top: 6.5vh;
+  width: min(78rem, 88vw);
+  height: 3px;
+  translate: -50% 0;
+  transform: scaleX(var(--auf, 0));
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgb(var(--neon-rgb) / 0.55) 8%,
+    var(--neon-kern) 50%,
+    rgb(var(--neon-rgb) / 0.55) 92%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 10px rgb(var(--neon-rgb) / 0.9),
+    0 0 34px rgb(var(--neon-rgb) / 0.6),
+    0 0 90px rgb(var(--neon-rgb) / 0.35);
+}
+
+/* --------------------------------------------------- Zeichenflaeche */
+
+/* Sie ragt unten hinaus: dort endet das Wellenfeld und hinterlaesst
+   sonst eine sichtbare Kante. */
+.shader {
+  position: absolute;
+  inset: -2% 0 -12% 0;
+  width: 100%;
+  height: 114%;
+  --bis: calc(var(--p, 0) * 145%);
+  opacity: calc(min(1, var(--p, 0) * 3.2) * (1 - var(--p, 0) * (1 - var(--effekt))));
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 var(--bis), transparent calc(var(--bis) + 22%));
+  mask-image: linear-gradient(to bottom, #000 0%, #000 var(--bis), transparent calc(var(--bis) + 22%));
+}
+
+/* ------------------------------------------------------- Schleier */
+
+/* Der Inhalt deckt den Hintergrund nicht zu, er legt sich darueber.
+   Gemessen ueber der hellsten Stelle des Shaders: Fliesstext 16.7:1,
+   gedaempfter Text 7.6:1. Im hellen Modus steht der Schleier auf 100,
+   dort gibt es nichts durchscheinen zu lassen. */
+.page-home .stage-inhalt {
+  background: color-mix(in oklab, var(--bg) calc(var(--schleier) * 1%), transparent);
+}
+
+.page-home .band {
+  background: color-mix(in oklab, var(--bg-soft) calc(var(--schleier) * 1% + 4%), transparent);
+}
+
+/* Bilder und Fusszeile bleiben undurchsichtig. Ein Lichtstrahl mitten
+   durch ein Bildschirmfoto sieht nach Fehler aus. */
+.page-home .arbeit-bild,
+.page-home .tile-img { background: var(--surface); }
+
+.page-home .site-footer { background: var(--bg); }
+
+/* Zusaetzlicher Scrollweg, damit der Uebergang Zeit hat. */
+.stage-raum { height: 75vh; }
+
+/* -------------------------------------------------------- Hell */
+
+/* Im hellen Modus bleibt die ruhige Flaeche und sonst nichts. Ein
+   leuchtender Shader auf Weiss ergibt kein Licht, sondern Schmutz. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .neon,
+  :root:not([data-theme="dark"]) .shader { display: none; }
+}
+
+:root[data-theme="light"] .neon,
+:root[data-theme="light"] .shader { display: none; }
+
+/* --------------------------------------- Weniger Bewegung */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Nichts bleibt stehen, nichts baut sich auf: die Flaeche sitzt
+     einfach oben und scrollt mit weg. */
+  .buehne { position: absolute; top: 0; left: 0; right: 0; margin-bottom: 0; }
+  .stage-raum { height: 0; }
+  .shader { display: none; }
+  .neon-balken,
+  .neon-schein,
+  .neon-saum { transform: scaleX(1); }
 }
 
 @media (max-width: 46rem) {
