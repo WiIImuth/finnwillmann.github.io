@@ -98,7 +98,7 @@
   --effekt:    0.85;
   /* Staerke der Wellen auf den Unterseiten. Hell darf hoeher sein,
      weil das Einfaerben dort ohnehin sanfter ausfaellt. */
-  --wellen-staerke: 0.85;
+  --wellen-staerke: 1;
 
   --shadow-sm: 0 1px 2px oklch(0% 0 0 / 45%);
   --shadow-lg: 0 2px 6px oklch(0% 0 0 / 40%), 0 30px 60px -30px oklch(0% 0 0 / 80%);
@@ -163,7 +163,7 @@
     --glow: 0.16;
     --schleier: 84;
     --effekt: 0.85;
-    --wellen-staerke: 0.9;
+    --wellen-staerke: 1;
     --neon-kern: #033fb2;
     --neon-rgb:  49 119 220;
     --grund-a: var(--kuehl);
@@ -203,7 +203,7 @@
   --glow: 0.16;
   --schleier: 84;
   --effekt: 0.85;
-  --wellen-staerke: 0.9;
+  --wellen-staerke: 1;
   --neon-kern: #033fb2;
   --neon-rgb:  49 119 220;
   --grund-a: var(--kuehl);
@@ -2106,9 +2106,9 @@ body.lightbox-open { overflow: hidden; }
    ruhiges Feld, und der Horizont der Wellen liegt genau in der Mitte. */
 .wellen-buehne .buehne-mitte {
   background: radial-gradient(
-    ellipse 62% 46% at 50% 44%,
+    ellipse 58% 42% at 50% 44%,
     var(--bg) 0%,
-    color-mix(in oklab, var(--bg) 68%, transparent) 38%,
+    color-mix(in oklab, var(--bg) 62%, transparent) 38%,
     transparent 74%
   );
 }
@@ -2120,10 +2120,15 @@ body.lightbox-open { overflow: hidden; }
 .seite-inhalt {
   position: relative;
   z-index: 2;
+  /* Oben nur ein Grundschleier von 15 Prozent, damit die Wellen zu
+     sehen sind. Gemessen am tatsaechlich gerenderten Bild: ohne ihn
+     faellt gedaempfter Text an der hellsten Stelle auf 4.43:1, mit ihm
+     steht er bei 5.0:1. Ab einer halben Bildschirmhoehe, wo der Inhalt
+     dicht wird, deckt der volle Schleier. */
   background: linear-gradient(
     to bottom,
-    transparent 0,
-    transparent 26vh,
+    color-mix(in oklab, var(--bg) 15%, transparent) 0,
+    color-mix(in oklab, var(--bg) 15%, transparent) 26vh,
     color-mix(in oklab, var(--bg) calc(var(--schleier) * 1%), transparent) 54vh
   );
 }

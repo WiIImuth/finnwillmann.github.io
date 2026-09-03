@@ -49,6 +49,9 @@
     "uniform vec3 uHorizonColor;",
     "uniform vec3 uWaveColor;",
     "uniform vec3 uCrestColor;",
+    "uniform vec2 uMouse;",
+    "uniform float uParallax;",
+    "uniform float uEnableMouse;",
     "out vec4 fragColor;",
     "const float MAX_DIST = 20000.0;",
     "float plasma(vec3 r, vec2 freq, vec4 tc) {",
@@ -89,6 +92,16 @@
     "  dir = mat3(c, -s, 0.0, s, c, 0.0, 0.0, 0.0, 1.0) * dir;",
     "  c = cos(uTilt); s = sin(uTilt);",
     "  dir = mat3(c, 0.0, s, 0.0, 1.0, 0.0, -s, 0.0, c) * dir;",
+    // Die Kamera dreht sich ein wenig mit dem Zeiger. Aus der Vorlage
+    // uebernommen, nur mit float statt bool.
+    "  if (uEnableMouse > 0.5) {",
+    "    float yaw = (uMouse.x - 0.5) * uParallax * 0.4;",
+    "    float pitch = (uMouse.y - 0.5) * uParallax * 0.4;",
+    "    c = cos(yaw); s = sin(yaw);",
+    "    dir = mat3(c, 0.0, s, 0.0, 1.0, 0.0, -s, 0.0, c) * dir;",
+    "    c = cos(pitch); s = sin(pitch);",
+    "    dir = mat3(1.0, 0.0, 0.0, 0.0, c, -s, 0.0, s, c) * dir;",
+    "  }",
     "  float dist = raymarch(cam, dir, freq, tc);",
     "  vec3 pos = cam + dist * dir;",
     "  float t = clamp(uFogDepth / max(dist, 0.001), 0.0, 1.0);",
@@ -309,6 +322,25 @@
     // Auf den Unterseiten laufen nur die Wellen. Das spart das zweite
     // Programm pro Bild und ist der ruhigere Hintergrund fuer Text.
     var nurWellen = !!einst.nurWellen;
+    // Der Zeiger wird nur auf Geraeten mit echtem Zeiger verfolgt, und
+    // die Kamera laeuft ihm gedaempft hinterher statt zu springen.
+    var mausAn =
+      einst.maus !== false &&
+      global.matchMedia &&
+      global.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    var zielX = 0.5, zielY = 0.5, istX = 0.5, istY = 0.5;
+
+    if (mausAn) {
+      global.addEventListener(
+        "pointermove",
+        function (e) {
+          zielX = e.clientX / (global.innerWidth || 1);
+          zielY = 1 - e.clientY / (global.innerHeight || 1);
+        },
+        { passive: true }
+      );
+    }
+
 
     function wellenSatz(w) {
       return {
@@ -325,6 +357,8 @@
         uSteps: w.steps != null ? w.steps : 40,
         uBrightness: w.brightness != null ? w.brightness : 0.75,
         uOpacity: w.opacity != null ? w.opacity : 0.4,
+        uParallax: w.parallax != null ? w.parallax : 0.5,
+        uEnableMouse: mausAn ? 1 : 0,
         uHorizonColor: hexZuRgb(w.horizonColor || "#2a1a4d"),
         uWaveColor: hexZuRgb(w.waveColor || "#6a34d8"),
         uCrestColor: hexZuRgb(w.crestColor || "#c9a6ff")
@@ -373,6 +407,7 @@
     var ruheK = 0;
     var gezeichnet = 0;
 
+
     function bild(uhr) {
       if (!laeuft) return;
       var dt = vorher ? (uhr - vorher) / 1000 : 0.016;
@@ -391,6 +426,9 @@
       }
       gezeichnet = uhr;
 
+      istX += 0.08 * (zielX - istX);
+      istY += 0.08 * (zielY - istY);
+
       var t = zeit;
 
       gl.viewport(0, 0, b, h);
@@ -402,6 +440,7 @@
       gl.useProgram(wellen.p);
       if (wellen.u.iResolution) gl.uniform2f(wellen.u.iResolution, b, h);
       if (wellen.u.iTime) gl.uniform1f(wellen.u.iTime, t);
+      if (wellen.u.uMouse) gl.uniform2f(wellen.u.uMouse, istX, istY);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
 
       // Dunkel sind die Strahlen Licht und werden addiert. Hell sind

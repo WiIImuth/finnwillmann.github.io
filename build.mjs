@@ -791,7 +791,6 @@ function projectPage({ project, L }) {
   return `
 <article class="project">
   <section class="hero hero-page">
-    <div class="hero-glow" aria-hidden="true"></div>
     <div class="wrap hero-inner">
       <a class="back" href="${r.projects}">← ${escapeHtml(t.back)}</a>
       <h1 class="display-sm">${escapeHtml(d.title)}</h1>
@@ -1139,6 +1138,7 @@ async function build() {
           canonical: abs(r.project(project.slug)),
           altUrl: ro.project(project.slug),
           bodyClass: "page-project",
+          wellen: true,
           current: r.projects,
           image: project.data.cover || "",
           content: projectPage({ project, L }),
