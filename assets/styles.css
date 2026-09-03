@@ -317,8 +317,10 @@ h2, h3, h4 { letter-spacing: -0.022em; }
   top: 0;
   z-index: 40;
   background: color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  /* Der Weichzeichner laeuft bei jedem gescrollten Bild neu. 12px
+     sehen aus wie 20px und kosten deutlich weniger. */
+  backdrop-filter: saturate(150%) blur(12px);
+  -webkit-backdrop-filter: saturate(150%) blur(12px);
   border-bottom: 1px solid transparent;
   transition: border-color 0.3s ease, background-color 0.3s ease;
 }
@@ -1386,6 +1388,7 @@ body.lightbox-open { overflow: hidden; }
 .stage { position: relative; }
 
 .page-home .hero-home {
+  will-change: transform, opacity;
   position: sticky;
   top: 0;
   min-height: 100svh;
@@ -1400,8 +1403,14 @@ body.lightbox-open { overflow: hidden; }
   opacity: clamp(0, calc(1 - var(--p, 0) * 2.1), 1);
 }
 
+/* Der Name schrumpft jetzt ueber transform statt ueber die Breitenachse
+   der Schrift. Eine Aenderung an font-variation-settings zwingt den
+   Browser, die ganze Zeile neu zu setzen und neu zu rastern, und das bei
+   jedem Scrollschritt an einer Ueberschrift von zehn rem. Genau das war
+   das Ruckeln. transform kostet nichts, es laeuft im Compositor. */
 .page-home .hero-home .display {
-  font-variation-settings: "wdth" calc(var(--wdth-display) - var(--p, 0) * 40), "wght" 800;
+  transform: scaleX(calc(1 - var(--p, 0) * 0.26));
+  transform-origin: 0 50%;
 }
 
 .page-home .hero-home.ist-weg { visibility: hidden; }
@@ -1960,10 +1969,27 @@ body.lightbox-open { overflow: hidden; }
   inset: -2% 0 -12% 0;
   width: 100%;
   height: 114%;
-  --bis: calc(var(--p, 0) * 145%);
   opacity: calc(min(1, var(--p, 0) * 3.2) * (1 - var(--p, 0) * (1 - var(--effekt))));
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 var(--bis), transparent calc(var(--bis) + 22%));
-  mask-image: linear-gradient(to bottom, #000 0%, #000 var(--bis), transparent calc(var(--bis) + 22%));
+}
+
+/* Der Aufbau von oben nach unten lief ueber eine Maske, deren Kante sich
+   bei jedem Scrollschritt verschob. Eine Maske muss dabei jedes Mal neu
+   erzeugt werden. Jetzt liegt einfach ein Deckel darueber, der nach
+   unten wegfaehrt: derselbe Effekt, aber reines transform. Er malt die
+   Grundflaeche, im hellen Zustand also Weiss, und Weiss mal Untergrund
+   ist der Untergrund. Damit stimmt er in beiden Zustaenden. */
+.buehne-deckel {
+  position: absolute;
+  inset: 0;
+  height: 200%;
+  background: linear-gradient(
+    to bottom,
+    var(--bg) 0%,
+    var(--bg) 46%,
+    transparent 60%
+  );
+  transform: translateY(calc(var(--p, 0) * 100%));
+  will-change: transform;
 }
 
 /* ------------------------------------------------------ Randbetont */
@@ -2025,6 +2051,7 @@ body.lightbox-open { overflow: hidden; }
   .buehne { position: absolute; top: 0; left: 0; right: 0; margin-bottom: 0; }
   .stage-raum { height: 0; }
   .shader,
+  .buehne-deckel,
   .buehne-mitte { display: none; }
   .neon-balken,
   .neon-schein,

@@ -368,6 +368,7 @@
     var zeit = 0;
     var vorher = 0;
     var ruheK = 0;
+    var gezeichnet = 0;
 
     function bild(uhr) {
       if (!laeuft) return;
@@ -376,6 +377,17 @@
       if (!(dt > 0)) dt = 0.016;
       if (dt > 0.05) dt = 0.05;
       zeit += dt * (1 - 0.55 * ruheK);
+
+      // Der Hintergrund ist weich und langsam. Ein Bild alle 30 ms
+      // genuegt dafuer und halbiert die Last auf der Grafikkarte. Die
+      // Zeit laeuft trotzdem in jedem Frame weiter, damit die Bewegung
+      // nicht springt, wenn ein Bild ausgelassen wird.
+      if (uhr - gezeichnet < 30) {
+        raf = requestAnimationFrame(bild);
+        return;
+      }
+      gezeichnet = uhr;
+
       var t = zeit;
 
       gl.viewport(0, 0, b, h);

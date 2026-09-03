@@ -148,11 +148,11 @@
     const messen = () => {
       const weg = window.innerHeight * 1.5;
       const roh = Math.min(1, Math.max(0, window.scrollY / weg));
-      // In hundert Stufen statt stufenlos. Eine Aenderung der
-      // Breitenachse laesst den Browser die ganze Zeile neu setzen, und
-      // bei einer Ueberschrift dieser Groesse kostet das spuerbar. Den
-      // Unterschied sieht man nicht.
-      const p = Math.round(roh * 100) / 100;
+      // Frueher in hundert Stufen, weil die Breitenachse der Schrift
+      // teuer war. Es bewegen sich jetzt nur noch transform und opacity,
+      // und die kosten nichts. Also darf jeder Frame durch, und genau
+      // das macht es weich statt gestuft.
+      const p = Math.round(roh * 1000) / 1000;
       offen = false;
       if (p === letzter) return;
       letzter = p;
@@ -212,13 +212,13 @@
       motor = window.hintergrundShader(flaeche, {
         // Absichtlich unter der Bildschirmaufloesung gerechnet. Weiche
         // Verlaeufe vertragen das, und es ist der groesste Gewinn.
-        mass: 0.65,
+        mass: 0.55,
         wellen: {
           horizonColor: "#241640",
           waveColor: "#6a34d8",
           crestColor: "#c9a6ff",
           speed: 0.22,
-          steps: 40,
+          steps: 28,
           brightness: 0.9,
           opacity: 0.5,
           tilt: 1.11,
@@ -247,7 +247,7 @@
           waveColor: "#3778d7",
           crestColor: "#bfd9ff",
           speed: 0.22,
-          steps: 40,
+          steps: 28,
           brightness: 1,
           opacity: 0.22,
           tilt: 1.11,
