@@ -55,12 +55,14 @@
 
   /* ------------------------------------------- Hell und dunkel */
 
-  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  // Dunkel ist der Grundzustand dieser Seite. Wer im Betriebssystem
+  // hell eingestellt hat, bekommt hell, alle anderen bekommen dunkel.
+  const media = window.matchMedia("(prefers-color-scheme: light)");
 
   const currentTheme = () => {
     const set = root.getAttribute("data-theme");
     if (set === "light" || set === "dark") return set;
-    return media.matches ? "dark" : "light";
+    return media.matches ? "light" : "dark";
   };
 
   const applyTheme = (theme) => {
@@ -120,156 +122,75 @@
 
   onScroll();
 
-  /* -------------------------------------------- Einflug beim Scrollen */
+  /* ------------------------------------------------- Der eine Moment */
 
-  if (reduced || !("IntersectionObserver" in window)) {
-    for (const el of document.querySelectorAll("[data-anim]")) el.classList.add("is-in");
-  } else {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          entry.target.classList.add("is-in");
-          observer.unobserve(entry.target);
+  // Auf der Startseite bleibt der Hero stehen, waehrend der Inhalt sich
+  // darueber schiebt. Dabei zieht sich der Name in der Breite zusammen.
+  // Das Skript setzt nur einen Wert von 0 bis 1, die Gestaltung steht im
+  // Stylesheet. Ohne Skript steht der Wert auf 0 und alles ist da.
+
+  const heldHero = document.querySelector(".page-home .hero-home");
+
+  if (heldHero && !reduced) {
+    let offen = false;
+    let letzter = -1;
+
+    const messen = () => {
+      const weg = window.innerHeight * 0.85;
+      const roh = Math.min(1, Math.max(0, window.scrollY / weg));
+      // In hundert Stufen statt stufenlos. Eine Aenderung der Breitenachse
+      // laesst den Browser die ganze Zeile neu setzen, und bei einer
+      // Ueberschrift dieser Groesse kostet das auf schwachen Geraeten
+      // spuerbar. Der Unterschied ist mit blossem Auge nicht zu sehen.
+      const p = Math.round(roh * 100) / 100;
+      if (p === letzter) { offen = false; return; }
+      letzter = p;
+      heldHero.style.setProperty("--p", String(p));
+      offen = false;
+    };
+
+    addEventListener(
+      "scroll",
+      () => {
+        if (!offen) {
+          offen = true;
+          requestAnimationFrame(messen);
         }
       },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.06 }
+      { passive: true }
     );
 
-    for (const el of document.querySelectorAll("[data-anim]")) {
-      // Was beim Laden schon im Bild ist, kommt sofort herein und
-      // wartet nicht auf eine Scrollbewegung, die nie passiert.
-      if (el.getBoundingClientRect().top < window.innerHeight * 0.92) {
-        requestAnimationFrame(() => el.classList.add("is-in"));
-      } else {
-        observer.observe(el);
+    addEventListener("resize", messen, { passive: true });
+    messen();
+  }
+
+  /* ------------------------------------------- Navigation bei schmal */
+
+  const kopf = document.querySelector(".site-header");
+  const schalter = document.querySelector(".nav-toggle");
+
+  if (kopf && schalter) {
+    const schliessen = () => {
+      kopf.classList.remove("nav-offen");
+      schalter.setAttribute("aria-expanded", "false");
+    };
+
+    schalter.addEventListener("click", () => {
+      const offen = kopf.classList.toggle("nav-offen");
+      schalter.setAttribute("aria-expanded", offen ? "true" : "false");
+    });
+
+    for (const link of document.querySelectorAll(".site-nav a")) {
+      link.addEventListener("click", schliessen);
+    }
+
+    addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && kopf.classList.contains("nav-offen")) {
+        schliessen();
+        schalter.focus();
       }
-    }
+    });
   }
-
-  /* ------------------------------------------------ Licht auf den Karten */
-
-  if (!reduced && matchMedia("(hover: hover)").matches) {
-    for (const card of document.querySelectorAll(".card")) {
-      card.addEventListener(
-        "pointermove",
-        (e) => {
-          const r = card.getBoundingClientRect();
-          card.style.setProperty("--mx", `${((e.clientX - r.left) / r.width) * 100}%`);
-          card.style.setProperty("--my", `${((e.clientY - r.top) / r.height) * 100}%`);
-        },
-        { passive: true }
-      );
-      card.addEventListener("pointerleave", () => {
-        card.style.removeProperty("--mx");
-        card.style.removeProperty("--my");
-      });
-    }
-  }
-
-  /* -------------------------------------------------------- Parallaxe */
-
-  if (!reduced) {
-    // Nur auf unbeschnittenen Bildern. In den Karten und der Galerie
-    // sitzt das Bild exakt im Rahmen, ein Versatz würde dort eine
-    // Kante freilegen.
-    const layers = [...document.querySelectorAll(".cover")];
-
-    if (layers.length) {
-      let pending = false;
-
-      const shift = () => {
-        const h = window.innerHeight;
-        for (const el of layers) {
-          const r = el.getBoundingClientRect();
-          if (r.bottom < -200 || r.top > h + 200) continue;
-          // -1 am oberen Rand, +1 am unteren: daraus ein sanfter Versatz
-          const p = (r.top + r.height / 2 - h / 2) / (h / 2);
-          el.style.translate = `0 ${(p * -16).toFixed(2)}px`;
-        }
-        pending = false;
-      };
-
-      addEventListener(
-        "scroll",
-        () => {
-          if (!pending) {
-            pending = true;
-            requestAnimationFrame(shift);
-          }
-        },
-        { passive: true }
-      );
-
-      addEventListener("resize", shift, { passive: true });
-      shift();
-    }
-  }
-})();
-
-/* ------------------------------------------------------------------
-   Lightbox.
-
-   Bilder öffnen sich groß und passen sich immer vollständig in den
-   Bildschirm ein, egal ob hoch oder quer. Zoomen über Mausrad,
-   Doppelklick, die Knöpfe unten oder zwei Finger. Im vergrößerten
-   Zustand lässt sich das Bild ziehen.
-
-   Schließen über das Kreuz, einen Klick daneben oder Escape,
-   blättern mit den Pfeilen oder durch Wischen.
-
-   Ohne JavaScript bleiben die Bilder normale Links auf die Datei.
------------------------------------------------------------------- */
-
-(() => {
-  const all = [...document.querySelectorAll(".shots a, .cover-frame a")];
-  if (!all.length) return;
-
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
-  const MAX = 6;
-
-  const en = document.documentElement.lang === "en";
-  const words = en
-    ? { close: "Close", prev: "Previous image", next: "Next image", zoomIn: "Zoom in", zoomOut: "Zoom out" }
-    : { close: "Schließen", prev: "Vorheriges Bild", next: "Nächstes Bild", zoomIn: "Vergrößern", zoomOut: "Verkleinern" };
-
-  // Jede Galerie bleibt für sich. Weiterblättern führt nicht aus einer
-  // Arbeit in die nächste.
-  const groups = new Map();
-  for (const a of all) {
-    const key = a.closest(".shots, .cover-frame");
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(a);
-  }
-
-  const box = document.createElement("div");
-  box.className = "lightbox";
-  box.setAttribute("role", "dialog");
-  box.setAttribute("aria-modal", "true");
-  box.hidden = true;
-  box.innerHTML = `
-    <button class="lightbox-close" type="button" aria-label="${words.close}">✕</button>
-    <button class="lightbox-nav prev" type="button" aria-label="${words.prev}">‹</button>
-    <button class="lightbox-nav next" type="button" aria-label="${words.next}">›</button>
-    <img alt="" draggable="false">
-    <div class="lightbox-tools">
-      <button class="lightbox-zoom out" type="button" aria-label="${words.zoomOut}">−</button>
-      <span class="lightbox-counter"></span>
-      <button class="lightbox-zoom in" type="button" aria-label="${words.zoomIn}">+</button>
-    </div>`;
-  document.body.appendChild(box);
-
-  const big = box.querySelector("img");
-  const counter = box.querySelector(".lightbox-counter");
-  const prevBtn = box.querySelector(".prev");
-  const nextBtn = box.querySelector(".next");
-  const zoomIn = box.querySelector(".lightbox-zoom.in");
-  const zoomOut = box.querySelector(".lightbox-zoom.out");
-
-  let triggers = all;
-  let index = 0;
-  let lastFocus = null;
 
   /* ------------------------------------------------ Zoom und Verschieben */
 

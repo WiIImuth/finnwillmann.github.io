@@ -60,7 +60,7 @@ const LANGS = {
       source: "Quellcode",
       live: "Live ansehen",
       video: "Video ansehen",
-      tools: "Werkzeuge",
+      tools: "Womit ich arbeite",
       elsewhere: "Woanders zu finden",
       imprint: "Impressum",
       artworksEyebrow: "Zeichnung und 3D",
@@ -91,6 +91,8 @@ const LANGS = {
       mainNav: "Hauptnavigation",
       footerNav: "Fußzeile",
       shot: (x) => `Bildschirmfoto aus ${x}`,
+      projectView: "Projekt ansehen",
+      menu: "Menü",
     },
   },
   en: {
@@ -119,7 +121,7 @@ const LANGS = {
       source: "Source code",
       live: "Play it",
       video: "Watch video",
-      tools: "Tools",
+      tools: "What I work with",
       elsewhere: "Elsewhere",
       imprint: "Legal notice",
       artworksEyebrow: "Drawing and 3D",
@@ -150,6 +152,8 @@ const LANGS = {
       mainNav: "Main navigation",
       footerNav: "Footer",
       shot: (x) => `Screenshot from ${x}`,
+      projectView: "See the project",
+      menu: "Menu",
     },
   },
 };
@@ -500,7 +504,6 @@ ${ogImage ? `<meta name="twitter:card" content="summary_large_image">` : ""}
 <meta name="color-scheme" content="light dark">
 <script>
 (function () {
-  document.documentElement.classList.add("js");
   try {
     var saved = localStorage.getItem("theme");
     if (saved === "light" || saved === "dark") document.documentElement.setAttribute("data-theme", saved);
@@ -521,8 +524,9 @@ ${ogImage ? `<meta name="twitter:card" content="summary_large_image">` : ""}
         ? `<span class="brand-alias">${escapeHtml(alias)}</span><span class="brand-name">${escapeHtml(config.name)}</span>`
         : escapeHtml(config.name)
     }</a>
-    <nav class="site-nav" aria-label="${escapeHtml(t.mainNav)}">${navHtml}</nav>
+    <nav class="site-nav" id="site-nav" aria-label="${escapeHtml(t.mainNav)}">${navHtml}</nav>
     <div class="header-tools">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="${escapeHtml(t.menu)}"><span></span></button>
       <a class="lang-switch" href="${altUrl}" title="${escapeHtml(L.otherTitle)}" lang="${L.other}">${L.otherLabel}</a>
       <button class="theme-toggle" type="button" aria-label="${escapeHtml(t.theme)}" title="${escapeHtml(t.theme)}">${ICON_THEME}</button>
     </div>
@@ -550,21 +554,56 @@ ${content}
  * Bausteine
  * ------------------------------------------------------------------ */
 
-function projectCard(project, L) {
+// Eine Arbeit auf der Startseite: eine ganze Zeile, im Wechsel Bild
+// links und Bild rechts. Das Bild ist derselbe Link wie der Titel und
+// bleibt darum aus der Tabreihenfolge heraus.
+function arbeitZeile(project, L, index) {
+  const r = routes(L);
+  const d = project.data;
+  const t = L.t;
+  const image = d.thumb || d.cover;
+  const href = r.project(project.slug);
+  const tags = (d.tags || []).map((x) => `<li>${escapeHtml(x)}</li>`).join("");
+  const meta = [String(index + 1).padStart(2, "0"), d.year, d.role]
+    .filter(Boolean)
+    .map((x) => escapeHtml(String(x)))
+    .join(" · ");
+
+  return `<article>
+  <div class="arbeit-zeile">
+    ${image ? `<a class="arbeit-bild" href="${href}" tabindex="-1" aria-hidden="true"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></a>` : ""}
+    <div class="arbeit-text">
+      <p class="arbeit-meta">${meta}</p>
+      <h3 class="arbeit-titel"><a href="${href}">${escapeHtml(d.title)}</a></h3>
+      <p class="arbeit-summary">${escapeHtml(d.summary || "")}</p>
+      ${tags ? `<ul class="tags">${tags}</ul>` : ""}
+      <a class="arbeit-link" href="${href}">${escapeHtml(t.projectView)} <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</article>`;
+}
+
+// Die Uebersicht ist ein Verzeichnis: eine Zeile je Arbeit, mit Nummer,
+// Titel, Jahr und Bild. Bewusst anders als die Baender auf der Startseite,
+// damit die beiden Seiten nicht dasselbe zweimal zeigen.
+function werkZeile(project, L, index) {
   const r = routes(L);
   const d = project.data;
   const image = d.thumb || d.cover;
-  const tags = (d.tags || []).map((x) => `<li>${escapeHtml(x)}</li>`).join("");
+  const marken = (d.tags || []).map((x) => escapeHtml(x)).join(" · ");
 
-  return `<article class="card${image ? " has-cover" : ""}" data-anim="rise">
-  <a class="card-link" href="${r.project(project.slug)}">
-    ${image ? `<span class="card-cover"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></span>` : ""}
-    <span class="card-meta">${escapeHtml(d.year || "")}</span>
-    <h3 class="card-title">${escapeHtml(d.title)}</h3>
-    <p class="card-summary">${escapeHtml(d.summary || "")}</p>
+  return `<li class="werk">
+  <a class="werk-link" href="${r.project(project.slug)}">
+    <span class="werk-nr">${String(index + 1).padStart(2, "0")}</span>
+    <span class="werk-haupt">
+      <span class="werk-titel">${escapeHtml(d.title)}</span>
+      <span class="werk-summary">${escapeHtml(d.summary || "")}</span>
+      ${marken ? `<span class="werk-marken">${marken}</span>` : ""}
+    </span>
+    <span class="werk-jahr">${escapeHtml(d.year || "")}</span>
+    ${image ? `<span class="werk-bild"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></span>` : "<span></span>"}
   </a>
-  ${tags ? `<ul class="tags">${tags}</ul>` : ""}
-</article>`;
+</li>`;
 }
 
 function pageHeader({ eyebrow, title, lead, extra = "" }) {
@@ -583,7 +622,7 @@ function ctaSection(L) {
   const r = routes(L);
   const t = L.t;
   return `<section class="cta">
-  <div class="wrap" data-anim="rise">
+  <div class="wrap">
     <h2 class="display-sm">${escapeHtml(t.ctaTitle)}</h2>
     <p class="lead">${escapeHtml(t.ctaLead)}</p>
     <div class="btn-row"><a class="btn btn-primary" href="${r.contact}">${escapeHtml(t.ctaButton)}</a></div>
@@ -595,7 +634,7 @@ function artworkTile(artwork, href) {
   const d = artwork.data;
   const image = d.cover || (d.gallery || [])[0];
   // Der Anker führt direkt zu dieser Arbeit, nicht an den Seitenanfang.
-  return `<a class="tile" href="${href}#${artwork.slug}" data-anim="zoom">
+  return `<a class="tile" href="${href}#${artwork.slug}">
   ${image ? `<span class="tile-img"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></span>` : ""}
   <span class="tile-body">
     <span class="tile-meta">${escapeHtml(d.year || "")}${d.role ? ` · ${escapeHtml(d.role)}` : ""}</span>
@@ -617,19 +656,24 @@ function homePage({ config, L, home, projects, artworks }) {
     .join("");
 
   const featured = projects.filter((p) => p.data.featured !== false).slice(0, 3);
-  const location = pick(config.location, L.code);
+
+  // Die Ueberschrift traegt sich selbst. Rolle, Werkzeug und Ort stehen
+  // deshalb unter dem Satz und nicht als Kicker darueber.
+  const werkzeuge = (config.skills?.[0]?.items || []).slice(0, 2).join(", ");
+  const fakten = [pick(config.role, L.code), werkzeuge, pick(config.location, L.code)].filter(Boolean);
 
   return `
-<section class="hero">
+<div class="stage">
+<section class="hero hero-home">
   <div class="hero-glow" aria-hidden="true"></div>
   <div class="wrap hero-inner">
-    <p class="eyebrow">${escapeHtml(pick(config.role, L.code))}${location ? ` · ${escapeHtml(location)}` : ""}</p>
     <h1 class="display">${
       config.alias
         ? `${escapeHtml(config.alias)}<span class="hero-name">${escapeHtml(config.name)}</span>`
         : escapeHtml(config.name)
     }</h1>
     <p class="hero-lead">${escapeHtml(pick(config.tagline, L.code))}</p>
+    <p class="fakten">${fakten.map((f) => `<span>${escapeHtml(f)}</span>`).join("")}</p>
     <div class="btn-row">
       <a class="btn btn-primary" href="${r.projects}">${escapeHtml(t.heroCta)}</a>
       ${heroLinks}
@@ -637,48 +681,51 @@ function homePage({ config, L, home, projects, artworks }) {
   </div>
 </section>
 
+<div class="stage-inhalt">
 ${home.html
   ? `<section class="band">
   <div class="wrap">
-    <div class="statement" data-anim="rise">${home.html}</div>
-    <p class="section-link" data-anim="rise"><a href="${r.about}">${escapeHtml(t.moreAbout)}</a></p>
+    <div class="statement">${home.html}</div>
+    <p class="section-link"><a href="${r.about}">${escapeHtml(t.moreAbout)}</a></p>
   </div>
 </section>`
   : ""}
 
 <section class="wrap section">
-  <h2 class="section-title" data-anim="rise">${escapeHtml(t.selected)}</h2>
+  <h2 class="section-title">${escapeHtml(t.selected)}</h2>
   ${featured.length
-    ? `<div class="cards">${featured.map((p) => projectCard(p, L)).join("")}</div>`
+    ? `<div class="arbeiten">${featured.map((p, i) => arbeitZeile(p, L, i)).join("")}</div>`
     : `<p class="muted">${escapeHtml(t.empty)}</p>`}
-  <p class="section-link" data-anim="rise"><a href="${r.projects}">${escapeHtml(
+  <p class="section-link"><a href="${r.projects}">${escapeHtml(
       projects.length > featured.length ? t.allProjects(projects.length) : t.overview
     )}</a></p>
 </section>
 
 ${artworks.length
   ? `<section class="band">
-  <div class="wrap">
-    <h2 class="section-title" data-anim="rise">${escapeHtml(t.artworksTitle)}</h2>
-    <p class="statement statement-sm" data-anim="rise">${escapeHtml(pick(config.artworksIntro, L.code) || t.artworksLead)}</p>
+  <div class="wrap stapel">
+    <h2 class="section-title">${escapeHtml(t.artworksTitle)}</h2>
+    <p class="statement statement-sm">${escapeHtml(pick(config.artworksIntro, L.code) || t.artworksLead)}</p>
     <div class="tiles">${artworks.slice(0, 3).map((a) => artworkTile(a, r.artworks)).join("")}</div>
-    <p class="section-link" data-anim="rise"><a href="${r.artworks}">${escapeHtml(t.artworksAll)}</a></p>
+    <p class="section-link"><a href="${r.artworks}">${escapeHtml(t.artworksAll)}</a></p>
   </div>
 </section>`
   : ""}
 
 ${ctaSection(L)}
+</div>
+</div>
 `;
 }
 
 function projectsIndexPage({ L, projects, intro }) {
   const t = L.t;
   return `
-${pageHeader({ eyebrow: t.projectsEyebrow, title: t.projectsTitle, lead: intro || t.projectsLead })}
+${pageHeader({ title: t.projectsTitle, lead: intro || t.projectsLead })}
 
 <section class="wrap section-tight">
   ${projects.length
-    ? `<div class="cards">${projects.map((p) => projectCard(p, L)).join("")}</div>`
+    ? `<ul class="werkliste">${projects.map((p, i) => werkZeile(p, L, i)).join("")}</ul>`
     : `<p class="muted">${escapeHtml(t.empty)}</p>`}
 </section>
 
@@ -712,7 +759,7 @@ function projectPage({ project, L }) {
     ? `<div class="shots wrap">${shots
         .map(
           (src) =>
-            `<figure data-anim="zoom"><a href="${src}"><img src="${src}" alt="${escapeHtml(t.shot(d.title))}"${dims(src)} loading="lazy" decoding="async"></a></figure>`
+            `<figure><a href="${src}"><img src="${src}" alt="${escapeHtml(t.shot(d.title))}"${dims(src)} loading="lazy" decoding="async"></a></figure>`
         )
         .join("")}</div>`
     : "";
@@ -731,14 +778,14 @@ function projectPage({ project, L }) {
   </section>
 
   <div class="wrap">
-    ${meta.length ? `<dl class="project-meta" data-anim="rise">${meta.join("")}</dl>` : ""}
+    ${meta.length ? `<dl class="project-meta">${meta.join("")}</dl>` : ""}
   </div>
 
-  ${d.cover ? `<div class="cover-frame wrap" data-anim="zoom"><a href="${d.cover}"><img class="cover" src="${d.cover}" alt="${escapeHtml(d.title)}"${dims(d.cover)}></a></div>` : ""}
+  ${d.cover ? `<div class="cover-frame wrap"><a href="${d.cover}"><img class="cover" src="${d.cover}" alt="${escapeHtml(d.title)}"${dims(d.cover)}></a></div>` : ""}
   ${gallery}
 
   <div class="wrap">
-    <div class="prose" data-anim="rise">${project.html}</div>
+    <div class="prose">${project.html}</div>
   </div>
 </article>
 
@@ -755,7 +802,7 @@ function artworksPage({ config, L, artworks }) {
       const tags = (d.tags || []).map((x) => `<li>${escapeHtml(x)}</li>`).join("");
 
       const video = d.video && !/^https?:/.test(d.video)
-        ? `<div class="artwork-video" data-anim="zoom">
+        ? `<div class="artwork-video">
              <video src="${d.video}"${d.poster ? ` poster="${d.poster}"` : ""} controls muted loop playsinline preload="none"></video>
            </div>`
         : "";
@@ -763,12 +810,12 @@ function artworksPage({ config, L, artworks }) {
       const shots = (d.gallery || [])
         .map(
           (src) =>
-            `<figure data-anim="zoom"><a href="${src}" target="_blank" rel="noopener noreferrer"><img src="${src}" alt="${escapeHtml(d.title)}"${dims(src)} loading="lazy" decoding="async"></a></figure>`
+            `<figure><a href="${src}" target="_blank" rel="noopener noreferrer"><img src="${src}" alt="${escapeHtml(d.title)}"${dims(src)} loading="lazy" decoding="async"></a></figure>`
         )
         .join("");
 
       return `<article class="artwork" id="${a.slug}">
-  <header class="artwork-head" data-anim="rise">
+  <header class="artwork-head">
     <h2 class="artwork-title">${escapeHtml(d.title)}</h2>
     <p class="artwork-meta">${escapeHtml(d.year || "")}${d.role ? ` · ${escapeHtml(d.role)}` : ""}</p>
     ${a.html ? `<div class="prose narrow">${a.html}</div>` : ""}
@@ -785,7 +832,7 @@ function artworksPage({ config, L, artworks }) {
     .slice(0, 6)
     .map(
       (post) =>
-        `<a class="insta-tile" href="${post.href || ig.profile}" target="_blank" rel="noopener noreferrer" data-anim="zoom">
+        `<a class="insta-tile" href="${post.href || ig.profile}" target="_blank" rel="noopener noreferrer">
            <img src="${post.image}" alt="${escapeHtml(post.alt || "Instagram")}"${dims(post.image)} loading="lazy" decoding="async">
          </a>`
     )
@@ -794,10 +841,10 @@ function artworksPage({ config, L, artworks }) {
   const instagram = ig.profile
     ? `<section class="band insta">
   <div class="wrap">
-    <h2 class="display-sm" data-anim="rise">${escapeHtml(t.instagramTitle)}</h2>
-    <p class="lead" data-anim="rise">${escapeHtml(t.instagramLead)}</p>
+    <h2 class="display-sm">${escapeHtml(t.instagramTitle)}</h2>
+    <p class="lead">${escapeHtml(t.instagramLead)}</p>
     ${posts ? `<div class="insta-grid">${posts}</div>` : ""}
-    <div class="btn-row spaced" data-anim="rise">
+    <div class="btn-row spaced">
       <a class="btn" href="${ig.profile}" target="_blank" rel="noopener noreferrer">${escapeHtml(t.instagramCta)}</a>
     </div>
   </div>
@@ -805,7 +852,7 @@ function artworksPage({ config, L, artworks }) {
     : "";
 
   return `
-${pageHeader({ eyebrow: t.artworksEyebrow, title: t.artworksTitle, lead: pick(config.artworksIntro, L.code) || t.artworksLead })}
+${pageHeader({ title: t.artworksTitle, lead: pick(config.artworksIntro, L.code) || t.artworksLead })}
 
 <section class="wrap section-tight artworks">
   ${entries || `<p class="muted">${escapeHtml(t.empty)}</p>`}
@@ -829,13 +876,13 @@ function aboutPage({ config, L, about }) {
     .join("");
 
   return `
-${pageHeader({ eyebrow: pick(config.role, L.code), title: about.data.headline || t.aboutTitle, lead: about.data.lead || "" })}
+${pageHeader({ title: about.data.headline || t.aboutTitle, lead: about.data.lead || "" })}
 
 <section class="wrap section-tight">
-  <div class="prose narrow" data-anim="rise">${about.html}</div>
+  <div class="prose narrow">${about.html}</div>
   ${skills
-    ? `<h2 class="section-title spaced" data-anim="rise">${escapeHtml(t.tools)}</h2>
-       <div class="skills" data-anim="rise">${skills}</div>`
+    ? `<h2 class="section-title spaced">${escapeHtml(t.tools)}</h2>
+       <div class="skills">${skills}</div>`
     : ""}
 </section>
 
@@ -850,16 +897,16 @@ function contactPage({ config, L, contact }) {
     .join("");
 
   return `
-${pageHeader({ eyebrow: t.contactTitle, title: contact.data.headline || t.contactTitle, lead: contact.data.lead || "" })}
+${pageHeader({ title: contact.data.headline || t.contactTitle, lead: contact.data.lead || "" })}
 
 <section class="wrap section-tight">
-  ${contact.html ? `<div class="prose narrow" data-anim="rise">${contact.html}</div>` : ""}
-  <div class="btn-row spaced" data-anim="rise">
+  ${contact.html ? `<div class="prose narrow">${contact.html}</div>` : ""}
+  <div class="btn-row spaced">
     <a class="btn btn-primary" href="mailto:${escapeHtml(config.email)}">${escapeHtml(config.email)}</a>
   </div>
   ${links
-    ? `<h2 class="section-title spaced" data-anim="rise">${escapeHtml(t.elsewhere)}</h2>
-       <ul class="link-list" data-anim="rise">${links}</ul>`
+    ? `<h2 class="section-title spaced">${escapeHtml(t.elsewhere)}</h2>
+       <ul class="link-list">${links}</ul>`
     : ""}
 </section>
 `;
@@ -869,7 +916,8 @@ function imprintPage({ config, L }) {
   const t = L.t;
   const im = config.impressum || {};
   return `
-<article class="wrap section prose narrow" data-anim="rise">
+<article class="wrap section">
+  <div class="prose narrow">
   <h1>${escapeHtml(t.imprint)}</h1>
   <p>${escapeHtml(t.imprintHead)}</p>
   <p>${escapeHtml(im.name || config.name)}<br>
@@ -880,6 +928,7 @@ function imprintPage({ config, L }) {
   <h2>${escapeHtml(t.imprintResponsible)}</h2>
   <p>${escapeHtml(im.name || config.name)}, ${escapeHtml(t.imprintAddress)}</p>
   ${im.note ? `<p class="muted"><em>${escapeHtml(pick(im.note, L.code))}</em></p>` : ""}
+  </div>
 </article>
 `;
 }
@@ -887,10 +936,12 @@ function imprintPage({ config, L }) {
 function privacyPage({ config, L, privacy }) {
   const t = L.t;
   return `
-<article class="wrap section prose narrow" data-anim="rise">
+<article class="wrap section">
+  <div class="prose narrow">
   <h1>${escapeHtml(privacy.data.headline || t.privacyTitle)}</h1>
   ${privacy.data.lead ? `<p class="lead">${escapeHtml(privacy.data.lead)}</p>` : ""}
   ${privacy.html}
+  </div>
 </article>
 `;
 }
@@ -1162,9 +1213,9 @@ async function build() {
       description: D.t.notFoundText,
       altUrl: routes(LANGS.en).home,
       bodyClass: "page-legal",
-      content: `<section class="wrap section prose narrow"><h1>404</h1><p>${escapeHtml(
+      content: `<section class="wrap section"><div class="prose narrow"><h1>404</h1><p>${escapeHtml(
         D.t.notFoundText
-      )} <a href="/">${escapeHtml(D.t.backHome)}</a>.</p></section>`,
+      )} <a href="/">${escapeHtml(D.t.backHome)}</a>.</p></div></section>`,
     })
   );
 
