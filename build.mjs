@@ -24,7 +24,7 @@ import { readFile, readdir, mkdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes, pbkdf2Sync, createCipheriv } from "node:crypto";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(ROOT, "dist");
@@ -94,11 +94,22 @@ const LANGS = {
       projectView: "Projekt ansehen",
       menu: "Menü",
       menuClose: "Menü schließen",
+      intern: {
+        titel: "Intern",
+        lead: "Dieser Bereich ist verschlüsselt. Ohne Passwort steht hier nichts, auch nicht im Quelltext.",
+        label: "Passwort",
+        knopf: "Öffnen",
+        rechnet: "Wird entschlüsselt …",
+        falsch: "Das Passwort passt nicht.",
+        fehlt: "Bitte ein Passwort eingeben.",
+        alt: "Dieser Browser kann das nicht entschlüsseln. Er braucht eine sichere Verbindung und WebCrypto.",
+      },
       gruppe: {
         bereiche: "Bereiche",
         arbeiten: "Arbeiten",
         woanders: "Woanders",
         recht: "Rechtliches",
+        intern: "Geschlossen",
       },
     },
   },
@@ -162,15 +173,61 @@ const LANGS = {
       projectView: "See the project",
       menu: "Menu",
       menuClose: "Close menu",
+      intern: {
+        titel: "Internal",
+        lead: "This area is encrypted. Without the password there is nothing here, not even in the source.",
+        label: "Password",
+        knopf: "Open",
+        rechnet: "Decrypting …",
+        falsch: "That password does not fit.",
+        fehlt: "Please enter a password.",
+        alt: "This browser cannot decrypt it. It needs a secure connection and WebCrypto.",
+      },
       gruppe: {
         bereiche: "Sections",
         arbeiten: "Work",
         woanders: "Elsewhere",
         recht: "Legal",
+        intern: "Closed",
       },
     },
   },
 };
+
+/* ------------------------------------------------------------------ *
+ * Interner Bereich
+ *
+ * Es gibt keinen Server. Ein Passwortvergleich im Browser waere immer
+ * auslesbar, deshalb steht hier kein Passwort, sondern nur der bereits
+ * verschluesselte Inhalt. Der Schluessel entsteht erst im Browser aus
+ * dem, was eingetippt wird.
+ *
+ * AES-256-GCM, Schluessel ueber PBKDF2-SHA256 mit 300000 Runden und
+ * eigenem Salz. Ohne das richtige Passwort gibt es nur Kauderwelsch,
+ * und die Pruefsumme von GCM merkt jeden Rateversuch.
+ *
+ * Der Klartext gehoert nicht ins Repository. content/intern.md steht
+ * in .gitignore, verschluesselt wird auf seinem Rechner, und nur die
+ * fertige Kapsel assets/intern.enc.json wird veroeffentlicht.
+ * ------------------------------------------------------------------ */
+
+const INTERN_RUNDEN = 300000;
+
+function verschluessle(text, passwort) {
+  const salz = randomBytes(16);
+  const iv = randomBytes(12);
+  const schluessel = pbkdf2Sync(passwort, salz, INTERN_RUNDEN, 32, "sha256");
+  const c = createCipheriv("aes-256-gcm", schluessel, iv);
+  const teil = Buffer.concat([c.update(text, "utf8"), c.final()]);
+  // Die Pruefsumme haengt hinten dran, so erwartet es WebCrypto.
+  return {
+    v: 1,
+    it: INTERN_RUNDEN,
+    salz: salz.toString("base64"),
+    iv: iv.toString("base64"),
+    ct: Buffer.concat([teil, c.getAuthTag()]).toString("base64"),
+  };
+}
 
 const routes = (L) => ({
   home: `${L.prefix}/`,
@@ -180,6 +237,7 @@ const routes = (L) => ({
   about: `${L.prefix}/${L.seg.about}/`,
   contact: `${L.prefix}/${L.seg.contact}/`,
   imprint: `${L.prefix}/${L.seg.imprint}/`,
+  intern: "/intern/",
   privacy: `${L.prefix}/${L.seg.privacy}/`,
 });
 
@@ -448,7 +506,7 @@ const ICON_THEME = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false
  * Layout
  * ------------------------------------------------------------------ */
 
-function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "", image = "", v = {}, wellen = false, projekte = [], werke = [] }) {
+function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "", image = "", v = {}, wellen = false, projekte = [], werke = [], intern = false, noindex = false }) {
   const r = routes(L);
   const t = L.t;
   // Künstlername vorn, bürgerlicher Name direkt daneben. So steht in jedem
@@ -503,7 +561,7 @@ function layout({ config, L, title, description, bodyClass = "", content, canoni
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(fullTitle)}</title>
 <meta name="description" content="${escapeHtml(description || "")}">
-${config.site?.noindex ? '<meta name="robots" content="noindex, nofollow">' : ""}
+${config.site?.noindex || noindex ? '<meta name="robots" content="noindex, nofollow">' : ""}
 ${canonical ? `<link rel="canonical" href="${canonical}">` : ""}
 ${base && canonical ? `<link rel="alternate" hreflang="${L.code}" href="${canonical}">` : ""}
 ${base && altUrl ? `<link rel="alternate" hreflang="${L.other}" href="${base}${altUrl}">` : ""}
@@ -560,7 +618,7 @@ ${content}
   : content}
 </main>
 
-${schubfach({ config, L, current, projekte, werke })}
+${schubfach({ config, L, current, projekte, werke, intern })}
 
 <footer class="site-footer">
   <div class="wrap footer-inner">
@@ -589,7 +647,7 @@ const ICON_ZU = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" f
 // die Kopfzeile: alle Bereiche, jede Arbeit einzeln, die Links nach
 // draussen und das Rechtliche. Geschlossen ist es inert, damit es fuer
 // Tastatur und Vorleseprogramm nicht existiert.
-function schubfach({ config, L, current, projekte = [], werke = [] }) {
+function schubfach({ config, L, current, projekte = [], werke = [], intern = false }) {
   const r = routes(L);
   const t = L.t;
 
@@ -625,6 +683,9 @@ function schubfach({ config, L, current, projekte = [], werke = [] }) {
     link(r.privacy, t.privacy, "menue-klein"),
   ].join("");
 
+  // Nur hier zu finden, in keiner Navigation und in keiner Sitemap.
+  const geschlossen = intern ? link(r.intern, t.intern.titel, "menue-klein") : "";
+
   return `<div class="menue-hinter" data-menue-zu hidden></div>
 <aside class="menue" id="menue" role="dialog" aria-modal="true" aria-label="${escapeHtml(t.menu)}">
   <div class="menue-kopf">
@@ -636,6 +697,7 @@ function schubfach({ config, L, current, projekte = [], werke = [] }) {
     ${gruppe(t.gruppe.arbeiten, arbeiten)}
     ${gruppe(t.gruppe.woanders, woanders)}
     ${gruppe(t.gruppe.recht, recht)}
+    ${gruppe(t.gruppe.intern, geschlossen)}
   </nav>
 </aside>`;
 }
@@ -1011,6 +1073,36 @@ ${pageHeader({ glow: false, title: contact.data.headline || t.contactTitle, lead
 `;
 }
 
+// Die Seite traegt nur das Schloss und die Kapsel. Der Klartext taucht
+// im ausgelieferten HTML an keiner Stelle auf.
+function internPage({ L, kapsel }) {
+  const t = L.t;
+  return `
+<section class="wrap section">
+  <div class="prose narrow">
+    <h1>${escapeHtml(t.intern.titel)}</h1>
+    <p class="lead">${escapeHtml(t.intern.lead)}</p>
+  </div>
+
+  <form class="intern-form" novalidate
+    data-rechnet="${escapeHtml(t.intern.rechnet)}"
+    data-falsch="${escapeHtml(t.intern.falsch)}"
+    data-fehlt="${escapeHtml(t.intern.fehlt)}"
+    data-alt="${escapeHtml(t.intern.alt)}">
+    <label for="intern-pw">${escapeHtml(t.intern.label)}</label>
+    <input id="intern-pw" name="intern-pw" type="password" autocomplete="current-password" spellcheck="false" required>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="submit">${escapeHtml(t.intern.knopf)}</button>
+    </div>
+    <p class="intern-hinweis" role="status" aria-live="polite"></p>
+  </form>
+
+  <div class="prose narrow intern-inhalt" hidden></div>
+  <script type="application/json" id="intern-kapsel">${JSON.stringify(kapsel).replace(/</g, "\\u003c")}</script>
+</section>
+`;
+}
+
 function imprintPage({ config, L }) {
   const t = L.t;
   const im = config.impressum || {};
@@ -1144,6 +1236,32 @@ async function build() {
     shader: await fingerprint("assets/shader.js"),
   };
 
+  /* Die Kapsel fuer den internen Bereich.
+     Liegt content/intern.md vor und steht INTERN_PASSWORT in der
+     Umgebung, wird neu verschluesselt. Sonst wird die vorhandene
+     Kapsel weitergereicht, damit ein Build ohne Passwort, etwa in der
+     Github Action, den Bereich nicht verliert. Fehlt beides, entfaellt
+     der Bereich vollstaendig, samt Eintrag im Schubfach. */
+  const kapselDatei = path.join(ROOT, "assets", "intern.enc.json");
+  const internQuelle = path.join(ROOT, "content", "intern.md");
+  let kapsel = null;
+
+  if (existsSync(internQuelle) && process.env.INTERN_PASSWORT) {
+    const seite = await loadMarkdownFile(internQuelle);
+    kapsel = verschluessle(
+      JSON.stringify({ titel: seite.data.title || "", html: seite.html }),
+      process.env.INTERN_PASSWORT
+    );
+    await writeFile(kapselDatei, JSON.stringify(kapsel) + "\n", "utf8");
+    console.log("  · Interner Bereich neu verschlüsselt.");
+  } else if (existsSync(kapselDatei)) {
+    kapsel = JSON.parse(await readFile(kapselDatei, "utf8"));
+    if (existsSync(internQuelle)) {
+      console.warn("  ! content/intern.md liegt vor, aber INTERN_PASSWORT fehlt. Die alte Kapsel bleibt stehen.");
+    }
+  }
+  const intern = !!kapsel;
+
   await collectSizes(path.join(ROOT, "assets", "images"), "/assets/images");
   const base = config.site?.url ? config.site.url.replace(/\/$/, "") : "";
   const abs = (p) => (base ? base + p : "");
@@ -1176,7 +1294,7 @@ async function build() {
     await writePage(
       L.dir ? path.join(L.dir, "index.html") : "index.html",
       layout({
-        config, L, v, projekte: projects, werke: artworks,
+        config, L, v, intern, projekte: projects, werke: artworks,
         title: "",
         description: pick(config.site?.description, L.code),
         canonical: abs(r.home),
@@ -1191,7 +1309,7 @@ async function build() {
     await writePage(
       toFile(r.projects),
       layout({
-        config, L, v, projekte: projects, werke: artworks,
+        config, L, v, intern, projekte: projects, werke: artworks,
         title: t.projectsTitle,
         description: pick(config.projectsIntro, L.code) || t.projectsLead,
         canonical: abs(r.projects),
@@ -1208,7 +1326,7 @@ async function build() {
       await writePage(
         toFile(r.project(project.slug)),
         layout({
-          config, L, v, projekte: projects, werke: artworks,
+          config, L, v, intern, projekte: projects, werke: artworks,
           title: project.data.title,
           description: project.data.summary,
           canonical: abs(r.project(project.slug)),
@@ -1226,7 +1344,7 @@ async function build() {
     await writePage(
       toFile(r.artworks),
       layout({
-        config, L, v, projekte: projects, werke: artworks,
+        config, L, v, intern, projekte: projects, werke: artworks,
         title: t.artworksTitle,
         description: pick(config.artworksIntro, L.code) || t.artworksLead,
         canonical: abs(r.artworks),
@@ -1242,7 +1360,7 @@ async function build() {
     await writePage(
       toFile(r.about),
       layout({
-        config, L, v, projekte: projects, werke: artworks,
+        config, L, v, intern, projekte: projects, werke: artworks,
         title: about.data.headline || t.aboutTitle,
         description: about.data.lead || "",
         canonical: abs(r.about),
@@ -1258,7 +1376,7 @@ async function build() {
     await writePage(
       toFile(r.contact),
       layout({
-        config, L, v, projekte: projects, werke: artworks,
+        config, L, v, intern, projekte: projects, werke: artworks,
         title: t.contactTitle,
         description: contact.data.lead || "",
         canonical: abs(r.contact),
@@ -1274,7 +1392,7 @@ async function build() {
     await writePage(
       toFile(r.imprint),
       layout({
-        config, L, v, projekte: projects, werke: artworks,
+        config, L, v, intern, projekte: projects, werke: artworks,
         title: t.imprint,
         description: t.imprint,
         canonical: abs(r.imprint),
@@ -1289,7 +1407,7 @@ async function build() {
       await writePage(
         toFile(r.privacy),
         layout({
-          config, L, v, projekte: projects, werke: artworks,
+          config, L, v, intern, projekte: projects, werke: artworks,
           title: privacy.data.headline || t.privacyTitle,
           description: privacy.data.lead || t.privacyTitle,
           canonical: abs(r.privacy),
@@ -1310,10 +1428,28 @@ async function build() {
   }
 
   const D = LANGS.de;
+
+  // Einmal, nicht je Sprache: die Adresse ist fuer beide dieselbe. Sie
+  // steht in keiner Sitemap und traegt noindex.
+  if (kapsel) {
+    await writePage(
+      toFile(routes(D).intern),
+      layout({
+        config, L: D, v, intern: true, noindex: true,
+        title: D.t.intern.titel,
+        description: D.t.intern.lead,
+        bodyClass: "page-legal page-intern",
+        wellen: true,
+        current: routes(D).intern,
+        content: internPage({ L: D, kapsel }),
+      })
+    );
+  }
+
   await writePage(
     "404.html",
     layout({
-      config, L: D, v,
+      config, L: D, v, intern,
       title: D.t.notFoundTitle,
       description: D.t.notFoundText,
       altUrl: routes(LANGS.en).home,
@@ -1326,6 +1462,7 @@ async function build() {
 
   if (existsSync(path.join(ROOT, "assets"))) {
     await copyDir(path.join(ROOT, "assets"), path.join(DIST, "assets"));
+    await rm(path.join(DIST, "assets", "intern.enc.json"), { force: true });
   }
 
   if (base) {

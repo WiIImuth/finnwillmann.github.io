@@ -486,6 +486,170 @@
     });
   }
 
+  /* ------------------------------------------------------ Innen aufmachen */
+
+  // Auf dieser Seite steht kein Passwort, auch nicht versteckt und auch
+  // nicht in einer anderen Datei. Was hier liegt, ist der bereits
+  // verschluesselte Inhalt. Der Schluessel dafuer entsteht erst hier im
+  // Browser, aus dem, was eingetippt wird: PBKDF2-SHA256 mit dem Salz
+  // aus der Kapsel, daraus AES-256-GCM. Passt das Passwort nicht, faellt
+  // die Pruefsumme von GCM durch und es kommt nichts heraus. Es gibt
+  // also nichts auszulesen, nur zu raten, und das dauert je Versuch.
+
+  const kapselTag = document.getElementById("intern-kapsel");
+  const schloss = document.querySelector(".intern-form");
+
+  if (kapselTag && schloss) {
+    const feld = schloss.querySelector("#intern-pw");
+    const knopf = schloss.querySelector("button");
+    const hinweis = schloss.querySelector(".intern-hinweis");
+    const ziel = document.querySelector(".intern-inhalt");
+    const sagen = (s) => { if (hinweis) hinweis.textContent = s || ""; };
+    const roh = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+    let kapsel = null;
+    try { kapsel = JSON.parse(kapselTag.textContent); } catch (e) { kapsel = null; }
+
+    // WebCrypto gibt es nur ueber eine sichere Verbindung.
+    const krypto = window.crypto && window.crypto.subtle;
+
+    if (!krypto || !kapsel || !ziel) {
+      sagen(schloss.dataset.alt);
+      if (feld) feld.disabled = true;
+      if (knopf) knopf.disabled = true;
+    } else {
+      schloss.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const wort = feld.value;
+        if (!wort) {
+          sagen(schloss.dataset.fehlt);
+          feld.focus();
+          return;
+        }
+
+        knopf.disabled = true;
+        sagen(schloss.dataset.rechnet);
+        // Zwei Bilder abwarten, damit der Hinweis wirklich steht, bevor
+        // dreihunderttausend Runden den Faden belegen.
+        await new Promise((f) => requestAnimationFrame(() => requestAnimationFrame(f)));
+
+        try {
+          const basis = await krypto.importKey(
+            "raw",
+            new TextEncoder().encode(wort),
+            "PBKDF2",
+            false,
+            ["deriveKey"]
+          );
+          const schluessel = await krypto.deriveKey(
+            { name: "PBKDF2", salt: roh(kapsel.salz), iterations: kapsel.it, hash: "SHA-256" },
+            basis,
+            { name: "AES-GCM", length: 256 },
+            false,
+            ["decrypt"]
+          );
+          const klar = await krypto.decrypt(
+            { name: "AES-GCM", iv: roh(kapsel.iv) },
+            schluessel,
+            roh(kapsel.ct)
+          );
+          const inhalt = JSON.parse(new TextDecoder().decode(klar));
+
+          ziel.innerHTML = inhalt.html || "";
+          ziel.hidden = false;
+          schloss.hidden = true;
+          feld.value = "";
+          sagen("");
+
+          if (inhalt.titel) {
+            const h1 = document.querySelector(".page-intern h1");
+            const vor = document.querySelector(".page-intern .lead");
+            if (h1) h1.textContent = inhalt.titel;
+            if (vor) vor.remove();
+            const schnitt = document.title.indexOf(" · ");
+            document.title = schnitt < 0 ? inhalt.titel : inhalt.titel + document.title.slice(schnitt);
+          }
+
+          // Gebraucht wird sie nicht mehr.
+          kapselTag.remove();
+
+          ziel.setAttribute("tabindex", "-1");
+          ziel.focus();
+        } catch (err) {
+          sagen(schloss.dataset.falsch);
+          knopf.disabled = false;
+          feld.select();
+        }
+      });
+    }
+  }
+
+})();
+
+/* ------------------------------------------------------------------
+   Lightbox.
+
+   Bilder öffnen sich groß und passen sich immer vollständig in den
+   Bildschirm ein, egal ob hoch oder quer. Zoomen über Mausrad,
+   Doppelklick, die Knöpfe unten oder zwei Finger. Im vergrößerten
+   Zustand lässt sich das Bild ziehen.
+
+   Schließen über das Kreuz, einen Klick daneben oder Escape,
+   blättern mit den Pfeilen oder durch Wischen.
+
+   Ohne JavaScript bleiben die Bilder normale Links auf die Datei.
+------------------------------------------------------------------ */
+
+(() => {
+  const all = [...document.querySelectorAll(".shots a, .cover-frame a")];
+  if (!all.length) return;
+
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+  const MAX = 6;
+
+  const en = document.documentElement.lang === "en";
+  const words = en
+    ? { close: "Close", prev: "Previous image", next: "Next image", zoomIn: "Zoom in", zoomOut: "Zoom out" }
+    : { close: "Schließen", prev: "Vorheriges Bild", next: "Nächstes Bild", zoomIn: "Vergrößern", zoomOut: "Verkleinern" };
+
+  // Jede Galerie bleibt für sich. Weiterblättern führt nicht aus einer
+  // Arbeit in die nächste.
+  const groups = new Map();
+  for (const a of all) {
+    const key = a.closest(".shots, .cover-frame");
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(a);
+  }
+
+  const box = document.createElement("div");
+  box.className = "lightbox";
+  box.setAttribute("role", "dialog");
+  box.setAttribute("aria-modal", "true");
+  box.hidden = true;
+  box.innerHTML = `
+    <button class="lightbox-close" type="button" aria-label="${words.close}">✕</button>
+    <button class="lightbox-nav prev" type="button" aria-label="${words.prev}">‹</button>
+    <button class="lightbox-nav next" type="button" aria-label="${words.next}">›</button>
+    <img alt="" draggable="false">
+    <div class="lightbox-tools">
+      <button class="lightbox-zoom out" type="button" aria-label="${words.zoomOut}">−</button>
+      <span class="lightbox-counter"></span>
+      <button class="lightbox-zoom in" type="button" aria-label="${words.zoomIn}">+</button>
+    </div>`;
+  document.body.appendChild(box);
+
+  const big = box.querySelector("img");
+  const counter = box.querySelector(".lightbox-counter");
+  const prevBtn = box.querySelector(".prev");
+  const nextBtn = box.querySelector(".next");
+  const zoomIn = box.querySelector(".lightbox-zoom.in");
+  const zoomOut = box.querySelector(".lightbox-zoom.out");
+
+  let triggers = all;
+  let index = 0;
+  let lastFocus = null;
+
   /* ------------------------------------------------ Zoom und Verschieben */
 
   let scale = 1;

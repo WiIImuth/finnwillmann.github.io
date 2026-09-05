@@ -2388,3 +2388,63 @@ body.lightbox-open { overflow: hidden; }
   .menue a:hover { color: var(--accent); padding-left: 0.35rem; }
   .menue-zu:hover { border-color: color-mix(in oklab, var(--accent) 55%, var(--border-strong)); }
 }
+
+
+/* ==================================================================
+   Interner Bereich
+
+   Nur ein Schloss. Der Inhalt dahinter liegt verschluesselt in der
+   Seite und wird erst sichtbar, wenn der Schluessel im Browser aus
+   dem eingetippten Wort entstanden ist.
+   ================================================================== */
+
+.intern-form {
+  max-width: 22rem;
+  margin-top: var(--s4);
+}
+
+.intern-form[hidden] { display: none; }
+
+.intern-form label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.intern-form input {
+  width: 100%;
+  padding: 0.72rem 0.9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.intern-form input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 28%, transparent);
+}
+
+.intern-form input:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.intern-form .btn-row { margin-top: var(--s2); }
+.intern-form button:disabled { opacity: 0.6; cursor: progress; }
+
+.intern-hinweis {
+  min-height: 1.4em;
+  margin: var(--s2) 0 0;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.intern-inhalt:focus { outline: none; }
+.intern-inhalt { margin-top: var(--s4); }
