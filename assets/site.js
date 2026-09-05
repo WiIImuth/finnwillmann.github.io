@@ -411,29 +411,76 @@
     wellenPruefen();
   }
 
-  /* ------------------------------------------- Navigation bei schmal */
+
+  /* ------------------------------------------------------- Schubfach */
+
+  // Ein Feld, das ueber die Seite faehrt. Geschlossen ist es `inert`:
+  // damit ist es fuer Tastatur und Vorleseprogramm nicht vorhanden, und
+  // ich muss den Fokus nicht von Hand einfangen.
 
   const kopf = document.querySelector(".site-header");
   const schalter = document.querySelector(".nav-toggle");
+  const fach = document.getElementById("menue");
+  const hinter = document.querySelector(".menue-hinter");
 
-  if (kopf && schalter) {
-    const schliessen = () => {
-      kopf.classList.remove("nav-offen");
-      schalter.setAttribute("aria-expanded", "false");
+  if (kopf && schalter && fach) {
+    const wurzel = document.documentElement;
+    let offen = false;
+    let vorherFokus = null;
+
+    // Geschlossen wird nichts angefasst, also auch nicht angesprungen.
+    fach.inert = true;
+    if (hinter) hinter.hidden = false;
+
+    const sperreBreite = () => {
+      // Ohne Ausgleich springt die Seite um die Breite der Bildlaufleiste.
+      const luecke = window.innerWidth - wurzel.clientWidth;
+      if (luecke > 0) document.body.style.paddingRight = luecke + "px";
+      wurzel.style.overflow = "hidden";
     };
 
-    schalter.addEventListener("click", () => {
-      const offen = kopf.classList.toggle("nav-offen");
-      schalter.setAttribute("aria-expanded", offen ? "true" : "false");
-    });
+    const loeseSperre = () => {
+      wurzel.style.overflow = "";
+      document.body.style.paddingRight = "";
+    };
 
-    for (const link of document.querySelectorAll(".site-nav a")) {
-      link.addEventListener("click", schliessen);
+    const auf = () => {
+      if (offen) return;
+      offen = true;
+      vorherFokus = document.activeElement;
+      wurzel.classList.add("menue-offen");
+      schalter.setAttribute("aria-expanded", "true");
+      fach.inert = false;
+      sperreBreite();
+      const zu = fach.querySelector(".menue-zu");
+      if (zu) zu.focus();
+    };
+
+    const zu = (zurueck) => {
+      if (!offen) return;
+      offen = false;
+      wurzel.classList.remove("menue-offen");
+      schalter.setAttribute("aria-expanded", "false");
+      fach.inert = true;
+      loeseSperre();
+      if (zurueck !== false && vorherFokus && vorherFokus.focus) vorherFokus.focus();
+    };
+
+    schalter.addEventListener("click", () => (offen ? zu() : auf()));
+
+    for (const el of document.querySelectorAll("[data-menue-zu]")) {
+      el.addEventListener("click", () => zu());
+    }
+
+    // Ein Klick auf einen Link fuehrt weg, der Fokus soll dann nicht
+    // zurueckspringen.
+    for (const link of fach.querySelectorAll("a")) {
+      link.addEventListener("click", () => zu(false));
     }
 
     addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && kopf.classList.contains("nav-offen")) {
-        schliessen();
+      if (e.key === "Escape" && offen) {
+        zu();
         schalter.focus();
       }
     });

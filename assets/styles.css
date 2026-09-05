@@ -1304,47 +1304,10 @@ body.lightbox-open { overflow: hidden; }
 .nav-toggle span::before { top: -5px; }
 .nav-toggle span::after  { top: 5px; }
 
-.site-header.nav-offen .nav-toggle span { background: transparent; }
-.site-header.nav-offen .nav-toggle span::before { transform: translateY(5px) rotate(45deg); }
-.site-header.nav-offen .nav-toggle span::after  { transform: translateY(-5px) rotate(-45deg); }
-
-@media (max-width: 52rem) {
-  .nav-toggle { display: inline-flex; }
-
-  .site-nav {
-    position: absolute;
-    inset: 100% 0 auto 0;
-    display: grid;
-    gap: 0;
-    margin: 0;
-    padding: var(--s1) clamp(1.25rem, 4vw, 3rem) var(--s3);
-    background: var(--bg);
-    border-bottom: 1px solid var(--border-soft);
-    box-shadow: var(--shadow-lg);
-    /* Der Inhalt bleibt im DOM und ist fuer die Tastatur erreichbar,
-       sobald das Feld offen ist. Geschlossen ist es wirklich zu. */
-    visibility: hidden;
-    opacity: 0;
-    transform: translateY(-8px);
-    transition: opacity 0.22s ease, transform 0.28s var(--ease), visibility 0s linear 0.28s;
-  }
-
-  .site-header.nav-offen .site-nav {
-    visibility: visible;
-    opacity: 1;
-    transform: none;
-    transition-delay: 0s;
-  }
-
-  .site-nav a {
-    padding-block: 0.85rem;
-    font-size: 1.05rem;
-    border-bottom: 1px solid var(--border-soft);
-  }
-
-  .site-nav a::after { display: none; }
-  .site-nav a[aria-current="page"] { color: var(--accent); }
-}
+/* Offen werden aus den drei Balken zwei gekreuzte. */
+.menue-offen .nav-toggle span { background: transparent; }
+.menue-offen .nav-toggle span::before { transform: translateY(5px) rotate(45deg); }
+.menue-offen .nav-toggle span::after  { transform: translateY(-5px) rotate(-45deg); }
 
 /* ------------------------------------------------------------ Kopf */
 
@@ -2044,8 +2007,6 @@ body.lightbox-open { overflow: hidden; }
 .page-home .arbeit-bild,
 .page-home .tile-img { background: var(--surface); }
 
-.page-home .site-footer { background: var(--bg); }
-
 /* Zusaetzlicher Scrollweg, damit der Uebergang Zeit hat. */
 .stage-raum { height: 75vh; }
 
@@ -2145,7 +2106,22 @@ body.lightbox-open { overflow: hidden; }
 .seite-inhalt .artwork-video,
 .seite-inhalt .insta-tile { background: var(--surface); }
 
-.hat-wellen .site-footer { background: var(--bg); }
+/* Die Buehne ist ein positioniertes Element und wuerde sonst ueber
+   die Fusszeile malen, obwohl sie im Markup davor steht. Die Fusszeile
+   braucht deshalb selbst eine Position und eine Ebene. */
+/* Die Buehne ist ein positioniertes Element und wuerde sonst ueber
+   die Fusszeile malen, obwohl sie im Markup davor steht. Die Fusszeile
+   braucht deshalb selbst eine Position und eine Ebene. Und ihr
+   Aussenabstand wird zu Innenabstand: sonst klafft zwischen Inhalt und
+   Fusszeile ein Streifen, in dem der Hintergrund ungefiltert steht. */
+.hat-wellen .site-footer,
+.page-home .site-footer {
+  position: relative;
+  z-index: 2;
+  margin-top: 0;
+  padding-block: var(--s6) var(--s4);
+  background: var(--bg);
+}
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) .wellen-buehne .shader { opacity: var(--wellen-staerke); }
@@ -2162,6 +2138,161 @@ body.lightbox-open { overflow: hidden; }
 
   .wellen-buehne .shader,
   .wellen-buehne .buehne-mitte { display: none; }
+}
+
+
+
+/* ==================================================================
+   Schubfach
+
+   Ein Feld, das ueber die Seite faehrt, wenn man auf die drei Balken
+   drueckt. Es steht in jeder Breite zur Verfuegung, nicht nur auf dem
+   Handy, und enthaelt mehr als die Kopfzeile: die Bereiche, alle
+   Arbeiten einzeln, die Links nach draussen und das Rechtliche.
+
+   Geschlossen ist es `inert`. Damit ist es fuer Tastatur und
+   Vorleseprogramm nicht vorhanden, ohne dass ich den Fokus von Hand
+   einfangen muss.
+   ================================================================== */
+
+.menue-hinter {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: color-mix(in oklab, oklch(0% 0 0) 55%, transparent);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.24s ease, visibility 0s linear 0.24s;
+}
+
+.menue {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 60;
+  width: min(26rem, 88vw);
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--s3) var(--s4) var(--s5);
+  background: var(--bg);
+  border-left: 1px solid var(--border-soft);
+  box-shadow: -2px 0 6px oklch(0% 0 0 / 20%), -40px 0 80px -40px oklch(0% 0 0 / 60%);
+  transform: translateX(100%);
+  visibility: hidden;
+  /* Ein Drawer faehrt herein, das ist die Kurve dafuer. Der Weg hinaus
+     ist kuerzer als der Weg herein. */
+  transition:
+    transform 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    visibility 0s linear 0.22s;
+}
+
+.menue-offen .menue-hinter {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.menue-offen .menue {
+  transform: none;
+  visibility: visible;
+  transition:
+    transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+    visibility 0s linear 0s;
+}
+
+.menue-kopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding-bottom: var(--s3);
+  margin-bottom: var(--s2);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.menue-marke {
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 118, "wght" 700;
+  font-size: 1.08rem;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+}
+
+.menue-zu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.16s ease-out, border-color 0.25s ease;
+}
+
+.menue-zu:active { transform: scale(0.94); }
+.menue-zu svg { width: 1.05rem; height: 1.05rem; }
+
+.menue-gruppe { margin-top: var(--s3); }
+
+.menue-gruppe h2 {
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 0.35rem;
+}
+
+.menue a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding: 0.55rem 0;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-soft);
+  transition: color 0.2s ease, padding-left 0.22s var(--ease-out);
+}
+
+.menue a:last-child { border-bottom: none; }
+
+.menue a[aria-current="page"] { color: var(--accent); }
+
+.menue-gross {
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 106, "wght" 700;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+}
+
+.menue-klein { font-size: 0.98rem; }
+
+.menue-neben {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Der Schalter steht jetzt in jeder Breite in der Ecke. */
+.nav-toggle { display: inline-flex; }
+
+/* Die waagerechte Navigation bleibt auf breiten Schirmen, schmal
+   uebernimmt das Schubfach. */
+@media (max-width: 52rem) {
+  .site-nav { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menue,
+  .menue-hinter { transition-duration: 0.01ms; }
+  .menue { transform: none; }
 }
 
 @media (max-width: 46rem) {
@@ -2251,4 +2382,9 @@ body.lightbox-open { overflow: hidden; }
   /* Linkliste */
   .link-list a:hover { color: var(--accent); padding-left: 0; }
   .link-list a:hover::after { transform: translateX(5px); }
+
+
+  /* Schubfach */
+  .menue a:hover { color: var(--accent); padding-left: 0.35rem; }
+  .menue-zu:hover { border-color: color-mix(in oklab, var(--accent) 55%, var(--border-strong)); }
 }

@@ -44,7 +44,7 @@ const LANGS = {
     seg: { projects: "projekte", artworks: "artworks", about: "ueber-mich", contact: "kontakt", imprint: "impressum", privacy: "datenschutz" },
     t: {
       skip: "Direkt zum Inhalt",
-      nav: { projects: "Projekte", artworks: "Artworks", about: "Über mich", contact: "Kontakt" },
+      nav: { home: "Startseite", projects: "Projekte", artworks: "Artworks", about: "Über mich", contact: "Kontakt" },
       heroCta: "Zu den Projekten",
       selected: "Eine Auswahl",
       allProjects: (n) => `Alle ${n} Projekte`,
@@ -93,6 +93,13 @@ const LANGS = {
       shot: (x) => `Bildschirmfoto aus ${x}`,
       projectView: "Projekt ansehen",
       menu: "Menü",
+      menuClose: "Menü schließen",
+      gruppe: {
+        bereiche: "Bereiche",
+        arbeiten: "Arbeiten",
+        woanders: "Woanders",
+        recht: "Rechtliches",
+      },
     },
   },
   en: {
@@ -105,7 +112,7 @@ const LANGS = {
     seg: { projects: "projects", artworks: "artworks", about: "about", contact: "contact", imprint: "imprint", privacy: "privacy" },
     t: {
       skip: "Skip to content",
-      nav: { projects: "Work", artworks: "Artworks", about: "About", contact: "Contact" },
+      nav: { home: "Home", projects: "Work", artworks: "Artworks", about: "About", contact: "Contact" },
       heroCta: "See the work",
       selected: "Selected work",
       allProjects: (n) => `All ${n} projects`,
@@ -154,6 +161,13 @@ const LANGS = {
       shot: (x) => `Screenshot from ${x}`,
       projectView: "See the project",
       menu: "Menu",
+      menuClose: "Close menu",
+      gruppe: {
+        bereiche: "Sections",
+        arbeiten: "Work",
+        woanders: "Elsewhere",
+        recht: "Legal",
+      },
     },
   },
 };
@@ -434,7 +448,7 @@ const ICON_THEME = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false
  * Layout
  * ------------------------------------------------------------------ */
 
-function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "", image = "", v = {}, wellen = false }) {
+function layout({ config, L, title, description, bodyClass = "", content, canonical, altUrl, current = "", image = "", v = {}, wellen = false, projekte = [], werke = [] }) {
   const r = routes(L);
   const t = L.t;
   // Künstlername vorn, bürgerlicher Name direkt daneben. So steht in jedem
@@ -526,7 +540,7 @@ ${ogImage ? `<meta name="twitter:card" content="summary_large_image">` : ""}
     }</a>
     <nav class="site-nav" id="site-nav" aria-label="${escapeHtml(t.mainNav)}">${navHtml}</nav>
     <div class="header-tools">
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="${escapeHtml(t.menu)}"><span></span></button>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menue" aria-label="${escapeHtml(t.menu)}"><span></span></button>
       <a class="lang-switch" href="${altUrl}" title="${escapeHtml(L.otherTitle)}" lang="${L.other}">${L.otherLabel}</a>
       <button class="theme-toggle" type="button" aria-label="${escapeHtml(t.theme)}" title="${escapeHtml(t.theme)}">${ICON_THEME}</button>
     </div>
@@ -545,6 +559,8 @@ ${content}
 </div>`
   : content}
 </main>
+
+${schubfach({ config, L, current, projekte, werke })}
 
 <footer class="site-footer">
   <div class="wrap footer-inner">
@@ -567,6 +583,63 @@ ${bodyClass.includes("page-home") || wellen ? `<script src="/assets/shader.js${v
 // Eine Arbeit auf der Startseite: eine ganze Zeile, im Wechsel Bild
 // links und Bild rechts. Das Bild ist derselbe Link wie der Titel und
 // bleibt darum aus der Tabreihenfolge heraus.
+const ICON_ZU = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+
+// Das Schubfach. Es steht in jeder Breite bereit und enthaelt mehr als
+// die Kopfzeile: alle Bereiche, jede Arbeit einzeln, die Links nach
+// draussen und das Rechtliche. Geschlossen ist es inert, damit es fuer
+// Tastatur und Vorleseprogramm nicht existiert.
+function schubfach({ config, L, current, projekte = [], werke = [] }) {
+  const r = routes(L);
+  const t = L.t;
+
+  const link = (href, text, klasse, neben, aussen) =>
+    `<a class="${klasse}" href="${href}"${aussen ? linkAttrs(href) : ""}${
+      href === current ? ' aria-current="page"' : ""
+    }><span>${escapeHtml(text)}</span>${neben ? `<span class="menue-neben">${escapeHtml(neben)}</span>` : ""}</a>`;
+
+  const gruppe = (titel, inhalt) =>
+    inhalt ? `<div class="menue-gruppe"><h2>${escapeHtml(titel)}</h2>${inhalt}</div>` : "";
+
+  const bereiche = [
+    [r.home, t.nav.home],
+    [r.projects, t.nav.projects],
+    [r.artworks, t.nav.artworks],
+    [r.about, t.nav.about],
+    [r.contact, t.nav.contact],
+  ]
+    .map(([href, text]) => link(href, text, "menue-gross"))
+    .join("");
+
+  const arbeiten = [
+    ...projekte.map((p) => link(r.project(p.slug), p.data.title, "menue-klein", p.data.year || "")),
+    ...werke.map((a) => link(`${r.artworks}#${a.slug}`, a.data.title, "menue-klein", a.data.year || "")),
+  ].join("");
+
+  const woanders = (config.links || [])
+    .map((l) => link(l.href, l.label, "menue-klein", "", true))
+    .join("");
+
+  const recht = [
+    link(r.imprint, t.imprint, "menue-klein"),
+    link(r.privacy, t.privacy, "menue-klein"),
+  ].join("");
+
+  return `<div class="menue-hinter" data-menue-zu hidden></div>
+<aside class="menue" id="menue" role="dialog" aria-modal="true" aria-label="${escapeHtml(t.menu)}">
+  <div class="menue-kopf">
+    <span class="menue-marke">${escapeHtml(config.alias || config.name)}</span>
+    <button class="menue-zu" type="button" aria-label="${escapeHtml(t.menuClose)}" data-menue-zu>${ICON_ZU}</button>
+  </div>
+  <nav aria-label="${escapeHtml(t.mainNav)}">
+    ${gruppe(t.gruppe.bereiche, bereiche)}
+    ${gruppe(t.gruppe.arbeiten, arbeiten)}
+    ${gruppe(t.gruppe.woanders, woanders)}
+    ${gruppe(t.gruppe.recht, recht)}
+  </nav>
+</aside>`;
+}
+
 function arbeitZeile(project, L, index) {
   const r = routes(L);
   const d = project.data;
@@ -744,6 +817,7 @@ ${ctaSection(L)}
 
 function projectsIndexPage({ L, projects, intro }) {
   const t = L.t;
+  const r = routes(L);
   return `
 ${pageHeader({ glow: false, title: t.projectsTitle, lead: intro || t.projectsLead })}
 
@@ -818,6 +892,7 @@ ${ctaSection(L)}
 
 function artworksPage({ config, L, artworks }) {
   const t = L.t;
+  const r = routes(L);
 
   const entries = artworks
     .map((a) => {
@@ -889,6 +964,7 @@ ${ctaSection(L)}
 
 function aboutPage({ config, L, about }) {
   const t = L.t;
+  const r = routes(L);
   const skills = (config.skills || [])
     .map(
       (g) => `<div class="skill-group">
@@ -1100,7 +1176,7 @@ async function build() {
     await writePage(
       L.dir ? path.join(L.dir, "index.html") : "index.html",
       layout({
-        config, L, v,
+        config, L, v, projekte: projects, werke: artworks,
         title: "",
         description: pick(config.site?.description, L.code),
         canonical: abs(r.home),
@@ -1115,7 +1191,7 @@ async function build() {
     await writePage(
       toFile(r.projects),
       layout({
-        config, L, v,
+        config, L, v, projekte: projects, werke: artworks,
         title: t.projectsTitle,
         description: pick(config.projectsIntro, L.code) || t.projectsLead,
         canonical: abs(r.projects),
@@ -1132,7 +1208,7 @@ async function build() {
       await writePage(
         toFile(r.project(project.slug)),
         layout({
-          config, L, v,
+          config, L, v, projekte: projects, werke: artworks,
           title: project.data.title,
           description: project.data.summary,
           canonical: abs(r.project(project.slug)),
@@ -1150,7 +1226,7 @@ async function build() {
     await writePage(
       toFile(r.artworks),
       layout({
-        config, L, v,
+        config, L, v, projekte: projects, werke: artworks,
         title: t.artworksTitle,
         description: pick(config.artworksIntro, L.code) || t.artworksLead,
         canonical: abs(r.artworks),
@@ -1166,7 +1242,7 @@ async function build() {
     await writePage(
       toFile(r.about),
       layout({
-        config, L, v,
+        config, L, v, projekte: projects, werke: artworks,
         title: about.data.headline || t.aboutTitle,
         description: about.data.lead || "",
         canonical: abs(r.about),
@@ -1182,7 +1258,7 @@ async function build() {
     await writePage(
       toFile(r.contact),
       layout({
-        config, L, v,
+        config, L, v, projekte: projects, werke: artworks,
         title: t.contactTitle,
         description: contact.data.lead || "",
         canonical: abs(r.contact),
@@ -1198,7 +1274,7 @@ async function build() {
     await writePage(
       toFile(r.imprint),
       layout({
-        config, L, v,
+        config, L, v, projekte: projects, werke: artworks,
         title: t.imprint,
         description: t.imprint,
         canonical: abs(r.imprint),
@@ -1213,7 +1289,7 @@ async function build() {
       await writePage(
         toFile(r.privacy),
         layout({
-          config, L, v,
+          config, L, v, projekte: projects, werke: artworks,
           title: privacy.data.headline || t.privacyTitle,
           description: privacy.data.lead || t.privacyTitle,
           canonical: abs(r.privacy),
