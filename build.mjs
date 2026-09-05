@@ -96,13 +96,13 @@ const LANGS = {
       menuClose: "Menü schließen",
       intern: {
         titel: "Intern",
-        lead: "Dieser Bereich ist verschlüsselt. Ohne Passwort steht hier nichts, auch nicht im Quelltext.",
+        lead: "Dieser Bereich ist verschlüsselt.",
         label: "Passwort",
         knopf: "Öffnen",
         rechnet: "Wird entschlüsselt …",
         falsch: "Das Passwort passt nicht.",
         fehlt: "Bitte ein Passwort eingeben.",
-        alt: "Dieser Browser kann das nicht entschlüsseln. Er braucht eine sichere Verbindung und WebCrypto.",
+        alt: "Dieser Browser kann das nicht entschlüsseln.",
       },
       gruppe: {
         bereiche: "Bereiche",
@@ -1259,6 +1259,12 @@ async function build() {
     if (existsSync(internQuelle)) {
       console.warn("  ! content/intern.md liegt vor, aber INTERN_PASSWORT fehlt. Die alte Kapsel bleibt stehen.");
     }
+  } else if (existsSync(internQuelle)) {
+    console.warn(
+      "  ! content/intern.md liegt vor, aber INTERN_PASSWORT fehlt und es gibt noch keine\n" +
+        "    Kapsel. Der interne Bereich bleibt deshalb aus, auch der Eintrag im Menü.\n" +
+        "    Einmal mit Passwort bauen, dann steht er:  .\\intern.ps1"
+    );
   }
   const intern = !!kapsel;
 
