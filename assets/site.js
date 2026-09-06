@@ -523,7 +523,20 @@
       await nachladen("js", d.leafletJs);
       await nachladen("js", d.reiseJs);
       wurzel.hidden = false;
-      window.reiseplaner(wurzel, daten, {});
+      // Die Werkstatt kommt erst, wenn jemand auf Bearbeiten drückt.
+      // Wer nur schaut, laedt sie nie.
+      window.reiseplaner(wurzel, daten, {
+        werkstatt: async (P) => {
+          try {
+            if (!window.reisewerkstatt) await nachladen("js", d.werkstattJs);
+            window.reisewerkstatt(P);
+            P.zeichne();
+          } catch (e) {
+            P.zustand.bearbeiten = false;
+            P.wurzel.setAttribute("data-modus", "ansehen");
+          }
+        },
+      });
     } catch (e) {
       wurzel.hidden = false;
       wurzel.textContent = "Der Reiseplaner konnte nicht geladen werden.";

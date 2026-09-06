@@ -128,6 +128,9 @@
       nurOffeneIdeen: false,
       ansicht: "karte",
       tafel: "plan",
+      bearbeiten: false,
+      // Die Werkstatt haengt sich hier ein, sobald sie geladen ist.
+      werkstatt: null,
     };
 
     /* -------------------------------------------- Daten auflösen --- */
@@ -321,7 +324,28 @@
       if (S.ansicht === "karte" && karte) setTimeout(function () { karte.invalidateSize(); }, 60);
     });
     werkzeug.appendChild(umschalter);
+
+    // Ansehen und Bearbeiten sind getrennt. Solange nicht bearbeitet
+    // wird, verschiebt kein Klick und kein Zug etwas.
+    var modusKnopf = el("button", "btn reise-klein reise-modus", "Bearbeiten");
+    modusKnopf.type = "button";
+    modusKnopf.setAttribute("aria-pressed", "false");
+    modusKnopf.addEventListener("click", function () { modus(!S.bearbeiten); });
+    werkzeug.appendChild(modusKnopf);
+
     wurzel.setAttribute("data-ansicht", "karte");
+    wurzel.setAttribute("data-modus", "ansehen");
+
+    function modus(an) {
+      S.bearbeiten = !!an;
+      wurzel.setAttribute("data-modus", S.bearbeiten ? "bearbeiten" : "ansehen");
+      modusKnopf.textContent = S.bearbeiten ? "Bearbeiten beenden" : "Bearbeiten";
+      modusKnopf.setAttribute("aria-pressed", S.bearbeiten ? "true" : "false");
+      if (S.bearbeiten && !S.werkstatt && typeof einst.werkstatt === "function") {
+        einst.werkstatt(schnittstelle);
+      }
+      zeichne();
+    }
 
     /* ------------------------------------------------- Entwürfe ---- */
 
@@ -569,12 +593,31 @@
 
         var m;
         if (g.length === 1) {
+          // Ziehbar nur im Bearbeitungsmodus, und nur was einen
+          // eigenen Ort hat. Kandidaten des offenen Hochzeitsorts
+          // bleiben fest, sie gehoeren zwei Alternativen zugleich.
+          var ziehbar = S.bearbeiten && kopfP.betont && !kopfP.alternativ && kopfP.ort && kopfP.ort.id;
           m = global.L.marker(pos, {
             icon: symbol(kopfP.markenArt, kopfP.farbe, kopfP.zahl, aktivHier, kopfP.alternativ || kopfP.verwaist),
             keyboard: true, title: kopfP.titel,
             opacity: kopfP.betont ? 1 : 0.45,
             zIndexOffset: kopfP.betont ? 400 : 0,
+            draggable: !!ziehbar,
+            autoPan: !!ziehbar,
           });
+          if (ziehbar) {
+            // Die Koordinate wechselt erst beim Loslassen, nicht
+            // waehrend des Zuges. So bleibt ein Versehen ein einziger
+            // Schritt und laesst sich am Stueck zuruecknehmen.
+            m.on("dragend", function (ev2) {
+              var ll = ev2.target.getLatLng();
+              if (S.werkstatt && S.werkstatt.punktGezogen) {
+                S.werkstatt.punktGezogen(kopfP, ll.lat, ll.lng, function () { zeichne(); });
+              } else {
+                zeichne();
+              }
+            });
+          }
           m.on("click", function () { waehle(kopfP); });
           m.bindPopup(popupEines(kopfP), { className: "reise-popup" });
           marker[kopfP.routeId + "/" + kopfP.id] = m;
@@ -671,8 +714,14 @@
       e.aufenthalte.forEach(function (a, i) {
         var v = e.verbindungen.filter(function (x) { return x.nach.id === a.id; })[0];
         if (v) liste.appendChild(zeileVerbindung(r, e, v));
+        // Vor jedem Aufenthalt eine Ablagestelle. Was hier landet, wird
+        // eine eigene Uebernachtungsbasis, kein Ziel eines Aufenthalts.
+        if (S.bearbeiten && S.werkstatt && S.werkstatt.luecke) liste.appendChild(S.werkstatt.luecke(r, e, i));
         liste.appendChild(zeileAufenthalt(r, e, a, i, t[a.id]));
       });
+      if (S.bearbeiten && S.werkstatt && S.werkstatt.luecke) {
+        liste.appendChild(S.werkstatt.luecke(r, e, e.aufenthalte.length));
+      }
 
       liste.appendChild(zeileEreignis(r, r.abflug, "Tag " + t.__abflug));
 
@@ -742,6 +791,9 @@
       var d = el("div", "reise-zeile reise-aufenthalt" + (offen ? " ist-offen" : ""));
       d.tabIndex = 0;
       d.dataset.eintrag = a.id;
+      d.dataset.ablage = "aufenthalt";
+      d.dataset.aufenthalt = a.id;
+      d.dataset.route = r.id;
       if (S.aktiv && S.aktiv.id === a.id) d.classList.add("ist-aktiv");
       d.style.setProperty("--farbe", r.farbe);
 
@@ -780,11 +832,16 @@
         d.appendChild(ul);
       }
 
+      if (S.bearbeiten && S.werkstatt && S.werkstatt.haltWerkzeug) {
+        d.appendChild(S.werkstatt.haltWerkzeug(r, e, a, i));
+      }
+
       d.addEventListener("click", function (ev2) {
-        if (ev2.target.closest("a")) return;
+        if (ev2.target.closest("a") || ev2.target.closest("button") || ev2.target.closest("select")) return;
         waehle({ art: "aufenthalt", id: a.id, routeId: r.id });
       });
       d.addEventListener("keydown", function (ev2) {
+        if (ev2.target !== d) return;
         if (ev2.key === "Enter" || ev2.key === " ") { ev2.preventDefault(); d.click(); }
       });
       return d;
@@ -840,12 +897,19 @@
         li.appendChild(a2);
       }
 
+      li.dataset.besuch = b.id;
+      li.dataset.route = r.id;
+      if (S.bearbeiten && S.werkstatt && S.werkstatt.besuchWerkzeug) {
+        li.appendChild(S.werkstatt.besuchWerkzeug(r, e, b));
+      }
+
       li.addEventListener("click", function (ev2) {
-        if (ev2.target.closest("a")) return;
+        if (ev2.target.closest("a") || ev2.target.closest("button") || ev2.target.closest("select")) return;
         ev2.stopPropagation();
         waehle({ art: "besuch", id: b.id, routeId: r.id });
       });
       li.addEventListener("keydown", function (ev2) {
+        if (ev2.target !== li) return;
         if (ev2.key === "Enter" || ev2.key === " ") { ev2.preventDefault(); li.click(); }
       });
       return li;
@@ -1075,17 +1139,51 @@
       });
 
       zeichneEntwuerfe();
+      if (S.werkstatt && S.werkstatt.vorZeichnen) S.werkstatt.vorZeichnen();
       zeichneListe();
       zeichneIdeen();
       zeichneKarte();
       zeichneLegende();
+      if (S.werkstatt && S.werkstatt.nachZeichnen) S.werkstatt.nachZeichnen();
     }
 
     starteKarte();
     zeichne();
     if (karte) setTimeout(function () { karte.invalidateSize(); aufRoute(route(S.auswahl), false); }, 80);
 
-    return { zeichne: zeichne, karte: function () { return karte; }, zustand: S };
+    // Alles, was die Werkstatt braucht, an einer Stelle. Sie kennt
+    // damit die Daten, aber nicht die inneren Bausteine der Ansicht.
+    var schnittstelle = {
+      wurzel: wurzel,
+      plan: plan,
+      zustand: S,
+      zeichne: zeichne,
+      modus: modus,
+      karte: function () { return karte; },
+      hilfen: {
+        ort: ort,
+        route: route,
+        entwurf: entwurf,
+        tage: tage,
+        basisFuer: basisFuer,
+        ortDesHalts: ortDesHalts,
+        nameDesHalts: nameDesHalts,
+        sichtbareBesuche: sichtbareBesuche,
+        el: el,
+        leer: leer,
+        sichererLink: sichererLink,
+        naechteWort: naechteWort,
+        KATEGORIEN: KATEGORIEN,
+        REGIONEN: REGIONEN,
+        FORMEN: FORMEN,
+      },
+      // Stellen, an denen die Werkstatt eigene Teile einhaengt.
+      stellen: { kopf: kopf, seite: seite, liste: liste, ideen: ideen },
+    };
+
+    if (typeof einst.werkstatt === "function" && einst.sofortBearbeiten) modus(true);
+
+    return schnittstelle;
   }
 
   global.reiseplaner = planer;

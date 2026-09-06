@@ -676,3 +676,223 @@
   margin: 0 0 0.3rem;
   font-size: 0.95rem;
 }
+
+/* ==================================================================
+   Werkstatt
+
+   Alles, was nur im Bearbeitungsmodus sichtbar ist. Solange
+   data-modus="ansehen" gilt, ruehrt kein Klick etwas an.
+   ================================================================== */
+
+.reise[data-modus="ansehen"] .reise-knopfreihe,
+.reise[data-modus="ansehen"] .reise-luecke { display: none; }
+
+.reise-modus[aria-pressed="true"] {
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--accent-contrast, #fff);
+}
+
+/* --------------------------------------------------------- Leiste */
+
+.reise-leiste {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+}
+
+.reise-leiste[hidden] { display: none; }
+.reise-leiste-links { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.reise-stand {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.reise-stand[data-stand="fehler"] { color: var(--accent); font-weight: 600; }
+
+.reise-verlauf { margin-left: auto; font-size: 0.86rem; }
+.reise-verlauf summary { cursor: pointer; color: var(--text-muted); }
+.reise-verlauf ul { margin: 0.4rem 0 0; padding-left: 1.1rem; color: var(--text-muted); }
+
+/* -------------------------------------------------------- Palette */
+
+.reise-baustein {
+  padding: 0.4rem 0.75rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: grab;
+  touch-action: none;
+}
+
+.reise-baustein:active { cursor: grabbing; }
+.reise-palette[hidden] { display: none; }
+
+/* --------------------------------------------------- Ablagestellen */
+
+.reise-luecke {
+  margin: 0.15rem 0 0.15rem 1.2rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px dashed var(--border-soft);
+  border-radius: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+[data-ablage].ist-ziel {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.reise-geist {
+  position: fixed;
+  z-index: 90;
+  pointer-events: none;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.4rem;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.86rem;
+  box-shadow: 0 4px 16px oklch(0% 0 0 / 30%);
+}
+
+/* --------------------------------------------------- Knopfreihen - */
+
+.reise-knopfreihe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+}
+
+.reise-knopfreihe select {
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.reise-winzig {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.reise-griff {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.35rem;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: grab;
+  touch-action: none;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.reise-griff:active { cursor: grabbing; }
+
+/* -------------------------------------------------- Zwischenlager - */
+
+.reise-lager[hidden] { display: none; }
+
+.reise-lager {
+  padding: var(--s2);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-btn);
+}
+
+.reise-lagerstueck { background: var(--surface); }
+
+/* ------------------------------------------------------- Rückfragen */
+
+.reise-frage {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: grid;
+  place-items: center;
+  padding: var(--s3);
+  background: color-mix(in oklab, oklch(0% 0 0) 55%, transparent);
+}
+
+.reise-frage-kasten {
+  width: min(34rem, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--s3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--bg);
+}
+
+.reise-frage-kasten h4 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+.reise-frage-kasten p { margin: 0 0 0.6rem; font-size: 0.94rem; line-height: 1.5; }
+.reise-frage-kasten .btn-row { margin-top: var(--s2); }
+
+.reise-formular { display: grid; gap: 0.3rem; }
+
+.reise-formular label {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.reise-formular input,
+.reise-formular textarea,
+.reise-formular select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.reise-formular textarea { resize: vertical; }
+
+.reise-blase {
+  position: fixed;
+  left: 50%;
+  bottom: var(--s3);
+  transform: translateX(-50%);
+  z-index: 95;
+  max-width: min(32rem, 92vw);
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  box-shadow: 0 6px 24px oklch(0% 0 0 / 30%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .reise-baustein:hover { border-color: var(--accent); color: var(--accent); }
+  .reise-griff:hover { border-color: var(--border-strong); color: var(--text); }
+}

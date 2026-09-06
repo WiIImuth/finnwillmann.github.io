@@ -1105,7 +1105,8 @@ function internPage({ L, kapsel, v = {} }) {
     data-leaflet-css="/assets/vendor/leaflet/leaflet.css"
     data-leaflet-js="/assets/vendor/leaflet/leaflet.js"
     data-reise-css="/assets/reise.css${v.reiseCss ? `?v=${v.reiseCss}` : ""}"
-    data-reise-js="/assets/reise.js${v.reiseJs ? `?v=${v.reiseJs}` : ""}"></div>
+    data-reise-js="/assets/reise.js${v.reiseJs ? `?v=${v.reiseJs}` : ""}"
+    data-werkstatt-js="/assets/reise-werkstatt.js${v.werkstattJs ? `?v=${v.werkstattJs}` : ""}"></div>
 
   <script type="application/json" id="intern-kapsel">${JSON.stringify(kapsel).replace(/</g, "\\u003c")}</script>
 </section>
@@ -1245,6 +1246,7 @@ async function build() {
     shader: await fingerprint("assets/shader.js"),
     reiseCss: await fingerprint("assets/reise.css"),
     reiseJs: await fingerprint("assets/reise.js"),
+    werkstattJs: await fingerprint("assets/reise-werkstatt.js"),
   };
 
   /* Die Kapsel fuer den internen Bereich.
