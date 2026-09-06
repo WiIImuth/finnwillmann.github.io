@@ -1,0 +1,598 @@
+/* ==================================================================
+   Reiseplaner
+
+   Liegt hinter dem internen Bereich. Uebernimmt Schrift, Farben und
+   Abstaende der uebrigen Seite; eigene Werte gibt es nur dort, wo die
+   Karte sie braucht.
+   ================================================================== */
+
+/* Der Planer braucht Breite. Auf dieser Seite ist die Spalte deshalb
+   breiter als sonst; der Einleitungstext bleibt über .narrow schmal
+   und damit lesbar. */
+.page-intern .wrap { max-width: 92rem; }
+
+.reise {
+  --karte-hoehe: clamp(26rem, 70vh, 50rem);
+  display: grid;
+  gap: var(--s3);
+  margin-top: var(--s4);
+}
+
+/* ------------------------------------------------------- Kopfzeile */
+
+.reise-kopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.reise-routen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.reise-route {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.reise-route .reise-punkt {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--farbe);
+  flex: none;
+}
+
+.reise-route.ist-aktiv {
+  color: var(--text);
+  border-color: var(--farbe);
+  background: color-mix(in oklab, var(--farbe) 12%, var(--surface));
+}
+
+.reise-werkzeug {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.reise-klein {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.88rem;
+}
+
+.reise-klein[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Der Umschalter zwischen Karte und Liste zeigt sich erst, wenn
+   nebeneinander kein Platz mehr ist. */
+.reise-umschalter { display: none; }
+
+/* ---------------------------------------------------------- Buehne */
+
+.reise-buehne {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(24rem, 1fr);
+  gap: var(--s3);
+  align-items: start;
+}
+
+.reise-karte {
+  height: var(--karte-hoehe);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-card, 0.8rem);
+  overflow: hidden;
+  background: var(--surface);
+  position: sticky;
+  top: calc(var(--kopf-hoehe, 4.5rem) + var(--s2));
+}
+
+.reise-seite {
+  display: grid;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+/* --------------------------------------------------- Steuerelemente */
+
+.reise-feld h3,
+.reise-legende h3 {
+  margin: 0 0 0.45rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.reise-steuer {
+  display: grid;
+  gap: var(--s2);
+}
+
+.reise-schalter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.reise-wahl {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-btn);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.reise-wahl.ist-aktiv {
+  color: var(--accent-contrast, #fff);
+  background: var(--action);
+  border-color: var(--action);
+}
+
+.reise-hinweis {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* ----------------------------------------------------------- Liste */
+
+.reise-liste {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.reise-listenkopf h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 108, "wght" 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  color: var(--farbe);
+}
+
+.reise-summe {
+  margin: 0.3rem 0 0;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.reise-leise { color: var(--text-muted); }
+
+.reise-zeile {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--farbe, var(--border-strong));
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.reise-zeile:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 32%, transparent);
+}
+
+.reise-zeile.ist-aktiv {
+  background: color-mix(in oklab, var(--farbe, var(--accent)) 10%, var(--surface));
+  border-color: var(--farbe, var(--accent));
+}
+
+.reise-zeile.ist-offen { border-left-style: dashed; }
+
+.reise-ereignis {
+  border-left-style: dotted;
+  cursor: default;
+}
+
+.reise-zeile-kopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.reise-nummer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--farbe);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.reise-zeile-titel {
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.reise-zeile-neben {
+  margin-left: auto;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.reise-zeile-text {
+  margin: 0.4rem 0 0;
+  font-size: 0.93rem;
+  line-height: 1.5;
+}
+
+/* Was noch offen ist, sagt es. Es wird nicht versteckt. */
+.reise-marke-offen {
+  display: inline-block;
+  margin: 0.45rem 0 0;
+  padding: 0.15rem 0.5rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* ----------------------------------------------------- Verbindungen */
+
+.reise-verbindung {
+  margin: 0 0 0 1.2rem;
+  padding: 0.55rem 0.9rem;
+  border-left: 2px dashed var(--border-strong);
+  font-size: 0.9rem;
+}
+
+.reise-verbindung .reise-zeile-titel { font-size: 0.95rem; }
+
+.reise-genau-offen { border-left-style: dotted; }
+.reise-genau-berechnet { border-left-style: solid; }
+
+.reise-marke-genau {
+  margin-left: auto;
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.4rem;
+  background: color-mix(in oklab, var(--text) 8%, transparent);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.reise-abschnitte {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------ Vorschlaege */
+
+.reise-vorschlaege {
+  margin: 0.65rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.reise-vorschlag {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.5rem;
+  background: color-mix(in oklab, var(--text) 3%, transparent);
+}
+
+.reise-vorschlag.ist-offen { border-style: dashed; }
+
+.reise-vorschlag.ist-aktiv {
+  border-color: var(--farbe, var(--accent));
+  background: color-mix(in oklab, var(--farbe, var(--accent)) 10%, transparent);
+}
+
+.reise-vorschlag .reise-zeile-titel { font-size: 0.95rem; font-weight: 600; }
+
+.reise-mobil {
+  margin: 0.35rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.reise-quelle {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.84rem;
+  color: var(--accent);
+}
+
+/* --------------------------------------------------------- Legende */
+
+.reise-legende {
+  padding: var(--s2) 0 0;
+  border-top: 1px solid var(--border-soft);
+  font-size: 0.88rem;
+}
+
+.reise-legende-teil { margin-bottom: var(--s2); }
+
+.reise-legende h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.reise-legende ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.reise-legende li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.reise-strich {
+  width: 2.2rem;
+  height: 0;
+  flex: none;
+  border-top: 3px solid var(--farbe, var(--text-muted));
+  border-radius: 2px;
+}
+
+.reise-strich-schematisch { border-top-style: dashed; }
+.reise-strich-offen { border-top-style: dotted; }
+.reise-strich-flug {
+  height: 0.6rem;
+  border-top: 3px dashed var(--text-muted);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+
+/* ---------------------------------------------------------- Marken */
+
+/* Die Formen unterscheiden die Art des Punktes. Farbe allein reicht
+   dafuer nicht, deshalb traegt jede Art ihre eigene Form. */
+
+.reise-marke {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--farbe, var(--text));
+}
+
+.reise-marke-aufenthalt,
+.reise-marke-mehrfach {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--farbe, var(--text));
+  border: 2px solid var(--bg);
+  box-shadow: 0 1px 4px oklch(0% 0 0 / 35%);
+}
+
+.reise-marke-zahl,
+.reise-mehrfach {
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.reise-marke-mehrfach {
+  border-radius: 0.5rem;
+  background: var(--text);
+}
+
+.reise-marke-sicht,
+.reise-marke-flughafen,
+.reise-marke-bahnhof,
+.reise-marke-hafen,
+.reise-marke-gebiet {
+  width: 20px;
+  height: 20px;
+}
+
+.reise-raute,
+.reise-quadrat,
+.reise-dreieck,
+.reise-tropfen {
+  display: block;
+  background: var(--farbe, var(--text));
+  border: 1.5px solid var(--bg);
+  box-shadow: 0 1px 3px oklch(0% 0 0 / 35%);
+}
+
+.reise-raute {
+  width: 13px;
+  height: 13px;
+  transform: rotate(45deg);
+}
+
+.reise-quadrat {
+  width: 13px;
+  height: 13px;
+  border-radius: 2px;
+}
+
+.reise-dreieck {
+  width: 0;
+  height: 0;
+  border: none;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 14px solid var(--farbe, var(--text));
+  background: none;
+  box-shadow: none;
+  filter: drop-shadow(0 1px 2px oklch(0% 0 0 / 40%));
+}
+
+.reise-tropfen {
+  width: 13px;
+  height: 13px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+}
+
+.reise-marke.ist-aktiv {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------- Leaflet dazu */
+
+.reise-karte .leaflet-container {
+  height: 100%;
+  width: 100%;
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.86rem;
+}
+
+/* Die Quellenangabe der Karte bleibt sichtbar und lesbar. */
+.reise-karte .leaflet-control-attribution {
+  background: color-mix(in oklab, var(--bg) 86%, transparent);
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  padding: 0.15rem 0.45rem;
+}
+
+.reise-karte .leaflet-control-attribution a { color: var(--accent); }
+
+.reise-karte .leaflet-bar a {
+  background: var(--surface);
+  color: var(--text);
+  border-bottom-color: var(--border-soft);
+}
+
+.reise-karte .leaflet-bar a:hover { background: var(--bg); }
+
+.reise-popup .leaflet-popup-content-wrapper {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.6rem;
+  box-shadow: 0 6px 24px oklch(0% 0 0 / 25%);
+}
+
+.reise-popup .leaflet-popup-tip {
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+}
+
+.reise-popup .leaflet-popup-content { margin: 0.7rem 0.85rem; }
+
+.reise-popup-inhalt { display: grid; gap: 0.2rem; }
+.reise-popup-neben { font-size: 0.85rem; color: var(--text-muted); }
+.reise-popup-quelle { font-size: 0.78rem; color: var(--text-muted); }
+
+.reise-popup-liste {
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.reise-popup-liste button {
+  width: 100%;
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--farbe, var(--border-strong));
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.reise-tip {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  font-size: 0.82rem;
+}
+
+.reise-fehler {
+  margin: 0;
+  padding: var(--s3);
+  color: var(--text-muted);
+}
+
+/* Dunkel: die Kacheln kommen hell, das waere ein Loch in der Seite.
+   Ein leichter Filter nimmt ihnen die Haerte, ohne sie unlesbar zu
+   machen. Marken und Linien liegen darueber und bleiben unberuehrt. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .reise-karte .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.7);
+  }
+}
+
+:root[data-theme="dark"] .reise-karte .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.7);
+}
+
+/* ----------------------------------------------------- Schmal ----- */
+
+@media (max-width: 60rem) {
+  .reise-buehne { grid-template-columns: 1fr; }
+  .reise-karte { position: static; height: clamp(20rem, 52vh, 30rem); }
+  .reise-umschalter { display: inline-flex; }
+  .reise[data-ansicht="karte"] .reise-seite { display: none; }
+  .reise[data-ansicht="liste"] .reise-karte { display: none; }
+  .reise[data-ansicht="liste"] .reise-seite { display: grid; }
+  .reise-zeile-neben { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reise-route,
+  .reise-wahl,
+  .reise-zeile { transition: none; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .reise-route:hover { color: var(--text); border-color: var(--farbe); }
+  .reise-wahl:hover { color: var(--text); border-color: var(--border-strong); }
+  .reise-wahl.ist-aktiv:hover { color: var(--accent-contrast, #fff); }
+  .reise-zeile:hover { border-color: var(--farbe, var(--border-strong)); }
+  .reise-popup-liste button:hover { background: var(--bg); }
+  .reise-quelle:hover { text-decoration: underline; }
+}
+
+/* Ein Kandidat ist noch keine Entscheidung, und so sieht er auch aus:
+   blasser gefuellt, dazu ein gestrichelter Ring aussen herum. Der Ring
+   liegt neben der Marke, nicht auf ihrem Rand, sonst franst die runde
+   Form aus. */
+.reise-marke.ist-alternativ {
+  background: color-mix(in oklab, var(--farbe) 42%, var(--bg));
+  outline: 2px dashed var(--farbe);
+  outline-offset: 2px;
+}

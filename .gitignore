@@ -12,3 +12,4 @@ _to_delete/
 # Der Klartext des internen Bereichs bleibt auf diesem Rechner.
 # Veroeffentlicht wird nur assets/intern.enc.json.
 content/intern.md
+content/reiseplan.json

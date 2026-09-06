@@ -96,13 +96,13 @@ const LANGS = {
       menuClose: "Menü schließen",
       intern: {
         titel: "Intern",
-        lead: "Dieser Bereich ist verschlüsselt.",
+        lead: "Dieser Bereich ist verschlüsselt. Ohne Passwort steht hier nichts, auch nicht im Quelltext.",
         label: "Passwort",
         knopf: "Öffnen",
         rechnet: "Wird entschlüsselt …",
         falsch: "Das Passwort passt nicht.",
         fehlt: "Bitte ein Passwort eingeben.",
-        alt: "Dieser Browser kann das nicht entschlüsseln.",
+        alt: "Dieser Browser kann das nicht entschlüsseln. Er braucht eine sichere Verbindung und WebCrypto.",
       },
       gruppe: {
         bereiche: "Bereiche",
@@ -1075,7 +1075,7 @@ ${pageHeader({ glow: false, title: contact.data.headline || t.contactTitle, lead
 
 // Die Seite traegt nur das Schloss und die Kapsel. Der Klartext taucht
 // im ausgelieferten HTML an keiner Stelle auf.
-function internPage({ L, kapsel }) {
+function internPage({ L, kapsel, v = {} }) {
   const t = L.t;
   return `
 <section class="wrap section">
@@ -1098,6 +1098,15 @@ function internPage({ L, kapsel }) {
   </form>
 
   <div class="prose narrow intern-inhalt" hidden></div>
+
+  <!-- Der Reiseplaner haengt sich hier ein, aber erst nach dem
+       Aufschliessen. Vorher wird nichts davon geladen. -->
+  <div class="reise-wurzel" hidden
+    data-leaflet-css="/assets/vendor/leaflet/leaflet.css"
+    data-leaflet-js="/assets/vendor/leaflet/leaflet.js"
+    data-reise-css="/assets/reise.css${v.reiseCss ? `?v=${v.reiseCss}` : ""}"
+    data-reise-js="/assets/reise.js${v.reiseJs ? `?v=${v.reiseJs}` : ""}"></div>
+
   <script type="application/json" id="intern-kapsel">${JSON.stringify(kapsel).replace(/</g, "\\u003c")}</script>
 </section>
 `;
@@ -1234,6 +1243,8 @@ async function build() {
     css: await fingerprint("assets/styles.css"),
     js: await fingerprint("assets/site.js"),
     shader: await fingerprint("assets/shader.js"),
+    reiseCss: await fingerprint("assets/reise.css"),
+    reiseJs: await fingerprint("assets/reise.js"),
   };
 
   /* Die Kapsel fuer den internen Bereich.
@@ -1244,12 +1255,14 @@ async function build() {
      der Bereich vollstaendig, samt Eintrag im Schubfach. */
   const kapselDatei = path.join(ROOT, "assets", "intern.enc.json");
   const internQuelle = path.join(ROOT, "content", "intern.md");
+  const reiseQuelle = path.join(ROOT, "content", "reiseplan.json");
   let kapsel = null;
 
   if (existsSync(internQuelle) && process.env.INTERN_PASSWORT) {
     const seite = await loadMarkdownFile(internQuelle);
+    const reise = existsSync(reiseQuelle) ? JSON.parse(await readFile(reiseQuelle, "utf8")) : null;
     kapsel = verschluessle(
-      JSON.stringify({ titel: seite.data.title || "", html: seite.html }),
+      JSON.stringify({ titel: seite.data.title || "", html: seite.html, reise }),
       process.env.INTERN_PASSWORT
     );
     await writeFile(kapselDatei, JSON.stringify(kapsel) + "\n", "utf8");
@@ -1447,7 +1460,7 @@ async function build() {
         bodyClass: "page-legal page-intern",
         wellen: true,
         current: routes(D).intern,
-        content: internPage({ L: D, kapsel }),
+        content: internPage({ L: D, kapsel, v }),
       })
     );
   }

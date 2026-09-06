@@ -496,6 +496,40 @@
   // die Pruefsumme von GCM durch und es kommt nichts heraus. Es gibt
   // also nichts auszulesen, nur zu raten, und das dauert je Versuch.
 
+  // Karte und Planer werden erst geladen, wenn wirklich jemand
+  // hereingekommen ist. Wer vor dem Schloss steht, laedt kein Kilobyte
+  // davon.
+  const nachladen = (art, adresse) =>
+    new Promise((fertig, daneben) => {
+      const el = document.createElement(art === "css" ? "link" : "script");
+      if (art === "css") {
+        el.rel = "stylesheet";
+        el.href = adresse;
+      } else {
+        el.src = adresse;
+        el.defer = false;
+      }
+      el.onload = () => fertig(adresse);
+      el.onerror = () => daneben(new Error(adresse));
+      document.head.appendChild(el);
+    });
+
+  async function starteReise(daten) {
+    const wurzel = document.querySelector(".reise-wurzel");
+    if (!wurzel) return;
+    const d = wurzel.dataset;
+    try {
+      await Promise.all([nachladen("css", d.leafletCss), nachladen("css", d.reiseCss)]);
+      await nachladen("js", d.leafletJs);
+      await nachladen("js", d.reiseJs);
+      wurzel.hidden = false;
+      window.reiseplaner(wurzel, daten, {});
+    } catch (e) {
+      wurzel.hidden = false;
+      wurzel.textContent = "Der Reiseplaner konnte nicht geladen werden.";
+    }
+  }
+
   const kapselTag = document.getElementById("intern-kapsel");
   const schloss = document.querySelector(".intern-form");
 
@@ -575,6 +609,8 @@
 
           ziel.setAttribute("tabindex", "-1");
           ziel.focus();
+
+          if (inhalt.reise) starteReise(inhalt.reise);
         } catch (err) {
           sagen(schloss.dataset.falsch);
           knopf.disabled = false;
