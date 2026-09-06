@@ -596,3 +596,83 @@
   outline: 2px dashed var(--farbe);
   outline-offset: 2px;
 }
+
+/* -------------------------------------------------- Tafeln und Ideen */
+
+.reise-tafeln {
+  display: flex;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--border-soft);
+  padding-bottom: 0.4rem;
+}
+
+.reise-tafel {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-btn);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reise-tafel.ist-aktiv {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+
+.reise-ideen { display: grid; gap: var(--s2); }
+.reise-ideen[hidden] { display: none; }
+.reise-liste[hidden] { display: none; }
+
+.reise-entwuerfe .reise-hinweis { line-height: 1.5; }
+
+/* Ein nicht erfuellter Nächteplan wird benannt, nicht verschwiegen. */
+.reise-summe.ist-konflikt {
+  padding: 0.4rem 0.6rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 0.45rem;
+  color: var(--text);
+}
+
+.reise-unterkunft {
+  margin: 0.4rem 0 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.reise-marken {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.4rem 0 0;
+}
+
+.reise-chip {
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.4rem;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.reise-vorschlag.ist-verwaist { border-style: dashed; }
+
+.reise-vorschlag:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 32%, transparent);
+}
+
+.reise-verwaist {
+  margin-top: var(--s2);
+  padding: var(--s2) 0 0;
+  border-top: 1px dashed var(--border-strong);
+}
+
+.reise-verwaist h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+}

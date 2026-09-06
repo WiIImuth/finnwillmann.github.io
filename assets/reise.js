@@ -1,14 +1,22 @@
 /* ------------------------------------------------------------------
    Reiseplaner.
 
-   Drei vorbereitete Routen durch Japan auf einer echten Karte, zum
+   Drei Reisevorschlaege durch Japan auf einer echten Karte, zum
    Ansehen und Vergleichen. Die Daten kommen verschluesselt aus dem
    internen Bereich und liegen nie offen im ausgelieferten HTML.
 
-   Etappe 1: Ansicht und Vergleich. Bearbeiten, Rueckgaengig und
-   Export folgen in der naechsten Etappe. Was hier schon steht, ist
-   bewusst ehrlich: eine Linie behauptet nie mehr Genauigkeit, als
-   ihre Daten hergeben.
+   Gezaehlt werden Naechte. 21 Reisetage sind 20 Naechte. Ein
+   Transfertag gehoert zu beiden angrenzenden Aufenthalten und zaehlt
+   trotzdem nur einmal. Tag 21 ist der Rueckflug, keine Hotelnacht.
+
+   Jede Route hat mehrere Entwuerfe, genau einer ist aktiv. Vorschlaege
+   haengen an Basisorten, nicht an festen Tagesnummern. Faellt die
+   Basis im aktiven Entwurf weg, wird der Vorschlag als verwaist
+   markiert und nicht geloescht.
+
+   Was hier steht, ist bewusst ehrlich: eine Linie behauptet nie mehr
+   Genauigkeit, als ihre Daten hergeben, und ein Ort gilt nie als
+   barrierefrei, nur weil nichts Gegenteiliges bekannt ist.
 
    Kartenbibliothek ist Leaflet, BSD 2-Clause, liegt unter
    assets/vendor/leaflet. Die Kacheln kommen von OpenStreetMap, der
@@ -36,14 +44,8 @@
   /* -------------------------------------------------------- Begriffe */
 
   var MITTEL = {
-    bahn: "Bahn",
-    flug: "Flug",
-    auto: "Auto",
-    taxi: "Taxi",
-    bus: "Bus",
-    faehre: "Fähre",
-    fuss: "zu Fuß",
-    offen: "noch offen",
+    bahn: "Bahn", flug: "Flug", auto: "Auto", taxi: "Taxi",
+    bus: "Bus", faehre: "Fähre", fuss: "zu Fuß", offen: "noch offen",
   };
 
   var GENAU = {
@@ -59,21 +61,20 @@
   };
 
   var KATEGORIEN = {
-    landschaft: "Landschaft",
-    architektur: "Architektur",
-    kultur: "Kultur",
-    museum: "Museum",
-    onsen: "Onsen",
-    essen: "Essen",
+    landschaft: "Landschaft", architektur: "Architektur", kultur: "Kultur",
+    museum: "Museum", onsen: "Onsen", essen: "Essen",
   };
 
+  var REGIONEN = {
+    kyushu: "Kyushu", okinawa: "Okinawa", chugoku: "Chugoku",
+    kansai: "Kansai", kanto: "Kanto",
+  };
+
+  var FORMEN = { local: "Vor Ort", excursion: "Ausflug", transfer_stop: "Zwischenhalt" };
+
   var ORTTYP = {
-    stadt: "Aufenthalt",
-    sicht: "Sehenswürdigkeit",
-    flughafen: "Flughafen",
-    bahnhof: "Bahnhof",
-    hafen: "Anleger",
-    gebiet: "Gebiet",
+    stadt: "Aufenthalt", sicht: "Sehenswürdigkeit", flughafen: "Flughafen",
+    bahnhof: "Bahnhof", hafen: "Anleger", gebiet: "Gebiet",
   };
 
   var GENAUIGKEIT_ORT = {
@@ -97,9 +98,7 @@
     return n;
   }
 
-  function sicher(text) {
-    return String(text == null ? "" : text);
-  }
+  function sicher(t) { return String(t == null ? "" : t); }
 
   // Nur http und https, alles andere fliegt raus.
   function sichererLink(href) {
@@ -107,120 +106,138 @@
     try {
       var u = new URL(href, location.href);
       return u.protocol === "http:" || u.protocol === "https:" ? u.href : "";
-    } catch (e) {
-      return "";
-    }
+    } catch (e) { return ""; }
   }
 
-  /* ------------------------------------------------- Abgeleitete Werte */
+  function naechteWort(n) { return n + (n === 1 ? " Nacht" : " Nächte"); }
 
-  // Reisetage entstehen aus der Reihenfolge und den Dauern. Sie werden
-  // nirgends zusaetzlich gespeichert, damit es keine zwei Wahrheiten gibt.
-  function tage(route) {
-    var tag = 1;
-    var raus = {};
-    for (var i = 0; i < route.aufenthalte.length; i++) {
-      var a = route.aufenthalte[i];
-      raus[a.id] = { von: tag, bis: tag + a.tage - 1 };
-      tag += a.tage;
-    }
-    raus.__summe = tag - 1;
-    return raus;
-  }
+  /* ---------------------------------------------------------- Planer */
 
   function planer(wurzel, plan, einst) {
     einst = einst || {};
     var anbieter = KARTENANBIETER[einst.karte || "osm"] || KARTENANBIETER.osm;
+    var zielNaechte = plan.zielNaechte || 20;
 
     var S = {
       auswahl: plan.routen[0].id,
       vergleich: false,
       aktiv: null,
-      filter: {},
-      wenigLaufen: false,
+      filterKat: {},
+      filterRegion: {},
+      filterForm: {},
+      nurOffeneIdeen: false,
       ansicht: "karte",
+      tafel: "plan",
     };
 
-    /* ---------------------------------------------- Ortsauflösung --- */
+    /* -------------------------------------------- Daten auflösen --- */
 
-    function ort(id) {
-      return id ? plan.orte[id] || null : null;
-    }
-
-    // Ein Aufenthalt mit offenem Ort hat entweder den gewaehlten
-    // Hochzeitsort oder gar keinen. Beides muss die Karte aushalten.
-    function ortDesAufenthalts(a) {
-      if (a.ortId) return ort(a.ortId);
-      if (a.ortOffen && a.ortOffen.grund === "hochzeitsort" && plan.hochzeitsort) {
-        return ort(plan.hochzeitsort);
-      }
-      return null;
-    }
-
-    function nameDesAufenthalts(a) {
-      var o = ortDesAufenthalts(a);
-      if (o) return o.name;
-      if (a.ortOffen && a.ortOffen.grund === "hochzeitsort") return "Hochzeitsort";
-      return "Ort noch offen";
-    }
-
-    function istOffen(a) {
-      return !ortDesAufenthalts(a);
-    }
+    function ort(id) { return id ? plan.orte[id] || null : null; }
 
     function route(id) {
       for (var i = 0; i < plan.routen.length; i++) if (plan.routen[i].id === id) return plan.routen[i];
       return plan.routen[0];
     }
 
-    function punktDerVerbindung(r, seite) {
-      if (seite.art === "ereignis") {
-        var e = r.ankunft.id === seite.id ? r.ankunft : r.abflug;
-        return { ort: ort(e.ortId), offen: true, ereignis: e };
-      }
-      for (var i = 0; i < r.aufenthalte.length; i++) {
-        if (r.aufenthalte[i].id === seite.id) {
-          var a = r.aufenthalte[i];
-          return { ort: ortDesAufenthalts(a), offen: istOffen(a), aufenthalt: a };
-        }
-      }
-      return { ort: null, offen: true };
+    function entwurf(r) {
+      for (var i = 0; i < r.entwuerfe.length; i++) if (r.entwuerfe[i].id === r.aktiverEntwurf) return r.entwuerfe[i];
+      return r.entwuerfe[0];
     }
 
-    // Ein offener Endpunkt hat trotzdem etwas zu zeigen: seine
-    // Kandidaten. Beide bekommen eine eigene, ausdruecklich als
-    // Alternative gekennzeichnete Linie. Erst die Auswahl macht daraus
-    // einen einzelnen Weg.
-    function endpunkte(r, seite) {
-      var p = punktDerVerbindung(r, seite);
+    // Ankunftstag und Weiterreisetag ergeben sich aus der Folge der
+    // Naechte. Der Transfertag steht bei beiden Aufenthalten und wird
+    // trotzdem nur einmal gezaehlt.
+    function tage(e) {
+      var tag = 1;
+      var raus = { __naechte: 0 };
+      for (var i = 0; i < e.aufenthalte.length; i++) {
+        var a = e.aufenthalte[i];
+        raus[a.id] = { an: tag, weiter: tag + a.naechte, naechte: a.naechte };
+        tag += a.naechte;
+        raus.__naechte += a.naechte;
+      }
+      raus.__abflug = tag;
+      return raus;
+    }
+
+    // Ein Aufenthalt mit offenem Ort nimmt den gewaehlten Hochzeitsort,
+    // solange es einen gibt.
+    function ortDesHalts(a) {
+      if (a.ortId) return ort(a.ortId);
+      if (a.ortOffen && a.ortOffen.grund === "hochzeitsort" && plan.hochzeitsort) return ort(plan.hochzeitsort);
+      return null;
+    }
+
+    function nameDesHalts(a) {
+      var o = ortDesHalts(a);
+      if (o) return o.name;
+      if (a.ortOffen && a.ortOffen.grund === "hochzeitsort") return "Hochzeitsort";
+      return "Ort noch offen";
+    }
+
+    function istOffen(a) { return !ortDesHalts(a); }
+
+    // Die Basis eines Vorschlags ist der erste Aufenthalt des aktiven
+    // Entwurfs, dessen Ort in seiner Basisliste steht. Findet sich
+    // keiner, ist der Vorschlag verwaist.
+    function basisFuer(b, e) {
+      var liste = b.basis || [];
+      for (var i = 0; i < liste.length; i++) {
+        for (var k = 0; k < e.aufenthalte.length; k++) {
+          var a = e.aufenthalte[k];
+          var o = ortDesHalts(a);
+          if (o && o.id === liste[i]) return a;
+        }
+      }
+      return null;
+    }
+
+    function sichtbareBesuche(r) {
+      return r.besuche.filter(function (b) { return !b.ausgeblendet; });
+    }
+
+    function punktDerVerbindung(r, e, seite) {
+      if (seite.art === "ereignis") {
+        var ev = r.ankunft.id === seite.id ? r.ankunft : r.abflug;
+        return { ort: ort(ev.ortId), ereignis: ev };
+      }
+      for (var i = 0; i < e.aufenthalte.length; i++) {
+        if (e.aufenthalte[i].id === seite.id) {
+          var a = e.aufenthalte[i];
+          return { ort: ortDesHalts(a), aufenthalt: a };
+        }
+      }
+      return { ort: null };
+    }
+
+    // Ein offener Endpunkt zeigt trotzdem seine Kandidaten, jeder
+    // ausdruecklich als Alternative.
+    function endpunkte(r, e, seite) {
+      var p = punktDerVerbindung(r, e, seite);
       if (p.ort) return [{ ort: p.ort, alternativ: false }];
-      var kandidaten = (p.aufenthalt && p.aufenthalt.ortOffen && p.aufenthalt.ortOffen.kandidaten) || [];
-      return kandidaten
-        .map(function (id) { return ort(id); })
-        .filter(function (o) { return o && o.lat != null; })
+      var k = (p.aufenthalt && p.aufenthalt.ortOffen && p.aufenthalt.ortOffen.kandidaten) || [];
+      return k.map(ort).filter(function (o) { return o && o.lat != null; })
         .map(function (o) { return { ort: o, alternativ: true }; });
     }
 
     // Die gespeicherte Genauigkeit gilt, aber ein zwischenzeitlich
     // gewaehlter Hochzeitsort kann eine offene Verbindung schematisch
     // machen. Nach oben wird nie aufgewertet.
-    function genauigkeit(r, v) {
+    function genauigkeit(r, e, v) {
       if (v.genauigkeit === "berechnet") return "berechnet";
-      var a = punktDerVerbindung(r, v.von);
-      var b = punktDerVerbindung(r, v.nach);
-      var mittelOffen = v.abschnitte.some(function (s) {
-        return s.mittel === "offen";
-      });
-      if (!a.ort || !b.ort || mittelOffen) return "offen";
+      var a = punktDerVerbindung(r, e, v.von);
+      var b = punktDerVerbindung(r, e, v.nach);
+      var offen = v.abschnitte.some(function (s) { return s.mittel === "offen"; });
+      if (!a.ort || !b.ort || offen) return "offen";
       return "schematisch";
     }
 
     function mittelListe(v) {
       var raus = [];
-      for (var i = 0; i < v.abschnitte.length; i++) {
-        var m = MITTEL[v.abschnitte[i].mittel] || v.abschnitte[i].mittel;
+      v.abschnitte.forEach(function (s) {
+        var m = MITTEL[s.mittel] || s.mittel;
         if (raus.indexOf(m) < 0) raus.push(m);
-      }
+      });
       return raus.join(", ");
     }
 
@@ -278,16 +295,14 @@
     vergleichKnopf.addEventListener("click", function () {
       S.vergleich = !S.vergleich;
       zeichne();
-      if (S.vergleich) aufAlles();
-      else aufRoute(route(S.auswahl), true);
+      if (S.vergleich) aufAlles(); else aufRoute(route(S.auswahl), true);
     });
     werkzeug.appendChild(vergleichKnopf);
 
     var knopfRoute = el("button", "btn reise-klein", "Gesamte Route anzeigen");
     knopfRoute.type = "button";
     knopfRoute.addEventListener("click", function () {
-      if (S.vergleich) aufAlles();
-      else aufRoute(route(S.auswahl), true);
+      if (S.vergleich) aufAlles(); else aufRoute(route(S.auswahl), true);
     });
     werkzeug.appendChild(knopfRoute);
 
@@ -298,31 +313,36 @@
 
     var umschalter = el("button", "btn reise-klein reise-umschalter");
     umschalter.type = "button";
+    umschalter.textContent = "Liste anzeigen";
     umschalter.addEventListener("click", function () {
       S.ansicht = S.ansicht === "karte" ? "liste" : "karte";
       wurzel.setAttribute("data-ansicht", S.ansicht);
       umschalter.textContent = S.ansicht === "karte" ? "Liste anzeigen" : "Karte anzeigen";
       if (S.ansicht === "karte" && karte) setTimeout(function () { karte.invalidateSize(); }, 60);
     });
-    umschalter.textContent = "Liste anzeigen";
     werkzeug.appendChild(umschalter);
     wurzel.setAttribute("data-ansicht", "karte");
 
-    /* --------------------------------------- Hochzeitsort und Filter */
+    /* ------------------------------------------------- Entwürfe ---- */
 
-    var steuer = el("div", "reise-steuer");
-    seite.appendChild(steuer);
+    var entwurfFeld = el("div", "reise-feld reise-entwuerfe");
+    entwurfFeld.appendChild(el("h3", null, "Entwurf dieser Route"));
+    var entwurfGruppe = el("div", "reise-schalter");
+    entwurfGruppe.setAttribute("role", "radiogroup");
+    entwurfGruppe.setAttribute("aria-label", "Entwurf wählen");
+    entwurfFeld.appendChild(entwurfGruppe);
+    var entwurfText = el("p", "reise-hinweis");
+    entwurfFeld.appendChild(entwurfText);
+    seite.appendChild(entwurfFeld);
+
+    /* --------------------------------------- Hochzeitsort und Filter */
 
     var hzFeld = el("div", "reise-feld");
     hzFeld.appendChild(el("h3", null, "Hochzeitsort"));
     var hzGruppe = el("div", "reise-schalter");
     hzGruppe.setAttribute("role", "radiogroup");
     hzGruppe.setAttribute("aria-label", "Hochzeitsort");
-    [
-      ["", "Noch offen"],
-      ["ort-fukuoka", "Fukuoka"],
-      ["ort-kumamoto", "Kumamoto"],
-    ].forEach(function (paar) {
+    [["", "Noch offen"], ["ort-fukuoka", "Fukuoka"], ["ort-kumamoto", "Kumamoto"]].forEach(function (paar) {
       var b = el("button", "reise-wahl", paar[1]);
       b.type = "button";
       b.setAttribute("role", "radio");
@@ -336,171 +356,127 @@
     hzFeld.appendChild(hzGruppe);
     var hzHinweis = el("p", "reise-hinweis");
     hzFeld.appendChild(hzHinweis);
-    steuer.appendChild(hzFeld);
+    seite.appendChild(hzFeld);
 
-    var filterFeld = el("div", "reise-feld");
-    filterFeld.appendChild(el("h3", null, "Vorschläge filtern"));
-    var filterGruppe = el("div", "reise-schalter");
-    Object.keys(KATEGORIEN).forEach(function (k) {
-      var b = el("button", "reise-wahl", KATEGORIEN[k]);
+    /* ---------------------------------------------------- Tafeln --- */
+
+    var tafelWahl = el("div", "reise-tafeln");
+    tafelWahl.setAttribute("role", "tablist");
+    tafelWahl.setAttribute("aria-label", "Ansicht wählen");
+    var tafelKnoepfe = {};
+    [["plan", "Reiseplan"], ["ideen", "Weitere Ideen"]].forEach(function (paar) {
+      var b = el("button", "reise-tafel", paar[1]);
       b.type = "button";
-      b.setAttribute("aria-pressed", "false");
-      b.addEventListener("click", function () {
-        S.filter[k] = !S.filter[k];
-        zeichne();
-      });
-      b.dataset.kat = k;
-      filterGruppe.appendChild(b);
+      b.setAttribute("role", "tab");
+      b.addEventListener("click", function () { S.tafel = paar[0]; zeichne(); });
+      tafelKnoepfe[paar[0]] = b;
+      tafelWahl.appendChild(b);
     });
-    filterFeld.appendChild(filterGruppe);
-    steuer.appendChild(filterFeld);
-
-    /* ------------------------------------------------------- Liste - */
+    seite.appendChild(tafelWahl);
 
     var liste = el("div", "reise-liste");
     seite.appendChild(liste);
+
+    var ideen = el("div", "reise-ideen");
+    seite.appendChild(ideen);
 
     var legende = el("div", "reise-legende");
     seite.appendChild(legende);
 
     /* ------------------------------------------------------- Karte - */
 
-    var karte = null;
-    var ebene = null;
-    var marker = {};
+    var karte = null, ebene = null, marker = {};
 
     function starteKarte() {
       if (!global.L) {
-        kartenFeld.appendChild(
-          el("p", "reise-fehler", "Die Karte konnte nicht geladen werden. Die Routenliste funktioniert weiterhin.")
-        );
+        kartenFeld.appendChild(el("p", "reise-fehler",
+          "Die Karte konnte nicht geladen werden. Reiseplan und weitere Ideen funktionieren weiterhin."));
         return;
       }
-      karte = global.L.map(kartenFeld, {
-        zoomControl: true,
-        worldCopyJump: false,
-        // Ohne bewussten Griff soll die Seite beim Scrollen nicht
-        // ploetzlich in die Karte zoomen.
-        scrollWheelZoom: false,
-      });
+      karte = global.L.map(kartenFeld, { zoomControl: true, worldCopyJump: false, scrollWheelZoom: false });
       karte.attributionControl.setPrefix("");
-      global.L.tileLayer(anbieter.url, {
-        maxZoom: anbieter.maxZoom,
-        attribution: anbieter.quelle,
-      }).addTo(karte);
+      global.L.tileLayer(anbieter.url, { maxZoom: anbieter.maxZoom, attribution: anbieter.quelle }).addTo(karte);
       ebene = global.L.layerGroup().addTo(karte);
       karte.setView([35.0, 133.5], 5);
-
       // Der Rollbalken zoomt erst nach einem Klick in die Karte.
-      karte.on("click", function () {
-        if (!karte.scrollWheelZoom.enabled()) karte.scrollWheelZoom.enable();
-      });
-      karte.on("mouseout", function () {
-        karte.scrollWheelZoom.disable();
-      });
+      karte.on("click", function () { if (!karte.scrollWheelZoom.enabled()) karte.scrollWheelZoom.enable(); });
+      karte.on("mouseout", function () { karte.scrollWheelZoom.disable(); });
     }
 
     /* ---------------------------------------------------- Symbole -- */
 
     function symbol(art, farbe, beschriftung, betont, alternativ) {
-      var k =
-        "reise-marke reise-marke-" + art + (betont ? " ist-aktiv" : "") + (alternativ ? " ist-alternativ" : "");
+      var k = "reise-marke reise-marke-" + art + (betont ? " ist-aktiv" : "") + (alternativ ? " ist-alternativ" : "");
       var inneres;
-      if (art === "aufenthalt") {
-        inneres = '<span class="reise-marke-zahl">' + sicher(beschriftung) + "</span>";
-      } else if (art === "sicht") {
-        inneres = '<span class="reise-raute"></span>';
-      } else if (art === "flughafen") {
-        inneres = '<span class="reise-dreieck"></span>';
-      } else if (art === "bahnhof") {
-        inneres = '<span class="reise-quadrat"></span>';
-      } else if (art === "hafen") {
-        inneres = '<span class="reise-tropfen"></span>';
-      } else {
-        inneres = '<span class="reise-mehrfach">' + sicher(beschriftung) + "</span>";
-      }
-      var groesse = art === "aufenthalt" || art === "mehrfach" ? 30 : 20;
+      if (art === "aufenthalt") inneres = '<span class="reise-marke-zahl">' + sicher(beschriftung) + "</span>";
+      else if (art === "sicht") inneres = '<span class="reise-raute"></span>';
+      else if (art === "flughafen") inneres = '<span class="reise-dreieck"></span>';
+      else if (art === "bahnhof") inneres = '<span class="reise-quadrat"></span>';
+      else if (art === "hafen") inneres = '<span class="reise-tropfen"></span>';
+      else inneres = '<span class="reise-mehrfach">' + sicher(beschriftung) + "</span>";
+      var g = art === "aufenthalt" || art === "mehrfach" ? 30 : 20;
       return global.L.divIcon({
         className: "",
         html: '<span class="' + k + '" style="--farbe:' + farbe + '">' + inneres + "</span>",
-        iconSize: [groesse, groesse],
-        iconAnchor: [groesse / 2, groesse / 2],
+        iconSize: [g, g],
+        iconAnchor: [g / 2, g / 2],
       });
     }
 
     /* ------------------------------------------- Punkte einsammeln - */
 
-    // Alles, was auf die Karte soll, erst als Liste. Danach werden
-    // deckungsgleiche Punkte zusammengefasst, damit Tokio bei Ankunft
-    // und bei Rueckkehr auswaehlbar bleibt.
+    function passtFilter(b) {
+      var kats = Object.keys(S.filterKat).filter(function (k) { return S.filterKat[k]; });
+      if (kats.length && !b.kategorien.some(function (k) { return kats.indexOf(k) >= 0; })) return false;
+      var reg = Object.keys(S.filterRegion).filter(function (k) { return S.filterRegion[k]; });
+      if (reg.length && reg.indexOf(b.region) < 0) return false;
+      var frm = Object.keys(S.filterForm).filter(function (k) { return S.filterForm[k]; });
+      if (frm.length && frm.indexOf(b.form) < 0) return false;
+      return true;
+    }
+
     function punkte(r, betont) {
-      var t = tage(r);
+      var e = entwurf(r);
+      var t = tage(e);
       var raus = [];
 
       raus.push({
-        art: "ereignis",
-        id: r.ankunft.id,
-        routeId: r.id,
-        ort: ort(r.ankunft.ortId),
-        titel: "Ankunft in Tokio",
-        neben: "Tag 1",
-        farbe: r.farbe,
-        markenArt: "flughafen",
-        betont: betont,
+        art: "ereignis", id: r.ankunft.id, routeId: r.id, ort: ort(r.ankunft.ortId),
+        titel: "Ankunft in Tokio", neben: "Tag 1", farbe: r.farbe,
+        markenArt: "flughafen", betont: betont,
       });
 
-      r.aufenthalte.forEach(function (a, i) {
-        var o = ortDesAufenthalts(a);
+      e.aufenthalte.forEach(function (a, i) {
+        var o = ortDesHalts(a);
+        var neben = "Tag " + t[a.id].an + " bis " + t[a.id].weiter + ", " + naechteWort(a.naechte);
         if (o) {
           raus.push({
-            art: "aufenthalt",
-            id: a.id,
-            routeId: r.id,
-            ort: o,
-            titel: nameDesAufenthalts(a),
-            neben: "Tag " + t[a.id].von + " bis " + t[a.id].bis,
-            zahl: i + 1,
-            farbe: r.farbe,
-            markenArt: "aufenthalt",
-            betont: betont,
+            art: "aufenthalt", id: a.id, routeId: r.id, ort: o, titel: nameDesHalts(a),
+            neben: neben, zahl: i + 1, farbe: r.farbe, markenArt: "aufenthalt", betont: betont,
           });
           return;
         }
-        // Ohne festen Ort stehen die Kandidaten auf der Karte, jeder
-        // ausdruecklich als Alternative.
-        var kandidaten = (a.ortOffen && a.ortOffen.kandidaten) || [];
-        kandidaten.forEach(function (id, k) {
+        ((a.ortOffen && a.ortOffen.kandidaten) || []).forEach(function (id) {
           var ko = ort(id);
           if (!ko || ko.lat == null) return;
           raus.push({
-            art: "aufenthalt",
-            id: a.id + "@" + id,
-            eintragId: a.id,
-            routeId: r.id,
-            ort: ko,
-            titel: ko.name,
-            neben: "Alternative, Tag " + t[a.id].von + " bis " + t[a.id].bis,
-            zahl: i + 1,
-            farbe: r.farbe,
-            markenArt: "aufenthalt",
-            alternativ: true,
-            betont: betont,
+            art: "aufenthalt", id: a.id + "@" + id, eintragId: a.id, routeId: r.id, ort: ko,
+            titel: ko.name, neben: "Alternative, " + neben, zahl: i + 1, farbe: r.farbe,
+            markenArt: "aufenthalt", alternativ: true, betont: betont,
           });
         });
       });
 
-      r.besuche.forEach(function (b) {
-        if (!sichtbar(b)) return;
+      sichtbareBesuche(r).forEach(function (b) {
+        if (!passtFilter(b)) return;
         var o = ort(b.ortId);
+        if (!o || o.lat == null) return;
         raus.push({
-          art: "besuch",
-          id: b.id,
-          routeId: r.id,
-          ort: o,
-          titel: b.name,
-          neben: b.kategorien.map(function (k) { return KATEGORIEN[k] || k; }).join(", "),
+          art: "besuch", id: b.id, routeId: r.id, ort: o, titel: b.name,
+          neben: (FORMEN[b.form] || b.form) + (basisFuer(b, e) ? "" : ", ohne Basis"),
           farbe: r.farbe,
-          markenArt: o ? (o.typ === "sicht" || o.typ === "gebiet" ? "sicht" : o.typ) : "sicht",
+          markenArt: o.typ === "sicht" || o.typ === "gebiet" ? "sicht" : o.typ,
+          verwaist: !basisFuer(b, e),
           betont: betont,
         });
       });
@@ -508,56 +484,37 @@
       return raus;
     }
 
-    function sichtbar(b) {
-      var an = Object.keys(S.filter).filter(function (k) { return S.filter[k]; });
-      if (!an.length) return true;
-      return b.kategorien.some(function (k) { return an.indexOf(k) >= 0; });
-    }
-
     /* -------------------------------------------------- Verbindungen */
 
-    // Ein Flug wird als Bogen gezeichnet, ausdruecklich als Schema.
-    // Die Kruemmung ist reine Darstellung, die gespeicherten
-    // Koordinaten bleiben unangetastet.
+    // Ein Flug wird als Bogen gezeichnet, ausdruecklich als Schema. Die
+    // Kruemmung ist reine Darstellung, die gespeicherten Koordinaten
+    // bleiben unangetastet.
     function bogen(a, b, staerke) {
-      var punkteAusgabe = [];
-      var schritte = 48;
-      var mx = (a[0] + b[0]) / 2;
-      var my = (a[1] + b[1]) / 2;
-      var dx = b[0] - a[0];
-      var dy = b[1] - a[1];
-      var laenge = Math.sqrt(dx * dx + dy * dy) || 1;
-      var kx = mx + (-dy / laenge) * laenge * staerke;
-      var ky = my + (dx / laenge) * laenge * staerke;
+      var raus = [], schritte = 48;
+      var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      var dx = b[0] - a[0], dy = b[1] - a[1];
+      var l = Math.sqrt(dx * dx + dy * dy) || 1;
+      var kx = mx + (-dy / l) * l * staerke, ky = my + (dx / l) * l * staerke;
       for (var i = 0; i <= schritte; i++) {
-        var t = i / schritte;
-        var u = 1 - t;
-        punkteAusgabe.push([
-          u * u * a[0] + 2 * u * t * kx + t * t * b[0],
-          u * u * a[1] + 2 * u * t * ky + t * t * b[1],
-        ]);
+        var t = i / schritte, u = 1 - t;
+        raus.push([u * u * a[0] + 2 * u * t * kx + t * t * b[0], u * u * a[1] + 2 * u * t * ky + t * t * b[1]]);
       }
-      return punkteAusgabe;
+      return raus;
     }
 
     function zeichneVerbindungen(r, betont, versatz) {
-      r.verbindungen.forEach(function (v) {
-        var von = endpunkte(r, v.von);
-        var nach = endpunkte(r, v.nach);
+      var e = entwurf(r);
+      e.verbindungen.forEach(function (v) {
+        var von = endpunkte(r, e, v.von), nach = endpunkte(r, e, v.nach);
         if (!von.length || !nach.length) return;
-
-        var g = genauigkeit(r, v);
+        var g = genauigkeit(r, e, v);
         var hatFlug = v.abschnitte.some(function (s) { return s.mittel === "flug"; });
 
         von.forEach(function (a, ai) {
           nach.forEach(function (b, bi) {
             var alternativ = a.alternativ || b.alternativ;
-            var vonXY = [a.ort.lat, a.ort.lon];
-            var nachXY = [b.ort.lat, b.ort.lon];
-            var linie = hatFlug
-              ? bogen(vonXY, nachXY, 0.18 + versatz * 0.07 + (ai + bi) * 0.05)
-              : [vonXY, nachXY];
-
+            var p1 = [a.ort.lat, a.ort.lon], p2 = [b.ort.lat, b.ort.lon];
+            var linie = hatFlug ? bogen(p1, p2, 0.18 + versatz * 0.07 + (ai + bi) * 0.05) : [p1, p2];
             // Muster sagt das Verkehrsmittel, Deckkraft die Genauigkeit.
             var muster = g === "offen" ? "2 8" : hatFlug ? "10 8" : "1 7";
             if (g === "berechnet") muster = null;
@@ -566,19 +523,12 @@
               color: r.farbe,
               weight: betont ? (g === "offen" ? 2 : 3) : 2,
               opacity: betont ? (alternativ ? 0.42 : g === "offen" ? 0.5 : 0.85) : 0.28,
-              dashArray: muster,
-              lineCap: "round",
-              interactive: betont,
+              dashArray: muster, lineCap: "round", interactive: betont,
             });
             if (betont) {
               pfad.bindTooltip(
-                sicher(GENAU[g]) +
-                  ": " +
-                  sicher(mittelListe(v)) +
-                  (alternativ
-                    ? ". Alternative, solange der Hochzeitsort offen ist: " +
-                      sicher((a.alternativ ? a.ort : b.ort).name)
-                    : ""),
+                sicher(GENAU[g]) + ": " + sicher(mittelListe(v)) +
+                  (alternativ ? ". Alternative, solange der Hochzeitsort offen ist: " + sicher((a.alternativ ? a.ort : b.ort).name) : ""),
                 { sticky: true, className: "reise-tip" }
               );
             }
@@ -596,27 +546,21 @@
       marker = {};
 
       var routen = S.vergleich ? plan.routen : [route(S.auswahl)];
+      routen.forEach(function (r, i) { zeichneVerbindungen(r, r.id === S.auswahl, i); });
 
-      routen.forEach(function (r, i) {
-        zeichneVerbindungen(r, r.id === S.auswahl, i);
-      });
-
-      // Punkte sammeln, deckungsgleiche zusammenlegen.
       var gruppen = {};
       routen.forEach(function (r) {
         punkte(r, r.id === S.auswahl).forEach(function (p) {
           if (!p.ort || p.ort.lat == null) return;
-          var schluessel = p.ort.lat.toFixed(5) + "," + p.ort.lon.toFixed(5);
-          (gruppen[schluessel] = gruppen[schluessel] || []).push(p);
+          var k = p.ort.lat.toFixed(5) + "," + p.ort.lon.toFixed(5);
+          (gruppen[k] = gruppen[k] || []).push(p);
         });
       });
 
-      Object.keys(gruppen).forEach(function (schluessel) {
-        var g = gruppen[schluessel];
-        var teile = schluessel.split(",");
+      Object.keys(gruppen).forEach(function (k) {
+        var g = gruppen[k];
+        var teile = k.split(",");
         var pos = [Number(teile[0]), Number(teile[1])];
-
-        // Betonte Punkte zuerst, damit die aktive Route oben liegt.
         g.sort(function (x, y) { return (y.betont ? 1 : 0) - (x.betont ? 1 : 0); });
         var kopfP = g[0];
         var aktivHier = g.some(function (p) {
@@ -626,9 +570,8 @@
         var m;
         if (g.length === 1) {
           m = global.L.marker(pos, {
-            icon: symbol(kopfP.markenArt, kopfP.farbe, kopfP.zahl, aktivHier, kopfP.alternativ),
-            keyboard: true,
-            title: kopfP.titel,
+            icon: symbol(kopfP.markenArt, kopfP.farbe, kopfP.zahl, aktivHier, kopfP.alternativ || kopfP.verwaist),
+            keyboard: true, title: kopfP.titel,
             opacity: kopfP.betont ? 1 : 0.45,
             zIndexOffset: kopfP.betont ? 400 : 0,
           });
@@ -638,9 +581,7 @@
         } else {
           m = global.L.marker(pos, {
             icon: symbol("mehrfach", kopfP.farbe, String(g.length), aktivHier),
-            keyboard: true,
-            title: g.length + " Einträge an diesem Ort",
-            zIndexOffset: 500,
+            keyboard: true, title: g.length + " Einträge an diesem Ort", zIndexOffset: 500,
           });
           m.bindPopup(popupMehrere(g), { className: "reise-popup" });
           g.forEach(function (p) { marker[p.routeId + "/" + p.id] = m; });
@@ -653,18 +594,12 @@
       var d = el("div", "reise-popup-inhalt");
       d.appendChild(el("strong", null, p.titel));
       if (p.neben) d.appendChild(el("span", "reise-popup-neben", p.neben));
+      if (p.alternativ) d.appendChild(el("span", "reise-popup-neben", "Alternative, solange der Hochzeitsort offen ist."));
+      if (p.verwaist) d.appendChild(el("span", "reise-popup-neben", "Im aktiven Entwurf gibt es dafür keine Basis."));
       var o = p.ort;
-      if (p.alternativ) {
-        d.appendChild(el("span", "reise-popup-neben", "Alternative, solange der Hochzeitsort offen ist."));
-      }
       if (o) {
-        d.appendChild(
-          el(
-            "span",
-            "reise-popup-quelle",
-            (ORTTYP[o.typ] || o.typ) + ", " + (GENAUIGKEIT_ORT[o.genauigkeit] || o.genauigkeit)
-          )
-        );
+        d.appendChild(el("span", "reise-popup-quelle",
+          (ORTTYP[o.typ] || o.typ) + ", " + (GENAUIGKEIT_ORT[o.genauigkeit] || o.genauigkeit)));
       }
       return d;
     }
@@ -693,10 +628,10 @@
       var id = p.eintragId || p.id;
       S.aktiv = { art: p.art, id: id, routeId: p.routeId };
       zeichne();
-      var eintrag = liste.querySelector('[data-eintrag="' + id + '"]');
+      var eintrag = seite.querySelector('[data-eintrag="' + id + '"]');
       if (eintrag) {
         eintrag.scrollIntoView({ block: "nearest" });
-        eintrag.focus({ preventScroll: true });
+        if (eintrag.focus) eintrag.focus({ preventScroll: true });
       }
     }
 
@@ -704,116 +639,105 @@
 
     function zeichneListe() {
       leer(liste);
+      liste.hidden = S.tafel !== "plan";
+      if (S.tafel !== "plan") return;
+
       var r = route(S.auswahl);
-      var t = tage(r);
+      var e = entwurf(r);
+      var t = tage(e);
 
       var kopfZeile = el("div", "reise-listenkopf");
       var h = el("h3", null, r.name);
       h.style.setProperty("--farbe", r.farbe);
       kopfZeile.appendChild(h);
-      var summe = t.__summe;
-      var ab = summe - plan.zielTage;
-      kopfZeile.appendChild(
-        el(
-          "p",
-          "reise-summe",
-          summe +
-            " Reisetage" +
-            (ab === 0
-              ? ", genau das Ziel von " + plan.zielTage
-              : ", " + (ab > 0 ? ab + " mehr" : -ab + " weniger") + " als das Ziel von " + plan.zielTage) +
-            ". Zwischen Ankunft und Abflug liegen " +
-            (summe - 1) +
-            " Nächte."
-        )
-      );
-      kopfZeile.appendChild(
-        el(
-          "p",
-          "reise-summe reise-leise",
-          plan.startdatum
-            ? "Startdatum: " + plan.startdatum
-            : "Kein Startdatum gesetzt. Die Tage sind relative Reisetage, keine Kalenderdaten."
-        )
-      );
+      kopfZeile.appendChild(el("p", "reise-summe reise-leise", "Entwurf: " + e.name));
+
+      var ab = t.__naechte - zielNaechte;
+      var summeZeile = el("p", "reise-summe" + (ab === 0 ? "" : " ist-konflikt"),
+        naechteWort(t.__naechte) + (ab === 0
+          ? ", genau das Ziel von " + zielNaechte + ". Ankunft an Tag 1, Rückflug an Tag " + t.__abflug + "."
+          : ", " + (ab > 0 ? ab + " zu viel" : -ab + " fehlen") + " gegenüber dem Ziel von " + zielNaechte +
+            ". Ungelöster Planungskonflikt, der Entwurf gilt noch nicht als vollständige 21 Tage Variante."));
+      kopfZeile.appendChild(summeZeile);
+
+      kopfZeile.appendChild(el("p", "reise-summe reise-leise",
+        plan.startdatum
+          ? "Startdatum: " + plan.startdatum + ", gerechnet in " + (plan.zeitzone || "Asia/Tokyo") + "."
+          : "Kein Startdatum gesetzt. Die Angaben sind relative Reisetage, keine Kalenderdaten."));
       liste.appendChild(kopfZeile);
 
       liste.appendChild(zeileEreignis(r, r.ankunft, "Tag 1"));
 
-      r.aufenthalte.forEach(function (a, i) {
-        var v = r.verbindungen.filter(function (x) { return x.nach.id === a.id; })[0];
-        if (v) liste.appendChild(zeileVerbindung(r, v));
-        liste.appendChild(zeileAufenthalt(r, a, i, t[a.id]));
+      e.aufenthalte.forEach(function (a, i) {
+        var v = e.verbindungen.filter(function (x) { return x.nach.id === a.id; })[0];
+        if (v) liste.appendChild(zeileVerbindung(r, e, v));
+        liste.appendChild(zeileAufenthalt(r, e, a, i, t[a.id]));
       });
 
-      var letzte = r.verbindungen.filter(function (x) { return x.nach.id === r.abflug.id; })[0];
-      if (letzte) liste.appendChild(zeileVerbindung(r, letzte));
-      liste.appendChild(zeileEreignis(r, r.abflug, "Tag " + t.__summe));
+      liste.appendChild(zeileEreignis(r, r.abflug, "Tag " + t.__abflug));
+
+      // Vorschlaege ohne Basis im aktiven Entwurf. Sie werden markiert,
+      // nicht geloescht und nicht heimlich woanders eingehaengt.
+      var verwaist = sichtbareBesuche(r).filter(function (b) { return !basisFuer(b, e); });
+      if (verwaist.length) {
+        var block = el("div", "reise-verwaist");
+        block.appendChild(el("h4", null, "Ohne Basis in diesem Entwurf"));
+        block.appendChild(el("p", "reise-leise",
+          "Diese Vorschläge gehören zu einem Ort, an dem dieser Entwurf nicht übernachtet. Sie bleiben erhalten und warten auf eine neue Zuordnung."));
+        var ul = el("ul", "reise-vorschlaege");
+        verwaist.forEach(function (b) { ul.appendChild(zeileBesuch(r, e, b, true)); });
+        block.appendChild(ul);
+        liste.appendChild(block);
+      }
     }
 
-    function zeileEreignis(r, e, tagText) {
+    function zeileEreignis(r, ev, tagText) {
       var d = el("div", "reise-zeile reise-ereignis");
       d.tabIndex = 0;
-      d.dataset.eintrag = e.id;
-      var kopfZ = el("div", "reise-zeile-kopf");
-      kopfZ.appendChild(el("span", "reise-zeile-titel", e.art === "ankunft" ? "Ankunft in Tokio" : "Rückflug ab Tokio"));
-      kopfZ.appendChild(el("span", "reise-zeile-neben", tagText));
-      d.appendChild(kopfZ);
-      d.appendChild(el("p", "reise-zeile-text", e.text));
-      if (e.flughafenOffen && e.flughafenOffen.length) {
-        var namen = e.flughafenOffen.map(function (id) { return ort(id).name; }).join(" oder ");
-        d.appendChild(el("p", "reise-marke-offen", "Flughafen noch offen: " + namen));
+      d.dataset.eintrag = ev.id;
+      var k = el("div", "reise-zeile-kopf");
+      k.appendChild(el("span", "reise-zeile-titel", ev.art === "ankunft" ? "Ankunft in Tokio" : "Rückflug ab Tokio"));
+      k.appendChild(el("span", "reise-zeile-neben", tagText));
+      d.appendChild(k);
+      d.appendChild(el("p", "reise-zeile-text", ev.text));
+      if (ev.flughafenOffen && ev.flughafenOffen.length) {
+        d.appendChild(el("p", "reise-marke-offen", "Flughafen noch offen: " +
+          ev.flughafenOffen.map(function (id) { return ort(id).name; }).join(" oder ")));
       }
-      d.addEventListener("click", function () { waehle({ art: "ereignis", id: e.id, routeId: r.id }); });
-      d.addEventListener("keydown", function (ev) {
-        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); d.click(); }
+      d.addEventListener("click", function () { waehle({ art: "ereignis", id: ev.id, routeId: r.id }); });
+      d.addEventListener("keydown", function (e2) {
+        if (e2.key === "Enter" || e2.key === " ") { e2.preventDefault(); d.click(); }
       });
       return d;
     }
 
-    function zeileVerbindung(r, v) {
-      var g = genauigkeit(r, v);
+    function zeileVerbindung(r, e, v) {
+      var g = genauigkeit(r, e, v);
       var d = el("div", "reise-verbindung reise-genau-" + g);
-      var kopfZ = el("div", "reise-zeile-kopf");
-      kopfZ.appendChild(el("span", "reise-zeile-titel", mittelListe(v)));
-      kopfZ.appendChild(el("span", "reise-marke-genau", GENAU[g]));
-      d.appendChild(kopfZ);
+      var k = el("div", "reise-zeile-kopf");
+      k.appendChild(el("span", "reise-zeile-titel", mittelListe(v)));
+      k.appendChild(el("span", "reise-marke-genau", GENAU[g]));
+      d.appendChild(k);
 
       if (v.abschnitte.length > 1) {
         var ul = el("ul", "reise-abschnitte");
         v.abschnitte.forEach(function (s) {
-          var von = ort(s.vonOrt);
-          var nach = ort(s.nachOrt);
-          ul.appendChild(
-            el(
-              "li",
-              null,
-              (MITTEL[s.mittel] || s.mittel) +
-                ": " +
-                (von ? von.name : "offen") +
-                " nach " +
-                (nach ? nach.name : "offen")
-            )
-          );
+          var vo = ort(s.vonOrt), na = ort(s.nachOrt);
+          ul.appendChild(el("li", null,
+            (MITTEL[s.mittel] || s.mittel) + ": " + (vo ? vo.name : "offen") + " nach " + (na ? na.name : "offen")));
         });
         d.appendChild(ul);
       }
 
-      d.appendChild(
-        el(
-          "p",
-          "reise-zeile-text reise-leise",
-          (v.hinweis ? v.hinweis + " " : "") +
-            GENAU_ERKLAERT[g] +
-            (v.dauerMin == null && v.distanzKm == null
-              ? " Fahrzeit und Entfernung sind unbekannt."
-              : "")
-        )
-      );
+      var hinweise = v.abschnitte.map(function (s) { return s.hinweis; }).filter(Boolean);
+      d.appendChild(el("p", "reise-zeile-text reise-leise",
+        (v.hinweis ? v.hinweis + " " : "") + (hinweise.length ? hinweise.join(" ") + " " : "") +
+        GENAU_ERKLAERT[g] +
+        (v.dauerMin == null && v.distanzKm == null ? " Fahrzeit und Entfernung sind unbekannt." : "")));
       return d;
     }
 
-    function zeileAufenthalt(r, a, i, spanne) {
+    function zeileAufenthalt(r, e, a, i, spanne) {
       var offen = istOffen(a);
       var d = el("div", "reise-zeile reise-aufenthalt" + (offen ? " ist-offen" : ""));
       d.tabIndex = 0;
@@ -821,82 +745,163 @@
       if (S.aktiv && S.aktiv.id === a.id) d.classList.add("ist-aktiv");
       d.style.setProperty("--farbe", r.farbe);
 
-      var kopfZ = el("div", "reise-zeile-kopf");
+      var k = el("div", "reise-zeile-kopf");
       var num = el("span", "reise-nummer", String(i + 1));
       num.setAttribute("aria-hidden", "true");
-      kopfZ.appendChild(num);
-      kopfZ.appendChild(el("span", "reise-zeile-titel", nameDesAufenthalts(a)));
-      kopfZ.appendChild(el("span", "reise-zeile-neben", "Tag " + spanne.von + " bis " + spanne.bis + ", " + a.tage + " Tage"));
-      d.appendChild(kopfZ);
+      k.appendChild(num);
+      k.appendChild(el("span", "reise-zeile-titel", nameDesHalts(a)));
+      k.appendChild(el("span", "reise-zeile-neben",
+        "Tag " + spanne.an + " bis " + spanne.weiter + ", " + naechteWort(a.naechte)));
+      d.appendChild(k);
 
       if (offen && a.ortOffen) {
-        var namen = (a.ortOffen.kandidaten || []).map(function (id) { return ort(id).name; }).join(" oder ");
-        d.appendChild(el("p", "reise-marke-offen", "Ort noch offen: " + namen));
+        d.appendChild(el("p", "reise-marke-offen", "Ort noch offen: " +
+          (a.ortOffen.kandidaten || []).map(function (id) { return ort(id).name; }).join(" oder ")));
       }
       if (a.notizen) d.appendChild(el("p", "reise-zeile-text", a.notizen));
 
-      var besuche = r.besuche.filter(function (b) { return b.aufenthaltId === a.id && sichtbar(b); });
+      // Unterkunft, ohne erfundenes Haus und ohne erfundenen Preis.
+      var u = plan.unterkuenfte && plan.unterkuenfte[a.id];
+      if (u) {
+        var uz = el("p", "reise-unterkunft");
+        uz.appendChild(el("strong", null, "Unterkunft: "));
+        uz.appendChild(document.createTextNode(
+          (u.hotel || u.status) + ". " + u.zimmerbedarf + ". Zugang " + u.zugang + "."));
+        d.appendChild(uz);
+      }
+
+      var besuche = sichtbareBesuche(r).filter(function (b) {
+        var basis = basisFuer(b, e);
+        return basis && basis.id === a.id && passtFilter(b);
+      });
       if (besuche.length) {
         var ul = el("ul", "reise-vorschlaege");
-        besuche.forEach(function (b) { ul.appendChild(zeileBesuch(r, b)); });
+        besuche.forEach(function (b) { ul.appendChild(zeileBesuch(r, e, b, false)); });
         d.appendChild(ul);
       }
 
-      d.addEventListener("click", function (ev) {
-        if (ev.target.closest("a")) return;
+      d.addEventListener("click", function (ev2) {
+        if (ev2.target.closest("a")) return;
         waehle({ art: "aufenthalt", id: a.id, routeId: r.id });
       });
-      d.addEventListener("keydown", function (ev) {
-        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); d.click(); }
+      d.addEventListener("keydown", function (ev2) {
+        if (ev2.key === "Enter" || ev2.key === " ") { ev2.preventDefault(); d.click(); }
       });
       return d;
     }
 
-    function zeileBesuch(r, b) {
+    function zeileBesuch(r, e, b, verwaist) {
       var o = ort(b.ortId);
-      var li = el("li", "reise-vorschlag" + (o ? "" : " ist-offen"));
+      var li = el("li", "reise-vorschlag" + (o ? "" : " ist-offen") + (verwaist ? " ist-verwaist" : ""));
       li.dataset.eintrag = b.id;
+      li.tabIndex = 0;
       if (S.aktiv && S.aktiv.id === b.id) li.classList.add("ist-aktiv");
 
-      var kopfZ = el("div", "reise-zeile-kopf");
-      kopfZ.appendChild(el("span", "reise-zeile-titel", b.name));
-      var kats = b.kategorien.map(function (k) { return KATEGORIEN[k] || k; }).join(", ");
-      if (kats) kopfZ.appendChild(el("span", "reise-zeile-neben", kats));
-      li.appendChild(kopfZ);
+      var k = el("div", "reise-zeile-kopf");
+      k.appendChild(el("span", "reise-zeile-titel", b.name));
+      k.appendChild(el("span", "reise-zeile-neben", FORMEN[b.form] || b.form));
+      li.appendChild(k);
 
-      if (!o) {
-        li.appendChild(el("p", "reise-marke-offen", "Ort auf Karte festlegen"));
-      } else if (o.genauigkeit !== "bestaetigt") {
-        li.appendChild(el("p", "reise-leise reise-zeile-text", GENAUIGKEIT_ORT[o.genauigkeit] + (o.anker ? ": " + o.anker : "")));
+      if (b.interesse) li.appendChild(el("p", "reise-zeile-text", b.interesse));
+
+      var marken = el("p", "reise-marken");
+      (b.kategorien || []).forEach(function (kat) {
+        marken.appendChild(el("span", "reise-chip", KATEGORIEN[kat] || kat));
+      });
+      if (b.region) marken.appendChild(el("span", "reise-chip", REGIONEN[b.region] || b.region));
+      li.appendChild(marken);
+
+      if (verwaist) {
+        li.appendChild(el("p", "reise-marke-offen", "Zur Neuplanung markiert: " +
+          (b.basis || []).map(function (id) { return (ort(id) || {}).name || id; }).join(" oder ") +
+          " ist in diesem Entwurf keine Basis."));
+      }
+
+      if (!o) li.appendChild(el("p", "reise-marke-offen", "Ort auf Karte festlegen"));
+      else if (o.genauigkeit !== "bestaetigt") {
+        li.appendChild(el("p", "reise-leise reise-zeile-text",
+          GENAUIGKEIT_ORT[o.genauigkeit] + (o.anker ? ": " + o.anker : "")));
       }
 
       if (b.notizen) li.appendChild(el("p", "reise-zeile-text", b.notizen));
 
       var m = b.mobilitaet || {};
-      if (m.hinweis) {
-        var w = el("p", "reise-mobil");
-        w.appendChild(el("strong", null, "Zum Gehen: "));
-        w.appendChild(document.createTextNode(m.hinweis));
-        li.appendChild(w);
-      } else {
-        li.appendChild(el("p", "reise-mobil reise-leise", "Zum Gehen: noch nicht geprüft."));
-      }
+      var w = el("p", "reise-mobil");
+      w.appendChild(el("strong", null, "Zum Gehen: "));
+      w.appendChild(document.createTextNode(m.hinweis || "noch nicht geprüft. Eine fehlende Angabe ist kein Beleg für einen leichten Weg."));
+      li.appendChild(w);
 
       var href = sichererLink(b.quelleLink);
       if (href) {
-        var a = el("a", "reise-quelle", "Quelle");
-        a.href = href;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        li.appendChild(a);
+        var a2 = el("a", "reise-quelle", "Quelle");
+        a2.href = href;
+        a2.target = "_blank";
+        a2.rel = "noopener noreferrer";
+        li.appendChild(a2);
       }
 
-      li.addEventListener("click", function (ev) {
-        if (ev.target.closest("a")) return;
-        ev.stopPropagation();
+      li.addEventListener("click", function (ev2) {
+        if (ev2.target.closest("a")) return;
+        ev2.stopPropagation();
         waehle({ art: "besuch", id: b.id, routeId: r.id });
       });
+      li.addEventListener("keydown", function (ev2) {
+        if (ev2.key === "Enter" || ev2.key === " ") { ev2.preventDefault(); li.click(); }
+      });
       return li;
+    }
+
+    /* ------------------------------------------------ Weitere Ideen */
+
+    function filterZeile(titel, quelle, zustand, beschriftung) {
+      var feld = el("div", "reise-feld");
+      feld.appendChild(el("h3", null, titel));
+      var gruppe = el("div", "reise-schalter");
+      Object.keys(quelle).forEach(function (k) {
+        var b = el("button", "reise-wahl", beschriftung ? beschriftung(k) : quelle[k]);
+        b.type = "button";
+        b.setAttribute("aria-pressed", zustand[k] ? "true" : "false");
+        if (zustand[k]) b.classList.add("ist-aktiv");
+        b.addEventListener("click", function () { zustand[k] = !zustand[k]; zeichne(); });
+        gruppe.appendChild(b);
+      });
+      feld.appendChild(gruppe);
+      return feld;
+    }
+
+    function zeichneIdeen() {
+      leer(ideen);
+      ideen.hidden = S.tafel !== "ideen";
+      if (S.tafel !== "ideen") return;
+
+      var r = route(S.auswahl);
+      var e = entwurf(r);
+
+      ideen.appendChild(filterZeile("Region", REGIONEN, S.filterRegion));
+      ideen.appendChild(filterZeile("Interesse", KATEGORIEN, S.filterKat));
+      ideen.appendChild(filterZeile("Besuchsform", FORMEN, S.filterForm));
+
+      var alle = sichtbareBesuche(r).filter(passtFilter);
+      ideen.appendChild(el("p", "reise-summe reise-leise",
+        alle.length + " von " + sichtbareBesuche(r).length + " Vorschlägen. Alle sind optional und noch keinem Ausflugstag zugeordnet."));
+
+      var ul = el("ul", "reise-vorschlaege");
+      alle.forEach(function (b) {
+        var basis = basisFuer(b, e);
+        var li = zeileBesuch(r, e, b, !basis);
+        var wo = el("p", "reise-leise reise-zeile-text");
+        if (basis) {
+          wo.textContent = "Von " + nameDesHalts(basis) + " aus. Als Übernachtung geplant würde daraus eine eigene Basis, deren Nächte von einem anderen Aufenthalt kommen müssten.";
+        } else {
+          wo.textContent = "In diesem Entwurf ohne Basis. Eine Übernachtung hier würde einen neuen Aufenthalt erzeugen und Nächte an anderer Stelle kosten.";
+        }
+        li.appendChild(wo);
+        ul.appendChild(li);
+      });
+      ideen.appendChild(ul);
+
+      ideen.appendChild(el("p", "reise-leise",
+        "Einplanen mit Übernachtung, Vorschau und Rückgängig kommen im nächsten Schritt. Bisher lässt sich hier ansehen und vergleichen."));
     }
 
     /* ---------------------------------------------------- Legende -- */
@@ -923,7 +928,7 @@
       g2.appendChild(el("h4", null, "Art des Punktes, an der Form"));
       var ul2 = el("ul");
       [
-        ["aufenthalt", "Aufenthalt, mit seiner Nummer"],
+        ["aufenthalt", "Übernachtungsbasis, mit ihrer Nummer"],
         ["sicht", "Sehenswürdigkeit"],
         ["flughafen", "Flughafen"],
         ["bahnhof", "Bahnhof"],
@@ -943,6 +948,13 @@
         li.appendChild(document.createTextNode(paar[1]));
         ul2.appendChild(li);
       });
+      var li3 = el("li");
+      var s3 = el("span", "reise-marke reise-marke-sicht ist-alternativ");
+      s3.setAttribute("aria-hidden", "true");
+      s3.appendChild(el("span", "reise-raute"));
+      li3.appendChild(s3);
+      li3.appendChild(document.createTextNode("Gestrichelt umrandet: Alternative oder ohne Basis im aktiven Entwurf"));
+      ul2.appendChild(li3);
       g2.appendChild(ul2);
       legende.appendChild(g2);
 
@@ -956,34 +968,29 @@
         ["flug", "Flüge als Bogen. Das ist keine tatsächliche Flugbahn."],
       ].forEach(function (paar) {
         var li = el("li");
-        var s = el("span", "reise-strich reise-strich-" + paar[0]);
-        li.appendChild(s);
+        li.appendChild(el("span", "reise-strich reise-strich-" + paar[0]));
         li.appendChild(document.createTextNode(paar[1]));
         ul3.appendChild(li);
       });
       g3.appendChild(ul3);
       legende.appendChild(g3);
 
-      legende.appendChild(
-        el(
-          "p",
-          "reise-leise",
-          "Die Farbe steht für den Reisevorschlag, das Muster für Verkehrsmittel und Genauigkeit. " +
-            "Kartendaten von " + anbieter.name + ", die Quellenangabe steht in der Karte."
-        )
-      );
+      legende.appendChild(el("p", "reise-leise",
+        "Die Farbe steht für den Reisevorschlag, das Muster für Verkehrsmittel und Genauigkeit. " +
+        "Kartendaten von " + anbieter.name + ", die Quellenangabe steht in der Karte. " +
+        "Nichts hier ist gebucht oder reserviert."));
     }
 
     /* --------------------------------------------------- Ausschnitt */
 
     function grenzen(routen) {
-      var punkteAlle = [];
+      var raus = [];
       routen.forEach(function (r) {
         punkte(r, true).forEach(function (p) {
-          if (p.ort && p.ort.lat != null) punkteAlle.push([p.ort.lat, p.ort.lon]);
+          if (p.ort && p.ort.lat != null) raus.push([p.ort.lat, p.ort.lon]);
         });
       });
-      return punkteAlle;
+      return raus;
     }
 
     function aufRoute(r, sanft) {
@@ -1000,7 +1007,7 @@
       karte.fitBounds(global.L.latLngBounds(p).pad(0.12));
     }
 
-    // Okinawa muss mit hineinpassen, deshalb reicht Japan hier von
+    // Okinawa muss hineinpassen, deshalb reicht der Ausschnitt von
     // Okinawa im Suedwesten bis Hokkaido im Nordosten.
     function ganzJapan() {
       if (!karte) return;
@@ -1008,6 +1015,37 @@
     }
 
     /* --------------------------------------------------- Neuzeichnen */
+
+    function zeichneEntwuerfe() {
+      var r = route(S.auswahl);
+      leer(entwurfGruppe);
+      r.entwuerfe.forEach(function (e) {
+        var b = el("button", "reise-wahl", e.name);
+        b.type = "button";
+        b.setAttribute("role", "radio");
+        var an = e.id === r.aktiverEntwurf;
+        b.setAttribute("aria-checked", an ? "true" : "false");
+        if (an) b.classList.add("ist-aktiv");
+        b.addEventListener("click", function () {
+          r.aktiverEntwurf = e.id;
+          S.aktiv = null;
+          zeichne();
+          aufRoute(r, true);
+        });
+        entwurfGruppe.appendChild(b);
+      });
+      var e = entwurf(r);
+      leer(entwurfText);
+      entwurfText.appendChild(document.createTextNode(e.beschreibung + " "));
+      var href = sichererLink(e.quelle);
+      if (href) {
+        var a = el("a", "reise-quelle", "Quelle");
+        a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer";
+        entwurfText.appendChild(a);
+      }
+      entwurfText.appendChild(el("span", "reise-leise",
+        " Die Verteilung der Nächte ist ein Planungsvorschlag. Nur der gewählte Entwurf zählt, es laufen nie zwei gleichzeitig."));
+    }
 
     function zeichne() {
       plan.routen.forEach(function (r) {
@@ -1030,13 +1068,15 @@
         ? "Gewählt: " + ort(plan.hochzeitsort).name + ". Nur die daran gebundenen Orte und Verbindungen ändern sich."
         : "Solange der Ort offen ist, sind Fukuoka und Kumamoto Alternativen. Die übrigen Etappen bleiben trotzdem nutzbar.";
 
-      Array.prototype.forEach.call(filterGruppe.children, function (b) {
-        var an = !!S.filter[b.dataset.kat];
-        b.classList.toggle("ist-aktiv", an);
-        b.setAttribute("aria-pressed", an ? "true" : "false");
+      Object.keys(tafelKnoepfe).forEach(function (k) {
+        var an = S.tafel === k;
+        tafelKnoepfe[k].classList.toggle("ist-aktiv", an);
+        tafelKnoepfe[k].setAttribute("aria-selected", an ? "true" : "false");
       });
 
+      zeichneEntwuerfe();
       zeichneListe();
+      zeichneIdeen();
       zeichneKarte();
       zeichneLegende();
     }
@@ -1045,11 +1085,7 @@
     zeichne();
     if (karte) setTimeout(function () { karte.invalidateSize(); aufRoute(route(S.auswahl), false); }, 80);
 
-    return {
-      zeichne: zeichne,
-      karte: function () { return karte; },
-      zustand: S,
-    };
+    return { zeichne: zeichne, karte: function () { return karte; }, zustand: S };
   }
 
   global.reiseplaner = planer;

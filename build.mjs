@@ -1481,7 +1481,15 @@ async function build() {
 
   if (existsSync(path.join(ROOT, "assets"))) {
     await copyDir(path.join(ROOT, "assets"), path.join(DIST, "assets"));
-    await rm(path.join(DIST, "assets", "intern.enc.json"), { force: true });
+    // Die Kapsel steckt schon im HTML, daneben braucht sie niemand.
+    // Laesst sie sich nicht loeschen, etwa weil der Ordner gesperrt
+    // ist, ist das kein Grund den Build abzubrechen: es ist ohnehin
+    // nur Chiffretext.
+    try {
+      await rm(path.join(DIST, "assets", "intern.enc.json"), { force: true });
+    } catch {
+      console.warn("  ! dist/assets/intern.enc.json ließ sich nicht entfernen, bleibt liegen. Es ist nur Chiffretext.");
+    }
   }
 
   if (base) {
