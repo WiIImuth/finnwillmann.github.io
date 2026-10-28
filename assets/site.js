@@ -146,7 +146,9 @@
     let letzter = -1;
 
     const messen = () => {
-      const weg = window.innerHeight * 1.5;
+      // Das Blatt folgt direkt auf den Hero. Nach einer Bildschirmhoehe
+      // liegt es ganz darueber, dann ist der Wert 1.
+      const weg = window.innerHeight;
       const roh = Math.min(1, Math.max(0, window.scrollY / weg));
       // Frueher in hundert Stufen, weil die Breitenachse der Schrift
       // teuer war. Es bewegen sich jetzt nur noch transform und opacity,
@@ -161,7 +163,7 @@
       if (buehne) buehne.style.setProperty("--p", String(p));
       // Ab hier ist der Hero unsichtbar. Dann gehoert er auch nicht mehr
       // in die Tabreihenfolge und nicht mehr in die Vorlesereihenfolge.
-      heldHero.classList.toggle("ist-weg", p >= 0.52);
+      heldHero.classList.toggle("ist-weg", p >= 0.72);
       if (nachFortschritt) nachFortschritt();
     };
 
@@ -210,6 +212,9 @@
     const anwerfen = () => {
       if (motor || reduced || !flaeche || !window.hintergrundShader) return;
       motor = window.hintergrundShader(flaeche, {
+        // Nur die Wellen. Die fallenden Lichtstriche sind raus: sie
+        // fuellten einen leeren Bildschirm, den es nicht mehr gibt.
+        nurWellen: true,
         // Absichtlich unter der Bildschirmaufloesung gerechnet. Weiche
         // Verlaeufe vertragen das, und es ist der groesste Gewinn.
         mass: 0.55,
@@ -223,19 +228,6 @@
           opacity: 0.5,
           tilt: 1.11,
           fogDepth: 15,
-        },
-        strahlen: {
-          colors: ["#cea4ff", "#b86fff", "#ffa5e2"],
-          backgroundColor: "#2a1150",
-          speed: 0.55,
-          streakCount: 2,
-          streakLength: 1.15,
-          density: 0.28,
-          twinkle: 0.8,
-          zoom: 3.5,
-          glow: 0.65,
-          backgroundGlow: 0.25,
-          opacity: 0.5,
         },
         // Hell ist eigenstaendig komponiert, in Blau statt Violett. Der
         // Ton ist nicht frei gewaehlt: es ist der kuehle Zweitton, den die
@@ -253,22 +245,6 @@
           tilt: 1.11,
           fogDepth: 15,
         },
-        strahlenHell: {
-          colors: ["#1853c6", "#0081e7", "#00a4e7"],
-          backgroundColor: "#a8c6f2",
-          speed: 0.55,
-          streakCount: 2,
-          streakLength: 1.15,
-          density: 0.28,
-          twinkle: 0.8,
-          zoom: 3.5,
-          glow: 0.65,
-          // Ohne Hintergrundschein: auf hellem Grund zieht der helle
-          // Zweig die Farbe aus dem Verhaeltnis der Kanaele, und der
-          // Schein kippt dabei ins Magenta statt ins Blaue.
-          backgroundGlow: 0,
-          opacity: 0.55,
-        },
       });
       if (motor) {
         motor.modus(!istDunkel());
@@ -277,13 +253,13 @@
     };
 
     // Gerechnet wird nur, wenn die Flaeche im Bild ist, der Tab vorn
-    // liegt, der dunkle Zustand aktiv ist und ueberhaupt schon etwas
-    // davon zu sehen waere.
+    // liegt und das Blatt sie noch nicht ganz zudeckt. Das Blatt ist
+    // undurchsichtig: was darunter liegt, waere verschwendete Arbeit.
     const pruefen = () => {
       if (!motor) anwerfen();
       if (!motor) return;
       motor.modus(!istDunkel());
-      if (imBild && wach && fortschritt > 0.005) motor.an();
+      if (imBild && wach && fortschritt < 0.995) motor.an();
       else motor.aus();
       // Je weiter der Inhalt darueberliegt, desto ruhiger wird es.
       motor.ruhe(fortschritt);
@@ -391,6 +367,11 @@
       { passive: true }
     );
 
+    // Beobachtet wird der Seitenkopf, nicht die Buehne: die steht still
+    // und ist immer im Bild. Ist der Kopf aus dem Bild, liegt das
+    // undurchsichtige Blatt ueber allem, und die Wellen koennen ruhen.
+    const wellenZiel = document.querySelector(".seite-inhalt .hero-page") || wellenBuehne;
+
     if ("IntersectionObserver" in window) {
       new IntersectionObserver(
         (eintraege) => {
@@ -398,7 +379,7 @@
           wellenPruefen();
         },
         { threshold: 0 }
-      ).observe(wellenBuehne);
+      ).observe(wellenZiel);
     }
 
     addEventListener("visibilitychange", () => {

@@ -643,6 +643,11 @@ ${bodyClass.includes("page-home") || wellen ? `<script src="/assets/shader.js${v
 // bleibt darum aus der Tabreihenfolge heraus.
 const ICON_ZU = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
 
+// Pfeile in den Knoepfen. Gezeichnet statt als Schriftzeichen, damit sie
+// in jeder Schrift gleich aussehen und dieselbe Strichstaerke haben.
+const ICON_PFEIL = `<svg class="pfeil" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+const ICON_ZURUECK = `<svg class="pfeil pfeil-zurueck" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>`;
+
 // Das Schubfach. Es steht in jeder Breite bereit und enthaelt mehr als
 // die Kopfzeile: alle Bereiche, jede Arbeit einzeln, die Links nach
 // draussen und das Rechtliche. Geschlossen ist es inert, damit es fuer
@@ -702,53 +707,32 @@ function schubfach({ config, L, current, projekte = [], werke = [], intern = fal
 </aside>`;
 }
 
-function arbeitZeile(project, L, index) {
+// Eine Arbeit, ueberall gleich: auf der Startseite wie in der Uebersicht,
+// das Bild links, der Text rechts, an derselben linken Kante. Keine
+// Schlagworte und keine Nummer, die Reihenfolge ist keine Information.
+// Jahr und Rolle stehen unter dem Titel, nicht als Kicker darueber.
+function arbeitZeile(project, L, ebene = 3) {
   const r = routes(L);
   const d = project.data;
   const t = L.t;
   const image = d.thumb || d.cover;
   const href = r.project(project.slug);
-  const tags = (d.tags || []).map((x) => `<li>${escapeHtml(x)}</li>`).join("");
-  const meta = [String(index + 1).padStart(2, "0"), d.year, d.role]
+  const meta = [d.year, d.role]
     .filter(Boolean)
     .map((x) => escapeHtml(String(x)))
     .join(" · ");
 
-  return `<article>
+  return `<article class="arbeit">
   <div class="arbeit-zeile">
     ${image ? `<a class="arbeit-bild" href="${href}" tabindex="-1" aria-hidden="true"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></a>` : ""}
     <div class="arbeit-text">
-      <p class="arbeit-meta">${meta}</p>
-      <h3 class="arbeit-titel"><a href="${href}">${escapeHtml(d.title)}</a></h3>
+      <h${ebene} class="arbeit-titel"><a href="${href}">${escapeHtml(d.title)}</a></h${ebene}>
+      ${meta ? `<p class="arbeit-meta">${meta}</p>` : ""}
       <p class="arbeit-summary">${escapeHtml(d.summary || "")}</p>
-      ${tags ? `<ul class="tags">${tags}</ul>` : ""}
-      <a class="arbeit-link" href="${href}">${escapeHtml(t.projectView)} <span aria-hidden="true">→</span></a>
+      <a class="btn" href="${href}" aria-label="${escapeHtml(`${t.projectView}: ${d.title}`)}">${escapeHtml(t.projectView)}${ICON_PFEIL}</a>
     </div>
   </div>
 </article>`;
-}
-
-// Die Uebersicht ist ein Verzeichnis: eine Zeile je Arbeit, mit Nummer,
-// Titel, Jahr und Bild. Bewusst anders als die Baender auf der Startseite,
-// damit die beiden Seiten nicht dasselbe zweimal zeigen.
-function werkZeile(project, L, index) {
-  const r = routes(L);
-  const d = project.data;
-  const image = d.thumb || d.cover;
-  const marken = (d.tags || []).map((x) => escapeHtml(x)).join(" · ");
-
-  return `<li class="werk">
-  <a class="werk-link" href="${r.project(project.slug)}">
-    <span class="werk-nr">${String(index + 1).padStart(2, "0")}</span>
-    <span class="werk-haupt">
-      <span class="werk-titel">${escapeHtml(d.title)}</span>
-      <span class="werk-summary">${escapeHtml(d.summary || "")}</span>
-      ${marken ? `<span class="werk-marken">${marken}</span>` : ""}
-    </span>
-    <span class="werk-jahr">${escapeHtml(d.year || "")}</span>
-    ${image ? `<span class="werk-bild"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></span>` : ""}
-  </a>
-</li>`;
 }
 
 function pageHeader({ eyebrow, title, lead, extra = "", glow = true }) {
@@ -782,8 +766,8 @@ function artworkTile(artwork, href) {
   return `<a class="tile" href="${href}#${artwork.slug}">
   ${image ? `<span class="tile-img"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></span>` : ""}
   <span class="tile-body">
-    <span class="tile-meta">${escapeHtml(d.year || "")}${d.role ? ` · ${escapeHtml(d.role)}` : ""}</span>
     <span class="tile-title">${escapeHtml(d.title)}</span>
+    <span class="tile-meta">${escapeHtml(d.year || "")}${d.role ? ` · ${escapeHtml(d.role)}` : ""}</span>
   </span>
 </a>`;
 }
@@ -796,8 +780,10 @@ function homePage({ config, L, home, projects, artworks }) {
   const r = routes(L);
   const t = L.t;
 
+  // Die Wege nach draussen sind eine Gruppe, nicht drei gleich starke
+  // Knoepfe neben der Hauptaktion.
   const heroLinks = (config.links || [])
-    .map((l) => `<a class="btn" href="${l.href}"${linkAttrs(l.href)}>${escapeHtml(l.label)}</a>`)
+    .map((l) => `<a href="${l.href}"${linkAttrs(l.href)}>${escapeHtml(l.label)}</a>`)
     .join("");
 
   const featured = projects.filter((p) => p.data.featured !== false).slice(0, 3);
@@ -833,19 +819,17 @@ function homePage({ config, L, home, projects, artworks }) {
     <p class="fakten">${fakten.map((f) => `<span>${escapeHtml(f)}</span>`).join("")}</p>
     <div class="btn-row">
       <a class="btn btn-primary" href="${r.projects}">${escapeHtml(t.heroCta)}</a>
-      ${heroLinks}
+      ${heroLinks ? `<div class="gruppe" role="group" aria-label="${escapeHtml(t.elsewhere)}">${heroLinks}</div>` : ""}
     </div>
   </div>
 </section>
 
-<div class="stage-raum" aria-hidden="true"></div>
-
-<div class="stage-inhalt">
+<div class="stage-inhalt blatt">
 ${home.html
   ? `<section class="band">
   <div class="wrap">
     <div class="statement">${home.html}</div>
-    <p class="section-link"><a href="${r.about}">${escapeHtml(t.moreAbout)}</a></p>
+    <p class="section-link"><a class="btn" href="${r.about}">${escapeHtml(t.moreAbout)}${ICON_PFEIL}</a></p>
   </div>
 </section>`
   : ""}
@@ -853,11 +837,11 @@ ${home.html
 <section class="wrap section">
   <h2 class="section-title">${escapeHtml(t.selected)}</h2>
   ${featured.length
-    ? `<div class="arbeiten">${featured.map((p, i) => arbeitZeile(p, L, i)).join("")}</div>`
+    ? `<div class="arbeiten">${featured.map((p) => arbeitZeile(p, L, 3)).join("")}</div>`
     : `<p class="muted">${escapeHtml(t.empty)}</p>`}
-  <p class="section-link"><a href="${r.projects}">${escapeHtml(
+  <p class="section-link"><a class="btn" href="${r.projects}">${escapeHtml(
       projects.length > featured.length ? t.allProjects(projects.length) : t.overview
-    )}</a></p>
+    )}${ICON_PFEIL}</a></p>
 </section>
 
 ${artworks.length
@@ -866,7 +850,7 @@ ${artworks.length
     <h2 class="section-title">${escapeHtml(t.artworksTitle)}</h2>
     <p class="statement statement-sm">${escapeHtml(pick(config.artworksIntro, L.code) || t.artworksLead)}</p>
     <div class="tiles">${artworks.slice(0, 3).map((a) => artworkTile(a, r.artworks)).join("")}</div>
-    <p class="section-link"><a href="${r.artworks}">${escapeHtml(t.artworksAll)}</a></p>
+    <p class="section-link"><a class="btn" href="${r.artworks}">${escapeHtml(t.artworksAll)}${ICON_PFEIL}</a></p>
   </div>
 </section>`
   : ""}
@@ -883,13 +867,15 @@ function projectsIndexPage({ L, projects, intro }) {
   return `
 ${pageHeader({ glow: false, title: t.projectsTitle, lead: intro || t.projectsLead })}
 
-<section class="wrap section-tight">
+<div class="blatt">
+<section class="wrap section">
   ${projects.length
-    ? `<ul class="werkliste">${projects.map((p, i) => werkZeile(p, L, i)).join("")}</ul>`
+    ? `<div class="arbeiten">${projects.map((p) => arbeitZeile(p, L, 2)).join("")}</div>`
     : `<p class="muted">${escapeHtml(t.empty)}</p>`}
 </section>
 
 ${ctaSection(L)}
+</div>
 `;
 }
 
@@ -897,8 +883,6 @@ function projectPage({ project, L }) {
   const r = routes(L);
   const t = L.t;
   const d = project.data;
-
-  const tags = (d.tags || []).map((x) => `<li>${escapeHtml(x)}</li>`).join("");
 
   const meta = [];
   if (d.year) meta.push(`<div><dt>${escapeHtml(t.period)}</dt><dd>${escapeHtml(d.year)}</dd></div>`);
@@ -924,18 +908,20 @@ function projectPage({ project, L }) {
         .join("")}</div>`
     : "";
 
+  // Das Blatt umfasst auch den Aufruf am Ende. Sonst endet es vor ihm,
+  // und der Aufruf stuende allein auf dem Licht.
   return `
 <article class="project">
   <section class="hero hero-page">
     <div class="wrap hero-inner">
-      <a class="back" href="${r.projects}">← ${escapeHtml(t.back)}</a>
+      <a class="btn back" href="${r.projects}">${ICON_ZURUECK}${escapeHtml(t.back)}</a>
       <h1 class="display-sm">${escapeHtml(d.title)}</h1>
       <p class="hero-lead">${escapeHtml(d.summary || "")}</p>
-      ${tags ? `<ul class="tags">${tags}</ul>` : ""}
       ${actions.length ? `<div class="btn-row">${actions.join("")}</div>` : ""}
     </div>
   </section>
 
+  <div class="blatt">
   <div class="wrap">
     ${meta.length ? `<dl class="project-meta">${meta.join("")}</dl>` : ""}
   </div>
@@ -946,9 +932,10 @@ function projectPage({ project, L }) {
   <div class="wrap">
     <div class="prose">${project.html}</div>
   </div>
-</article>
 
-${ctaSection(L)}
+  ${ctaSection(L)}
+  </div>
+</article>
 `;
 }
 
@@ -959,7 +946,6 @@ function artworksPage({ config, L, artworks }) {
   const entries = artworks
     .map((a) => {
       const d = a.data;
-      const tags = (d.tags || []).map((x) => `<li>${escapeHtml(x)}</li>`).join("");
 
       const video = d.video && !/^https?:/.test(d.video)
         ? `<div class="artwork-video">
@@ -979,7 +965,6 @@ function artworksPage({ config, L, artworks }) {
     <h2 class="artwork-title">${escapeHtml(d.title)}</h2>
     <p class="artwork-meta">${escapeHtml(d.year || "")}${d.role ? ` · ${escapeHtml(d.role)}` : ""}</p>
     ${a.html ? `<div class="prose narrow">${a.html}</div>` : ""}
-    ${tags ? `<ul class="tags">${tags}</ul>` : ""}
   </header>
   ${video}
   ${shots ? `<div class="shots">${shots}</div>` : ""}
@@ -1014,24 +999,27 @@ function artworksPage({ config, L, artworks }) {
   return `
 ${pageHeader({ glow: false, title: t.artworksTitle, lead: pick(config.artworksIntro, L.code) || t.artworksLead })}
 
-<section class="wrap section-tight artworks">
+<div class="blatt">
+<section class="wrap section artworks">
   ${entries || `<p class="muted">${escapeHtml(t.empty)}</p>`}
 </section>
 
 ${instagram}
 
 ${ctaSection(L)}
+</div>
 `;
 }
 
 function aboutPage({ config, L, about }) {
   const t = L.t;
   const r = routes(L);
+  // Werkzeuge als Satz, nicht als Schlagworte.
   const skills = (config.skills || [])
     .map(
       (g) => `<div class="skill-group">
       <h3>${escapeHtml(pick(g.group, L.code))}</h3>
-      <ul class="tags">${(g.items || []).map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>
+      <p class="skill-liste">${(g.items || []).map(escapeHtml).join(", ")}</p>
     </div>`
     )
     .join("");
@@ -1039,7 +1027,8 @@ function aboutPage({ config, L, about }) {
   return `
 ${pageHeader({ glow: false, title: about.data.headline || t.aboutTitle, lead: about.data.lead || "" })}
 
-<section class="wrap section-tight">
+<div class="blatt">
+<section class="wrap section">
   <div class="prose narrow">${about.html}</div>
   ${skills
     ? `<h2 class="section-title spaced">${escapeHtml(t.tools)}</h2>
@@ -1048,6 +1037,7 @@ ${pageHeader({ glow: false, title: about.data.headline || t.aboutTitle, lead: ab
 </section>
 
 ${ctaSection(L)}
+</div>
 `;
 }
 
@@ -1060,7 +1050,8 @@ function contactPage({ config, L, contact }) {
   return `
 ${pageHeader({ glow: false, title: contact.data.headline || t.contactTitle, lead: contact.data.lead || "" })}
 
-<section class="wrap section-tight">
+<div class="blatt">
+<section class="wrap section">
   ${contact.html ? `<div class="prose narrow">${contact.html}</div>` : ""}
   <div class="btn-row spaced">
     <a class="btn btn-primary" href="mailto:${escapeHtml(config.email)}">${escapeHtml(config.email)}</a>
@@ -1070,6 +1061,7 @@ ${pageHeader({ glow: false, title: contact.data.headline || t.contactTitle, lead
        <ul class="link-list">${links}</ul>`
     : ""}
 </section>
+</div>
 `;
 }
 

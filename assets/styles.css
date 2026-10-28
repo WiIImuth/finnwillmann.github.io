@@ -2759,3 +2759,591 @@ body.lightbox-open { overflow: hidden; }
   .lightbox-close::after,
   .lightbox-nav::after { display: none; }
 }
+
+
+/* ==================================================================
+   Klar
+
+   Liquid Glass so, wie Apple es selbst einsetzt: Glas nur auf dem,
+   was man anfasst. Die Kopfzeile schwebt als Kapsel, Knoepfe sind
+   Pillen, der Inhalt liegt deckend auf einem Blatt, das ueber das
+   Licht faehrt. Jede Seite hat dieselbe Ordnung: oben Licht, darueber
+   das Blatt.
+
+   Ecken kennen nur zwei Arten. Was man anfassen kann, ist eine Kapsel,
+   die Rundung ist die halbe Hoehe. Flaechen und Bilder haben einen
+   festen Radius, und was in einer Flaeche liegt, hat deren Radius
+   minus den Abstand dazwischen. So laufen alle Kurven parallel.
+   Kapseln in Kapseln sind es von selbst, solange der Abstand ringsum
+   gleich ist.
+
+   Die Regeln stehen am Ende und gewinnen so die Kaskade, ohne dass
+   die Bloecke darueber angefasst werden.
+   ================================================================== */
+
+:root {
+  --r-flaeche: 28px;
+  --r-blatt: 40px;
+  --einzug: 6px;
+  /* Die alten Radien zeigen jetzt auf die neuen. So folgt jede Regel
+     weiter oben, ohne dass sie angefasst wird. */
+  --radius: var(--r-flaeche);
+  --radius-lg: var(--r-flaeche);
+  --radius-btn: 999px;
+
+  /* Derselbe Seitenrand wie in .wrap. Die Kapsel der Kopfzeile ragt um
+     --ueberstand darueber hinaus, die Marke darin steht dann genau auf
+     der linken Kante des Inhalts. */
+  --rand: clamp(1.25rem, 4vw, 3rem);
+  --ueberstand: 16px;
+  --kopf-h: 4.5rem;
+
+  --tint-ruhe: rgb(255 255 255 / 0.06);
+  --tint-hover: rgb(255 255 255 / 0.1);
+  --tint-aktiv: rgb(255 255 255 / 0.13);
+  --haarlinie: rgb(255 255 255 / 0);
+  --glas-schatten: 0 1px 2px oklch(0% 0 0 / 30%), 0 14px 34px -14px oklch(0% 0 0 / 60%);
+  --knopf-schatten: 0 1px 2px oklch(0% 0 0 / 25%), 0 8px 20px -10px oklch(0% 0 0 / 50%);
+  --blatt-kante: rgb(255 255 255 / 0.07);
+  --blatt-schatten: 0 -30px 60px -30px oklch(0% 0 0 / 60%);
+
+  --pfeil: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+}
+
+/* Auf hellem Papier verschwindet Glas ohne Haarlinie und Schatten. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --tint-ruhe: oklch(30% 0.04 255 / 5%);
+    --tint-hover: oklch(30% 0.04 255 / 7%);
+    --tint-aktiv: oklch(30% 0.04 255 / 10%);
+    --haarlinie: oklch(30% 0.04 255 / 14%);
+    --glas-schatten: 0 1px 2px oklch(30% 0.05 255 / 10%), 0 14px 34px -14px oklch(30% 0.05 255 / 30%);
+    --knopf-schatten: 0 1px 2px oklch(30% 0.05 255 / 8%), 0 8px 20px -10px oklch(30% 0.05 255 / 25%);
+    --blatt-kante: oklch(30% 0.04 255 / 10%);
+    --blatt-schatten: 0 -30px 60px -30px oklch(30% 0.05 255 / 22%);
+  }
+}
+
+:root[data-theme="light"] {
+  --tint-ruhe: oklch(30% 0.04 255 / 5%);
+  --tint-hover: oklch(30% 0.04 255 / 7%);
+  --tint-aktiv: oklch(30% 0.04 255 / 10%);
+  --haarlinie: oklch(30% 0.04 255 / 14%);
+  --glas-schatten: 0 1px 2px oklch(30% 0.05 255 / 10%), 0 14px 34px -14px oklch(30% 0.05 255 / 30%);
+  --knopf-schatten: 0 1px 2px oklch(30% 0.05 255 / 8%), 0 8px 20px -10px oklch(30% 0.05 255 / 25%);
+  --blatt-kante: oklch(30% 0.04 255 / 10%);
+  --blatt-schatten: 0 -30px 60px -30px oklch(30% 0.05 255 / 22%);
+}
+
+@media (max-width: 40rem) {
+  :root { --ueberstand: 12px; --r-blatt: 28px; }
+}
+
+/* ------------------------------------------------- Kopfzeile als Kapsel */
+
+/* Die Kopfzeile liegt jetzt ueber der Seite statt im Fluss, damit das
+   Licht oben hinter dem Glas steht. Sie selbst ist durchsichtig und
+   laesst Klicks durch, nur die Kapsel darin faengt sie ab. */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding-top: 12px;
+  border: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+}
+
+.site-header::after { content: none; }
+
+.header-inner {
+  position: relative;
+  width: calc(min(100%, var(--wrap)) - 2 * var(--rand) + 2 * var(--ueberstand));
+  max-width: none;
+  min-height: 52px;
+  margin-inline: auto;
+  padding: 6px;
+  gap: 2px;
+  border-radius: 999px;
+  pointer-events: auto;
+}
+
+.brand {
+  padding-inline: calc(var(--ueberstand) - 6px);
+  margin-right: var(--s2);
+}
+
+/* In der Kapsel steht alles in voller Textfarbe. Gedaempfter Text
+   faellt auf dem Glas ueber einem hellen Bild unter 4.5:1, der Unterschied
+   zwischen aktiv und inaktiv liegt deshalb in der Kapsel dahinter, nicht
+   in der Schriftfarbe. Der buergerliche Name tritt ueber Groesse und
+   Gewicht zurueck. */
+.header-inner .brand-name { color: var(--text); font-weight: 400; }
+
+.site-nav { margin-inline: 0; gap: 2px; font-size: 0.9rem; }
+.site-nav a { color: var(--text); }
+
+/* Kapsel in der Kapsel: 40px hoch bei 6px Abstand, Radius 20 in 26. */
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.16s var(--ease-out);
+}
+
+.site-nav a::after { content: none; }
+.site-nav a[aria-current="page"] { background: var(--tint-aktiv); }
+.site-nav a:active { transform: scale(0.97); }
+
+.header-tools { margin-left: auto; gap: 2px; }
+
+/* Glas im Glas hiesse zweimal weichzeichnen. Die Schalter sind darum
+   durchsichtig und zeigen sich erst unter dem Zeiger. */
+.header-tools .nav-toggle,
+.header-tools .lang-switch,
+.header-tools .theme-toggle {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--text);
+}
+
+.nav-toggle::after,
+.lang-switch::after,
+.theme-toggle::after { content: none; }
+
+/* ----------------------------------------------------- Glas, ein Rezept */
+
+/* Dasselbe Material wie die Knoepfe weiter oben: ein Grund aus der
+   Hintergrundfarbe fuer den Kontrast, ein Schimmer darueber, die
+   Lichtkante als Ring im Rahmen. Neu sind Haarlinie und Schatten, ohne
+   sie verschwindet das Glas im hellen Zustand. */
+.header-inner,
+.gruppe {
+  background-color: var(--glas-grund);
+  background-image: linear-gradient(
+    rgb(var(--glas-tint) / var(--glas-deckung)),
+    rgb(var(--glas-tint) / var(--glas-deckung))
+  );
+  backdrop-filter: saturate(var(--glas-sat)) blur(var(--glas-blur));
+  -webkit-backdrop-filter: saturate(var(--glas-sat)) blur(var(--glas-blur));
+  box-shadow:
+    0 0 0 0.5px var(--haarlinie),
+    inset 0 1px 0 rgb(255 255 255 / calc(var(--glas-kante) * 0.3)),
+    var(--glas-schatten);
+}
+
+.header-inner::after,
+.gruppe::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    150deg,
+    rgb(255 255 255 / var(--glas-kante)) 0%,
+    rgb(255 255 255 / calc(var(--glas-kante) * 0.16)) 34%,
+    rgb(255 255 255 / 0) 54%,
+    rgb(255 255 255 / calc(var(--glas-kante) * 0.5)) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .header-inner,
+  .gruppe {
+    background-color: var(--surface);
+    background-image: none;
+  }
+  .header-inner::after,
+  .gruppe::after { display: none; }
+}
+
+/* ------------------------------------------------------------- Knoepfe */
+
+.btn {
+  height: 48px;
+  padding: 0 1.4rem;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 550;
+}
+
+.btn:not(.btn-primary) { box-shadow: 0 0 0 0.5px var(--haarlinie), var(--knopf-schatten); }
+
+.btn-primary {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 10px 26px -12px color-mix(in oklab, var(--action) 80%, transparent);
+}
+
+.btn svg {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s var(--ease-out);
+}
+
+.btn-row { gap: 0.75rem; }
+
+/* Zurueck ist eine kleine Kapsel, keine Textzeile mehr. Die alte Regel
+   fuer .back setzt inline-block und steht spaeter als .btn, darum hier
+   ausdruecklich wieder Flexbox. */
+.btn.back,
+.hero-page .btn.back {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 1rem 0 0.75rem;
+  margin: 0 0 var(--s4);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+/* Die Wege nach draussen: eine Glaskapsel, 4px Abstand, also Radius 20
+   in Radius 24. */
+.gruppe {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.gruppe a {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 0.94rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.16s var(--ease-out);
+}
+
+.gruppe a:active { transform: scale(0.97); }
+
+/* Die Zeile unter dem Leitsatz bricht jetzt nach dem Punkt um, nicht
+   vor einem Strich. */
+.fakten { gap: 0.25rem 0.6rem; }
+.fakten span + span { padding-left: 0; border-left: 0; }
+.fakten span:not(:last-child)::after { content: "·"; margin-left: 0.6rem; }
+
+/* ------------------------------------------------------------- Abstand */
+
+/* Die Kopfzeile liegt ueber der Seite. Wo kein Licht dahinter steht,
+   braucht der Inhalt ihren Platz oben frei. */
+.page-legal:not(.hat-wellen) main { padding-top: var(--kopf-h); }
+.page-intern .seite-inhalt > .section:first-child { padding-top: calc(var(--kopf-h) + clamp(2rem, 6vw, 4rem)); }
+
+.hero-page {
+  padding-top: calc(var(--kopf-h) + clamp(2rem, 8vh, 4.5rem));
+  padding-bottom: clamp(2.5rem, 7vh, 4.5rem);
+  border-bottom: 0;
+}
+
+/* --------------------------------------------------------------- Blatt */
+
+/* Auf jeder Seite dieselbe Ordnung: der Kopf steht im Licht, das Blatt
+   liegt deckend darueber. Deckend, weil Text auf ruhigem Grund am
+   besten liest, und weil darunter dann nichts mehr gerechnet werden
+   muss. */
+.blatt {
+  position: relative;
+  z-index: 2;
+  background: var(--bg);
+  border-radius: var(--r-blatt) var(--r-blatt) 0 0;
+  box-shadow: 0 -1px 0 var(--blatt-kante), var(--blatt-schatten);
+  transition: background-color 0.4s ease;
+}
+
+.page-home .stage-inhalt {
+  background: var(--bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.page-home .stage-inhalt::before { content: none; }
+
+.blatt .band,
+.page-home .blatt .band { background: none; }
+
+/* Ueber dem Seitenkopf bleibt nur der leichte Grundschleier, damit die
+   Wellen zu sehen sind. Den Rest deckt das Blatt. */
+.seite-inhalt:has(.blatt) { background: color-mix(in oklab, var(--bg) 15%, transparent); }
+
+/* ------------------------------------------------------- Startseite */
+
+/* Der Hero laesst unten einen Streifen frei, darin zeigt sich die
+   Kante des Blatts. Dass es weitergeht, sieht man so schon oben. */
+.page-home .hero-home {
+  min-height: calc(100svh - 2.5rem);
+  opacity: clamp(0, calc(1 - var(--p, 0) * 1.4), 1);
+}
+
+/* Die Wellen stehen von Anfang an da. Der Deckel, der sie beim Scrollen
+   aufgedeckt hat, gehoerte zum leeren Bildschirm, den es nicht mehr
+   gibt. */
+.page-home .shader { opacity: calc(var(--effekt) * (1 - var(--p, 0) * 0.4)); }
+.buehne-deckel { display: none; }
+
+/* Der Neonbalken sitzt ganz oben, hinter der Kapsel. Sein Schein faellt
+   durch das Glas. */
+.neon-balken,
+.neon-saum { top: 0; }
+
+/* Der Satz und sein Verweis stehen untereinander, an einer Kante. */
+@media (min-width: 58rem) {
+  .band .wrap:not(.stapel):has(> .section-link) { grid-template-columns: minmax(0, 1fr); }
+  .band .wrap:not(.stapel) > .section-link { margin: var(--s2) 0 0; padding-bottom: 0; }
+}
+
+/* --------------------------------------------------------- Ueberschriften */
+
+/* Abschnitte tragen eine echte Ueberschrift statt einer Zeile in
+   Kapitaelchen ueber einem Strich. */
+.section-title {
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 112, "wght" 740;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: var(--text);
+  margin: 0 0 var(--s4);
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.section-title.spaced { margin-top: var(--s6); }
+
+/* Lange deutsche Woerter in breiter Schrift: "Datenschutzerklaerung"
+   ragte bei 375px um gut 100px aus dem Bild. Lieber getrennt als
+   abgeschnitten. */
+.prose h1,
+.display-sm,
+.section-title {
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.section-link { margin: var(--s4) 0 0; }
+
+.section-link .btn {
+  display: inline-flex;
+  color: var(--text);
+  font-weight: 550;
+}
+
+/* ------------------------------------------------------------ Arbeiten */
+
+/* Keine Wechsel mehr: jedes Bild steht links, jeder Text rechts. */
+@media (min-width: 62rem) {
+  .arbeit-zeile,
+  .arbeiten > article:nth-child(even) .arbeit-zeile {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--s5);
+  }
+  .arbeiten > article:nth-child(even) .arbeit-bild { order: 0; }
+}
+
+.arbeit-titel { margin: 0 0 var(--s1); }
+
+.arbeit-meta {
+  margin: 0 0 var(--s2);
+  font-size: 0.95rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.arbeit-summary { color: var(--text); margin-bottom: var(--s3); }
+
+/* ------------------------------------------------------------- Kacheln */
+
+.tile-title { margin-top: 0; }
+
+.tile-meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.insta-tile { border: 0; border-radius: var(--r-flaeche); }
+
+/* ------------------------------------------------------------- Projekt */
+
+/* Das Titelbild lag in einem eckigen Feld, mit runden Ecken darin. Jetzt
+   hat es nur noch seine eigene Rundung. */
+.cover-frame,
+.seite-inhalt .cover-frame { background: none; }
+
+.cover-frame a { border-radius: var(--r-flaeche); overflow: hidden; }
+
+.project-meta { margin: var(--s4) 0; }
+
+/* ------------------------------------------------------------ Artworks */
+
+.artwork-meta {
+  font-size: 0.95rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------ Ueber mich */
+
+.skills { gap: var(--s3) var(--s4); }
+
+.skill-group h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text);
+}
+
+.skill-liste { margin: 0; color: var(--text-muted); }
+
+/* ------------------------------------------------------------ Linkliste */
+
+/* Eine Flaeche mit Zeilen darin. Die Zeilen sind 6px eingerueckt, ihr
+   Radius ist der der Flaeche minus diese 6px. */
+.link-list {
+  padding: var(--einzug);
+  border-radius: var(--r-flaeche);
+  background: var(--bg-soft);
+}
+
+.link-list li { position: relative; border-bottom: 0; }
+
+.link-list li + li::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1.1rem;
+  right: 1.1rem;
+  height: 1px;
+  background: var(--border-soft);
+}
+
+.link-list a {
+  align-items: center;
+  min-height: 3.5rem;
+  padding: 0 1.1rem;
+  border-radius: calc(var(--r-flaeche) - var(--einzug));
+  transition: background-color 0.2s ease;
+}
+
+.link-list a::after {
+  content: "";
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background-color: var(--accent);
+  -webkit-mask: var(--pfeil) center / contain no-repeat;
+  mask: var(--pfeil) center / contain no-repeat;
+}
+
+/* --------------------------------------------------------------- Menue */
+
+/* Das Schubfach schwebt wie die Kopfzeile, mit Abstand zum Rand und
+   dem Radius der Flaechen. */
+.menue {
+  top: 8px;
+  right: 8px;
+  height: calc(100dvh - 16px);
+  border-left: 0;
+  border-radius: var(--r-flaeche);
+  box-shadow: var(--glas-schatten);
+  transform: translateX(calc(100% + 16px));
+}
+
+.menue-zu {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tint-ruhe);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.menue-zu::after { content: none; }
+
+/* --------------------------------------------------------------- Schmal */
+
+@media (max-width: 30rem) {
+  .hero-home .btn-row { flex-direction: column; align-items: stretch; }
+  .hero-home .btn-row .btn { justify-content: center; }
+  .gruppe a { flex: 1; padding: 0 0.6rem; }
+}
+
+/* -------------------------------------------------------------- Zeiger */
+
+@media (hover: hover) and (pointer: fine) {
+  .site-nav a:hover,
+  .header-tools .nav-toggle:hover,
+  .header-tools .lang-switch:hover,
+  .header-tools .theme-toggle:hover,
+  .gruppe a:hover,
+  .menue-zu:hover { background: var(--tint-hover); color: var(--text); }
+
+  /* Knoepfe heben sich nicht mehr, sie hellen auf. Glas schwebt schon. */
+  .btn:hover { transform: none; }
+  .btn:not(.btn-primary):hover { box-shadow: 0 0 0 0.5px var(--haarlinie), var(--knopf-schatten); }
+  .btn-primary:hover {
+    background: color-mix(in oklab, var(--action) 88%, black);
+    border-color: transparent;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 10px 26px -12px color-mix(in oklab, var(--action) 80%, transparent);
+  }
+  .btn:hover .pfeil { transform: translateX(3px); }
+  .btn:hover .pfeil-zurueck { transform: translateX(-3px); }
+
+  .section-link .btn:hover,
+  .hero-page .btn.back:hover,
+  .btn.back:hover { transform: none; }
+
+  .tile:hover,
+  .shots figure:hover,
+  .insta-tile:hover { transform: none; box-shadow: none; }
+  .tile:hover .tile-img img,
+  .shots figure:hover img,
+  .insta-tile:hover img { transform: scale(1.03); }
+
+  .link-list a:hover { color: var(--text); padding-left: 1.1rem; background: var(--tint-hover); }
+  .link-list a:hover::after { transform: translateX(3px); }
+}
