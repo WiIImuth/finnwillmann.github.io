@@ -121,7 +121,9 @@ nach einem Commit `.lock`-Dateien liegen und spätere Befehle scheitern an
   28.10.2026 drin, Quelle waren `itch/` und `Docs/` im Shardcore-Projekt.
   Text und Bilder von Finn oder seiner itch.io-Seite, nicht erfunden. Eine
   neue Datei in `content/projects/` und `content/en/projects/` genügt,
-  `arbeitZeile` stellt sie dar. Die Ziffer vor dem Dateinamen folgt `order`.
+  `arbeitZeile` stellt sie dar. Projekte stehen neueste zuerst
+  (`loadProjects`): es zählt `date` als `JJJJ-MM`, sonst `year`. Neue
+  Projekte bekommen deshalb immer `date`. `order` gilt nur noch für Artworks.
 - Die Autoren-Mail in der Git-Historie ist `deine@mail.de`, ein Platzhalter.
   Commits zählen so nicht auf Finns GitHub-Konto.
 - Nebendomains finnwillmann.de, .global und fwillmann.com leiten noch nicht

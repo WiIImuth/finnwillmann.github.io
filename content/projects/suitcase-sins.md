@@ -25,7 +25,6 @@ gallery:
   - /assets/images/suitcase-sins-02.jpg
   - /assets/images/suitcase-sins-03.jpg
   - /assets/images/suitcase-sins-04.jpg
-order: 4
 draft: false
 ---
 

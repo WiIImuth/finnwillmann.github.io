@@ -37,19 +37,17 @@ dist/                   Generiert, nicht von Hand bearbeiten
 
 ## Ein neues Projekt hinzufügen
 
-Neue Datei in `content/projects/` anlegen, z. B. `03-mein-projekt.md`:
+Neue Datei in `content/projects/` anlegen, z. B. `mein-projekt.md`, und
+dieselbe Datei auf Englisch in `content/en/projects/`:
 
 ```markdown
 ---
 title: Mein Projekt
 summary: Ein Satz, der erklärt, was es tut.
 year: 2026
-tags:
-  - TypeScript
-  - React
+date: 2026-11
 repo: https://github.com/nutzer/repo
 demo: https://beispiel.de
-order: 3
 ---
 
 ## Das Problem
@@ -60,6 +58,10 @@ Fließtext in Markdown.
 Speichern, fertig. Die Karte auf der Startseite und die Detailseite unter
 `/projekte/mein-projekt/` entstehen automatisch.
 
+Die Projekte stehen neueste zuerst. Es zählt `date`, sonst `year`. Ein Jahr
+ohne Monat zählt wie sein Anfang, ein neues Projekt mit `date` landet also
+oben. Die Startseite zeigt die ersten drei.
+
 ### Frontmatter-Felder
 
 | Feld | Pflicht | Bedeutung |
@@ -68,12 +70,13 @@ Speichern, fertig. Die Karte auf der Startseite und die Detailseite unter
 | `summary` | empfohlen | Ein Satz auf der Karte und in der Google-Vorschau |
 | `slug` | nein | URL-Teil; sonst aus dem Dateinamen abgeleitet |
 | `year` | nein | Zeitraum, z. B. `2026` oder `"2025/26"` |
+| `date` | empfohlen | Monat als `JJJJ-MM`, bestimmt die Reihenfolge |
 | `role` | nein | Deine Rolle im Projekt |
-| `tags` | nein | Kurze Schlagworte für die Karte |
+| `tags` | nein | Wird seit dem Redesign nicht mehr angezeigt |
 | `stack` | nein | Technologien in der Detail-Infozeile |
 | `repo` / `demo` | nein | Buttons „Quellcode" und „Live ansehen" |
 | `cover` | nein | Pfad zu einem Bild, z. B. `/assets/images/app.png` |
-| `order` | nein | Kleinere Zahl = weiter oben |
+| `thumb` | nein | Bild in der Übersicht, sonst `cover`; wird auf 16:9 beschnitten |
 | `draft` | nein | `true` blendet das Projekt aus |
 
 Bilder gehören nach `assets/images/` und werden als `/assets/images/datei.png`

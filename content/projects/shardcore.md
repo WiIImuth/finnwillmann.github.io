@@ -3,6 +3,7 @@ title: Shardcore
 slug: shardcore
 summary: Ein Bohrschiff zerlegt Low-Poly-Planeten Block für Block bis zum Kern. Eine 3D-Adaption von To The Core mit eigenem Skill-Baum und dreizehn Welten.
 year: 2026
+date: 2026-10
 role: Einzelarbeit
 stack:
   - Unity 6
@@ -13,7 +14,7 @@ stack:
 repo: ""
 demo: https://willmuth.itch.io/shardcore-demo
 demoLabel: Demo auf itch.io
-thumb: /assets/images/shardcore-01.jpg
+thumb: /assets/images/shardcore-cover.jpg
 cover: /assets/images/shardcore-titel.jpg
 gallery:
   - /assets/images/shardcore-01.jpg
@@ -22,7 +23,6 @@ gallery:
   - /assets/images/shardcore-04.jpg
   - /assets/images/shardcore-05.jpg
   - /assets/images/shardcore-06.jpg
-order: 2
 draft: false
 ---
 

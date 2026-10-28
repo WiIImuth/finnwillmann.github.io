@@ -25,7 +25,6 @@ gallery:
   - /assets/images/grappleglory-04.jpg
   - /assets/images/grappleglory-05.jpg
   - /assets/images/grappleglory-06.jpg
-order: 1
 draft: false
 ---
 

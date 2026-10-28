@@ -1196,7 +1196,16 @@ async function loadCollection(L, name) {
   return projects;
 }
 
-const loadProjects = (L) => loadCollection(L, "projects");
+// Projekte stehen neueste zuerst. Es zählt `date` (JJJJ-MM), sonst `year`.
+// Ein Jahr ohne Monat zählt wie sein Anfang, "2025/26" liegt zwischen 2025
+// und 2026. Der Dateiname entscheidet nur bei Gleichstand.
+const stand = (p) => String(p.data.date ?? p.data.year ?? "");
+const vergleiche = (x, y) => (x < y ? -1 : x > y ? 1 : 0);
+
+async function loadProjects(L) {
+  const projects = await loadCollection(L, "projects");
+  return projects.sort((a, b) => vergleiche(stand(b), stand(a)) || vergleiche(a.file, b.file));
+}
 const loadArtworks = (L) => loadCollection(L, "artworks");
 
 /* ------------------------------------------------------------------ *

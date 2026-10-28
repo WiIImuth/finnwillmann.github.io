@@ -17,7 +17,6 @@ repo: ""
 demo: https://drive.google.com/drive/folders/1CQqry5PNj__V8CvP2Zu-ybV9MXhn8mew?usp=drive_link
 demoLabel: Download the build
 cover: /assets/images/carry-me-home-01.jpg
-order: 3
 draft: false
 ---
 

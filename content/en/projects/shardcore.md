@@ -3,6 +3,7 @@ title: Shardcore
 slug: shardcore
 summary: A drill ship breaks low poly planets apart block by block, all the way to the core. A 3D adaptation of To The Core with its own skill tree and thirteen worlds.
 year: 2026
+date: 2026-10
 role: Solo project
 stack:
   - Unity 6
@@ -13,7 +14,7 @@ stack:
 repo: ""
 demo: https://willmuth.itch.io/shardcore-demo
 demoLabel: Demo on itch.io
-thumb: /assets/images/shardcore-01.jpg
+thumb: /assets/images/shardcore-cover.jpg
 cover: /assets/images/shardcore-titel.jpg
 gallery:
   - /assets/images/shardcore-01.jpg
@@ -22,7 +23,6 @@ gallery:
   - /assets/images/shardcore-04.jpg
   - /assets/images/shardcore-05.jpg
   - /assets/images/shardcore-06.jpg
-order: 2
 draft: false
 ---
 
