@@ -117,9 +117,11 @@ nach einem Commit `.lock`-Dateien liegen und spätere Befehle scheitern an
 
 ## Offen
 
-- Weitere Arbeiten von itch.io sollen dazukommen, zuerst Chartcore. Text
-  und Bilder von Finn oder seiner itch.io-Seite, nicht erfunden. Eine neue
-  Datei in `content/projects/` genügt, `arbeitZeile` stellt sie dar.
+- Weitere Arbeiten von itch.io sollen dazukommen. Shardcore ist seit dem
+  28.10.2026 drin, Quelle waren `itch/` und `Docs/` im Shardcore-Projekt.
+  Text und Bilder von Finn oder seiner itch.io-Seite, nicht erfunden. Eine
+  neue Datei in `content/projects/` und `content/en/projects/` genügt,
+  `arbeitZeile` stellt sie dar. Die Ziffer vor dem Dateinamen folgt `order`.
 - Die Autoren-Mail in der Git-Historie ist `deine@mail.de`, ein Platzhalter.
   Commits zählen so nicht auf Finns GitHub-Konto.
 - Nebendomains finnwillmann.de, .global und fwillmann.com leiten noch nicht
