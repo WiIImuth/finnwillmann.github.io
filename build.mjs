@@ -746,7 +746,7 @@ function werkZeile(project, L, index) {
       ${marken ? `<span class="werk-marken">${marken}</span>` : ""}
     </span>
     <span class="werk-jahr">${escapeHtml(d.year || "")}</span>
-    ${image ? `<span class="werk-bild"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></span>` : "<span></span>"}
+    ${image ? `<span class="werk-bild"><img src="${image}" alt=""${dims(image)} loading="lazy" decoding="async"></span>` : ""}
   </a>
 </li>`;
 }

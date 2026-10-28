@@ -2448,3 +2448,314 @@ body.lightbox-open { overflow: hidden; }
 
 .intern-inhalt:focus { outline: none; }
 .intern-inhalt { margin-top: var(--s4); }
+
+/* ==================================================================
+   Glas
+
+   Die Seite hatte eine Atmosphaere im Hintergrund und deckende
+   Flaechen davor. Glas macht aus beidem eine Schicht: was hinten
+   leuchtet, scheint vorne gedaempft durch.
+
+   Zwei Entscheidungen stehen auf Messungen, nicht auf Geschmack.
+   Erstens: keine Brechung ueber einen SVG-Filter. Im Vergleich Bild
+   fuer Bild lag der Unterschied mit und ohne bei 0.11 von 255, also
+   unsichtbar, weil hinter Kopfzeile und Knoepfen ein weicher Verlauf
+   liegt und kein Muster, das sich verbiegen koennte. Gekostet hat sie
+   ungefaehr das Dreifache. Zweitens: den Charakter traegt die Kante,
+   nicht die Unschaerfe. Sie laeuft als Verlauf durch den Rahmen, hell
+   oben links, schwach unten rechts, wie Licht auf einer Scheibe.
+   ================================================================== */
+
+:root {
+  --glas-blur: 18px;
+  --glas-sat: 150%;
+  /* Glas braucht zwei Lagen, nicht eine. Der Grund traegt den
+     Kontrast: ohne ihn steht der Text der Kopfzeile auf dem Neonlicht
+     dahinter, gemessen 3.2:1 statt der noetigen 4.5:1. Der Schimmer
+     darueber macht daraus erst Glas. */
+  --glas-grund: color-mix(in oklab, var(--bg) 66%, transparent);
+  --glas-tint: 255 255 255;
+  --glas-deckung: 0.06;
+  /* Staerke der Lichtkante oben links. */
+  --glas-kante: 0.45;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    /* Auf hellem Papier braucht Glas Deckung, sonst verschwindet es,
+       und eine fast weisse Kante statt eines Lichtreflexes. */
+    --glas-grund: color-mix(in oklab, var(--bg) 58%, transparent);
+    --glas-deckung: 0.42;
+    --glas-sat: 180%;
+    --glas-kante: 0.95;
+  }
+}
+
+:root[data-theme="light"] {
+  --glas-grund: color-mix(in oklab, var(--bg) 58%, transparent);
+  --glas-deckung: 0.42;
+  --glas-sat: 180%;
+  --glas-kante: 0.95;
+}
+
+.site-header,
+.btn:not(.btn-primary),
+.tags li,
+.menue {
+  /* Kein position hier: die Kopfzeile ist sticky, das Menue fixed.
+     Beides zu ueberschreiben hat das Panel aus dem Bild geschoben.
+     Nur die Schlagworte brauchen einen Bezugsrahmen, siehe unten. */
+  border-color: transparent;
+  background-color: var(--glas-grund);
+  background-image: linear-gradient(
+    rgb(var(--glas-tint) / var(--glas-deckung)),
+    rgb(var(--glas-tint) / var(--glas-deckung))
+  );
+  backdrop-filter: saturate(var(--glas-sat)) blur(var(--glas-blur));
+  -webkit-backdrop-filter: saturate(var(--glas-sat)) blur(var(--glas-blur));
+}
+
+/* Die Kante liegt als Ring im Rahmen, nicht als Verlauf ueber der
+   Flaeche: zwei Masken, voneinander abgezogen. So folgt sie jedem
+   Radius, und die Flaeche darunter bleibt klar. */
+.site-header::after,
+.btn:not(.btn-primary)::after,
+.tags li::after,
+.menue::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    150deg,
+    rgb(255 255 255 / var(--glas-kante)) 0%,
+    rgb(255 255 255 / calc(var(--glas-kante) * 0.16)) 34%,
+    rgb(255 255 255 / 0) 54%,
+    rgb(255 255 255 / calc(var(--glas-kante) * 0.5)) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Die Kopfzeile hat keinen Radius, dort wuerde der Ring als Rahmen um
+   den ganzen Bildschirm laufen. Sie bekommt nur die obere Lichtkante
+   und unten eine Trennung, die beim Scrollen erscheint. */
+.site-header::after {
+  padding: 0;
+  mask: none;
+  -webkit-mask: none;
+  background: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / var(--glas-kante)) 0 1px,
+    transparent 1px
+  );
+}
+
+.site-header { border-bottom: 1px solid transparent; }
+.site-header.is-stuck { border-bottom-color: rgb(var(--glas-tint) / 0.10); }
+:root[data-theme="light"] .site-header.is-stuck { border-bottom-color: var(--border-soft); }
+
+/* Schlagworte waren der zurueckhaltendste denkbare Zustand: ein Rahmen
+   auf nichts. Als Glas gehoeren sie in dieselbe Welt wie alles andere. */
+.tags li {
+  position: relative;
+  border-radius: 9px;
+  color: var(--text-muted);
+}
+
+/* Ohne Glas im Browser bleibt eine deckende Flaeche. Kein halbnackter
+   Zwischenzustand, in dem Text direkt auf dem Hintergrund steht. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-header,
+  .btn:not(.btn-primary),
+  .tags li,
+  .menue {
+    background-color: var(--surface);
+    background-image: none;
+    border-color: var(--border);
+  }
+  .site-header::after,
+  .btn:not(.btn-primary)::after,
+  .tags li::after,
+  .menue::after { display: none; }
+}
+
+/* ------------------------------------------------- Das Blatt als Glas */
+
+/* Der Inhalt deckte den Hintergrund schon vorher nicht zu, er lag mit
+   78 Prozent darueber. Jetzt verwischt er ihn zusaetzlich: aus den
+   scharfen Lichtstrichen dahinter wird ein Schimmer. Das ist der
+   Unterschied zwischen einer getoenten Scheibe und Glas.
+
+   Die Kante oben war eine Linie quer durch das Bild. Sie laeuft jetzt
+   als Verlauf aus, deshalb der negative Rand und die Ueberlappung. */
+.page-home .stage-inhalt {
+  /* Weniger Unschaerfe als bei den kleinen Flaechen: das Blatt ist
+     riesig, und gemessen liegen 12px und 18px optisch gleichauf,
+     kosten aber nicht gleich viel. */
+  backdrop-filter: saturate(120%) blur(12px);
+  -webkit-backdrop-filter: saturate(120%) blur(12px);
+}
+
+.page-home .stage-inhalt::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6rem;
+  height: 6rem;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, var(--bg) calc(var(--schleier) * 0.8%), transparent)
+  );
+}
+
+.page-home .stage-inhalt { position: relative; }
+
+/* Die Abschnitte stiessen hart aneinander: eine Vollflaeche und eine
+   1px-Linie. Beides war das Gegenteil eines weichen Uebergangs. Das
+   Band laeuft jetzt oben und unten aus. */
+.band {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--bg-soft) 9%,
+    var(--bg-soft) 91%,
+    transparent 100%
+  );
+}
+
+.page-home .band {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in oklab, var(--bg-soft) calc(var(--schleier) * 1% + 4%), transparent) 9%,
+    color-mix(in oklab, var(--bg-soft) calc(var(--schleier) * 1% + 4%), transparent) 91%,
+    transparent 100%
+  );
+}
+
+/* Die Linie sitzt auf der Kante, wie der Rahmen vorher. Als Block im
+   Fluss haette sie den Abstand ein zweites Mal aufgemacht. */
+.cta {
+  position: relative;
+  border-top: 0;
+}
+
+.cta::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--border-soft) 12%,
+    var(--border-soft) 88%,
+    transparent
+  );
+}
+
+.page-header {
+  position: relative;
+  border-bottom: 0;
+}
+
+.page-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--border-soft) 10%,
+    var(--border-soft) 90%,
+    transparent
+  );
+}
+
+/* ------------------------------------------- Glas auf der Bedienung */
+
+/* Alles, was man anfassen kann, gehoert in dieselbe Welt: die runden
+   Knoepfe in der Kopfzeile, der Menueschalter und die Steuerung in der
+   Lightbox. Die Lightbox hatte ihre Unschaerfe schon, ihr fehlte nur
+   die Kante. Bildrahmen bleiben, wie sie sind: in dieser Welt wurde
+   bewusst entschieden, dass ein Bild ohne Rahmen steht. */
+.lang-switch,
+.theme-toggle,
+.nav-toggle,
+.menue-zu,
+.lightbox-close,
+.lightbox-nav {
+  /* Wieder kein position: die Lightbox-Knoepfe sind absolut in ihren
+     Ecken verankert, die vier anderen bringen ihr relative schon
+     selbst mit. Ueberschreiben hat sie in die linke Kante geraeumt. */
+  border-color: transparent;
+  background-color: var(--glas-grund);
+  background-image: linear-gradient(
+    rgb(var(--glas-tint) / var(--glas-deckung)),
+    rgb(var(--glas-tint) / var(--glas-deckung))
+  );
+  backdrop-filter: saturate(var(--glas-sat)) blur(var(--glas-blur));
+  -webkit-backdrop-filter: saturate(var(--glas-sat)) blur(var(--glas-blur));
+}
+
+.lang-switch::after,
+.theme-toggle::after,
+.nav-toggle::after,
+.menue-zu::after,
+.lightbox-close::after,
+.lightbox-nav::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    150deg,
+    rgb(255 255 255 / var(--glas-kante)) 0%,
+    rgb(255 255 255 / calc(var(--glas-kante) * 0.16)) 34%,
+    rgb(255 255 255 / 0) 54%,
+    rgb(255 255 255 / calc(var(--glas-kante) * 0.5)) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Der Menueschalter zeichnet seine drei Balken in span und dessen
+   Pseudoelementen. Der Ring darf sie nicht ueberdecken. */
+.nav-toggle span { z-index: 1; }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .lang-switch,
+  .theme-toggle,
+  .nav-toggle,
+  .menue-zu,
+  .lightbox-close,
+  .lightbox-nav {
+    background-color: var(--surface);
+    background-image: none;
+    border-color: var(--border);
+  }
+  .lang-switch::after,
+  .theme-toggle::after,
+  .nav-toggle::after,
+  .menue-zu::after,
+  .lightbox-close::after,
+  .lightbox-nav::after { display: none; }
+}
