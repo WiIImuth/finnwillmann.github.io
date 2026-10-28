@@ -100,14 +100,3 @@ Alle Menüs lassen sich ohne Maus bedienen, mit Tastatur oder Gamepad. Gängige
 Controller funktionieren auch, wenn man sie mitten im Spiel ein- oder aussteckt,
 und die Tastenhinweise zeigen dann den passenden Knopf. Das Spiel gibt es auf
 Deutsch und Englisch.
-
-## Wie es entstanden ist
-
-Code und Texte von Shardcore sind mit der KI Claude entstanden, die Musik mit
-Suno. So steht es auch auf der itch.io-Seite.
-
-Gebaut und veröffentlicht wird direkt aus Unity: Ein Menüpunkt baut Demo oder
-Vollversion mit der nächsten Versionsnummer, lädt per butler nur die Änderungen
-auf itch.io und markiert den Stand in Git.
-
-Die kostenlose Demo enthält die ersten beiden Welten.

@@ -97,14 +97,3 @@ and a game speed between 50 and 100 percent.
 Every menu works without a mouse, by keyboard or gamepad. Common controllers
 work even when plugged in or out mid game, and the button hints then show the
 matching button. The game is available in German and English.
-
-## How it was made
-
-The code and texts of Shardcore were made with the AI Claude, the music with
-Suno. The itch.io page says so as well.
-
-Building and publishing happens straight from Unity: a menu entry builds the
-demo or the full version with the next version number, uploads only the changes
-to itch.io via butler and tags the state in Git.
-
-The free demo contains the first two worlds.
